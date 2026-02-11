@@ -1,0 +1,14 @@
+numpy
+pandas
+scipy
+scikit-learn
+joblib
+xgboost
+mne
+matplotlib
+pylsl
+pyqtgraph
+PyQt5
+seaborn
+keyboard
+imblearn
