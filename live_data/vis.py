@@ -21,9 +21,8 @@ BUFFER_SIZE = SFREQ* BUFFER_SEC
 
 
 class EEG_Plot:
-    def __init__(self, inlet, units, labels, buffer_size=BUFFER_SIZE, y_range=Y_RANGE):
+    def __init__(self, inlet, labels, buffer_size=BUFFER_SIZE, y_range=Y_RANGE):
         self.inlet=inlet
-        self.units=units
         self.labels=labels
         self.n_ch=len(labels)
         self.buffer_size = buffer_size
@@ -45,9 +44,9 @@ class EEG_Plot:
 
         # Create plots + curves
         self.curves = []
-        for i, (lab, unit) in enumerate(zip(labels, units)):
+        for i, lab in enumerate(labels):
             p = self.win.addPlot(row=i, col=0)          # row=i (not 1)
-            p.setLabel("left", f"{lab} ({unit})")
+            p.setLabel("left", f"{lab}")
             p.setYRange(*self.y_range)                  # unpack tuple
             p.showGrid(x=True, y=True)
             self.curves.append(p.plot(pen="c"))
@@ -85,11 +84,11 @@ def main():
 
     stream = Stream()
     inlet = stream.connect_to_eeg_stream()
-    labels, units = stream.get_meta(inlet)
+    labels = stream.get_meta(inlet)
 
     
    
-    plot = EEG_Plot(inlet, units, labels)
+    plot = EEG_Plot(inlet, labels)
 
     timer = QtCore.QTimer()
     timer.timeout.connect(plot.update)  # update takes NO args
