@@ -43,7 +43,7 @@ class StreamTable:
                     f.flush()
 
 def main():
-    TIME = 60*5 #5 min
+    TIME = 60*1 # 1 min
 
     #Connect to EEG Device
     stream = Stream()
@@ -52,7 +52,7 @@ def main():
 
     #Create Table
     table = StreamTable()
-    table.save_table(channels, inlet, TIME)
+    table.save_table(channels, inlet, 'areeba_tests/eeg_table', TIME)
 
 if __name__ == '__main__':
     main()
