@@ -1,0 +1,94 @@
+
+Step 4: Feature selection...
+Top 10 most important features:
+   1. lag1_Gamma_mean_pow: 0.0370
+   2. lag1_Beta_mean_pow: 0.0302
+   3. Gamma_skew_pow: 0.0235
+   4. Beta_mean_pow: 0.0222
+   5. lag1_Beta_skew_pow: 0.0208
+   6. lag1_Gamma_kurt_pow: 0.0198
+   7. min_2: 0.0177
+   8. lag1_kurt_0: 0.0159
+   9. covM_2_2: 0.0154
+  10. lag1_std_2: 0.0146
+
+
+Enhanced features saved to: features.csv
+Final shape: (2479, 101)
+
+
+Class distribution in training data: {'relaxed': 819, 'neutral': 830, 'concentrating': 830}
+Class weights: {'relaxed': '1.01', 'neutral': '1.00', 'concentrating': '1.00'}
+
+
+
+==================================================
+Training RandomForest model
+==================================================
+
+Class distribution: {'relaxed': 819, 'neutral': 830, 'concentrating': 830}
+Fitting 3 folds for each of 288 candidates, totalling 864 fits
+
+Best parameters: {'bootstrap': True, 'class_weight': 'balanced', 'max_depth': None, 'max_features': 'sqrt', 'max_samples': 0.7, 'min_samples_leaf': 2, 'min_samples_split': 5, 'n_estimators': 200, 'oob_score': True}
+CV F1 score: 0.9601
+OOB Score: 0.9593
+
+Per-Class Accuracy:
+  Relaxed     : 0.9807 (98.07%)
+  Neutral     : 0.9255 (92.55%)
+  Concentrating: 0.9762 (97.62%)
+
+Overall Accuracy: 0.9601 (96.01%)
+Macro Avg F1-Score: 0.9601
+
+Detailed Classification Report:
+               precision    recall  f1-score   support
+
+      relaxed       0.98      0.93      0.96       819
+      neutral       0.93      0.96      0.94       830
+concentrating       0.98      0.99      0.98       830
+
+     accuracy                           0.96      2479
+    macro avg       0.96      0.96      0.96      2479
+ weighted avg       0.96      0.96      0.96      2479
+
+
+==================================================
+Training XGBoost model
+==================================================
+
+XGBoost training completed in 2.6 seconds
+Best fold accuracy: 0.9709
+
+Per-Class Accuracy:
+  Relaxed     : 0.9786 (97.86%)
+  Neutral     : 0.9432 (94.32%)
+  Concentrating: 0.9786 (97.86%)
+
+Overall Accuracy: 0.9665 (96.65%)
+Macro Avg F1-Score: 0.9665
+
+Detailed Classification Report:
+               precision    recall  f1-score   support
+
+      relaxed       0.98      0.95      0.96       819
+      neutral       0.94      0.96      0.95       830
+concentrating       0.98      0.99      0.98       830
+
+     accuracy                           0.97      2479
+    macro avg       0.97      0.97      0.97      2479
+ weighted avg       0.97      0.97      0.97      2479
+
+
+==================================================
+Training Stacked model
+==================================================
+
+  Overall Accuracy:     0.9645 (96.45%)
+  Relaxed Accuracy:     0.9750 (97.50%)
+  Neutral Accuracy:     0.9342 (93.42%)
+  Concentrating Acc:    0.9812 (98.12%)
+  Macro F1-Score:       0.9645
+  Training Time:        67.30s
+  Model Size:           5.61 MB
+

@@ -160,11 +160,32 @@ def setup_cross_validation(y: np.ndarray) -> StratifiedKFold:
 
 
 def evaluate_model(model, X: np.ndarray, y: np.ndarray, cv: StratifiedKFold) -> None:
-    """Evaluate model using cross-validation and print classification report."""
+    """Evaluate model using cross-validation and print classification report with per-class accuracy."""
     print("\nModel Evaluation:")
     y_pred = cross_val_predict(model, X, y, cv=cv, n_jobs=-1)
-    print(classification_report(y, y_pred, 
-                              target_names=['relaxed', 'neutral', 'concentrating']))
+    
+    # Get detailed classification report
+    report = classification_report(y, y_pred, 
+                                  target_names=['relaxed', 'neutral', 'concentrating'],
+                                  output_dict=True)
+    
+    # Print per-class accuracy
+    print("\nPer-Class Accuracy:")
+    class_names = ['relaxed', 'neutral', 'concentrating']
+    for i, class_name in enumerate(class_names):
+        accuracy = report[class_name]['precision']  # Using precision as per-class accuracy
+        print(f"  {class_name.capitalize():12s}: {accuracy:.4f} ({accuracy*100:.2f}%)")
+    
+    # Print overall metrics
+    print(f"\nOverall Accuracy: {report['accuracy']:.4f} ({report['accuracy']*100:.2f}%)")
+    print(f"Macro Avg Precision: {report['macro avg']['precision']:.4f}")
+    print(f"Macro Avg Recall: {report['macro avg']['recall']:.4f}")
+    print(f"Macro Avg F1-Score: {report['macro avg']['f1-score']:.4f}")
+    
+    # Print full classification report
+    print("\nDetailed Classification Report:")
+    print(classification_report(y, y_pred, target_names=['relaxed', 'neutral', 'concentrating']))
+    
     return y_pred
 
 def train_random_forest(X: np.ndarray, y: np.ndarray, 
@@ -229,7 +250,24 @@ def train_random_forest(X: np.ndarray, y: np.ndarray,
     
     # Cross-validated evaluation
     y_pred = cross_val_predict(best_model, X, y, cv=cv, n_jobs=-1)
-    print("\nCross-validated classification report:")
+    
+    # Get detailed classification report
+    report = classification_report(y, y_pred, 
+                                  target_names=['relaxed', 'neutral', 'concentrating'],
+                                  output_dict=True)
+    
+    # Print per-class accuracy
+    print("\nPer-Class Accuracy:")
+    class_names = ['relaxed', 'neutral', 'concentrating']
+    for i, class_name in enumerate(class_names):
+        accuracy = report[class_name]['precision']  # Using precision as per-class accuracy
+        print(f"  {class_name.capitalize():12s}: {accuracy:.4f} ({accuracy*100:.2f}%)")
+    
+    # Print overall metrics
+    print(f"\nOverall Accuracy: {report['accuracy']:.4f} ({report['accuracy']*100:.2f}%)")
+    print(f"Macro Avg F1-Score: {report['macro avg']['f1-score']:.4f}")
+    
+    print("\nDetailed Classification Report:")
     print(classification_report(y, y_pred, 
                               target_names=['relaxed', 'neutral', 'concentrating']))
     
@@ -366,7 +404,20 @@ def train_xgboost(X: np.ndarray, y: np.ndarray,
         print(f"Best fold accuracy: {best_score:.4f}")
         
         # Evaluation
-        print("\nCross-validated classification report:")
+        print("\nPer-Class Accuracy:")
+        report = classification_report(y, y_pred, 
+                                      target_names=['relaxed', 'neutral', 'concentrating'],
+                                      output_dict=True)
+        
+        class_names = ['relaxed', 'neutral', 'concentrating']
+        for i, class_name in enumerate(class_names):
+            accuracy = report[class_name]['precision']
+            print(f"  {class_name.capitalize():12s}: {accuracy:.4f} ({accuracy*100:.2f}%)")
+        
+        print(f"\nOverall Accuracy: {report['accuracy']:.4f} ({report['accuracy']*100:.2f}%)")
+        print(f"Macro Avg F1-Score: {report['macro avg']['f1-score']:.4f}")
+        
+        print("\nDetailed Classification Report:")
         print(classification_report(y, y_pred, 
                                   target_names=['relaxed', 'neutral', 'concentrating']))
         
@@ -450,6 +501,7 @@ def print_model_sizes(output_dir: str) -> None:
 def train_models(csv_path: str, output_dir: str = 'models') -> None:
     """
     Main function to train and evaluate models with enhanced class balancing.
+    Uses enhanced features if available.
     
     Args:
         csv_path: Path to the CSV file containing training data
@@ -477,14 +529,19 @@ def train_models(csv_path: str, output_dir: str = 'models') -> None:
     class_weights = compute_class_weight('balanced', classes=np.unique(y), y=y)
     print("Class weights:", {cls: f"{w:.2f}" for cls, w in zip(['relaxed', 'neutral', 'concentrating'], class_weights)})
     
-    # Feature selection
-    print("\nPerforming feature selection...")
-    X_selected, selector, selected_feature_names = perform_feature_selection(X, y)
-    
-    # Save feature selector
-    selector_path = os.path.join(output_dir, 'feature_selector.joblib')
-    joblib.dump(selector, selector_path)
-    print(f"\nSaved feature selector to {selector_path}")
+    # Check if this is enhanced features (already processed) or original features
+    if X.shape[1] > 200:  # Likely original features, apply feature selection
+        print("\nDetected original feature set, applying feature selection...")
+        X_selected, selector, selected_feature_names = perform_feature_selection(X, y)
+        
+        # Save feature selector
+        selector_path = os.path.join(output_dir, 'feature_selector.joblib')
+        joblib.dump(selector, selector_path)
+        print(f"\nSaved feature selector to {selector_path}")
+    else:  # Already enhanced features
+        print("\nDetected enhanced feature set, using as-is...")
+        X_selected = X
+        selected_feature_names = [f"feature_{i}" for i in range(X.shape[1])]
     
     # Save selected feature names
     with open(os.path.join(output_dir, 'selected_features.txt'), 'w') as f:
