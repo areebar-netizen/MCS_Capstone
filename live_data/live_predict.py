@@ -6,8 +6,6 @@ Live prediction pipeline:
 - Denoiser: placeholder class (user will implement later)
 - Predictor: loads a saved model and uses the existing feature extractor to
   produce per-window predictions from the buffered samples
-- Visualizer: adapted from code/visualize_predictions.py but allows replacing
-  predictions dynamically for a live display
 
 Run from the repository root so relative imports to the `code/` folder work.
 """
@@ -38,6 +36,7 @@ if str(CODE_DIR) not in sys.path:
     sys.path.insert(0, str(CODE_DIR))
 
 from EEG_feature_extraction_adv import generate_feature_vectors_from_samples, generate_feature_vectors_from_matrix
+from enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
 import joblib
 
 
@@ -319,17 +318,29 @@ def load_model(models_dir: Path, model_name: str):
         raise FileNotFoundError(f'Model file not found: {model_file}')
     model = joblib.load(model_file)
     
+    # Load feature selector
     feature_selector_file = Path(models_dir) / 'feature_selector.joblib'
+    feature_selector = None
     if feature_selector_file.exists():
         feature_selector = joblib.load(feature_selector_file)
-        return model, feature_selector
-    return model, None
+    
+    # Load preprocessing artifacts for enhanced features
+    try:
+        scaler, feature_info = load_preprocessing_artifacts('preprocessing_artifacts')
+        has_enhanced_preprocessing = True
+    except Exception as e:
+        print(f"Warning: Could not load preprocessing artifacts: {e}")
+        scaler = None
+        feature_info = None
+        has_enhanced_preprocessing = False
+    
+    return model, feature_selector, (scaler, feature_info, has_enhanced_preprocessing)
 
 
 class Predictor:
     def __init__(self, models_dir: Union[str, Path], model_name: str = 'stacked_model'):
         """Initialize predictor with a trained model."""
-        self.model, self.feature_selector = load_model(models_dir, model_name)
+        self.model, self.feature_selector, self.preprocessing_artifacts = load_model(models_dir, model_name)
         self.last_prediction = None
         self.last_confidence = 0.0
         self.prediction_history = []
@@ -346,8 +357,8 @@ class Predictor:
             units: List of units for each channel
             nsamples: Number of samples per window
             period: Window size in seconds
-            cols_to_ignore: Number of columns to ignore from the end of each row
-            
+            cols_to_ignore: Number of columns to ignore from end of each row
+        
         Returns:
             Tuple of (predictions, number_of_windows)
         """
@@ -383,6 +394,22 @@ class Predictor:
         if X.ndim == 1:
             X = X.reshape(1, -1)
 
+        # Apply enhanced preprocessing if available
+        if (self.preprocessing_artifacts is not None and 
+            len(self.preprocessing_artifacts) >= 3 and 
+            self.preprocessing_artifacts[2]):  # has_enhanced_preprocessing
+            
+            try:
+                scaler, feature_info = self.preprocessing_artifacts[0], self.preprocessing_artifacts[1]
+                X_processed = apply_feature_pipeline(X, scaler, feature_info)
+                
+                if X_processed is not None:
+                    X = X_processed
+                else:
+                    print("Warning: Enhanced preprocessing failed, using raw features")
+            except Exception as e:
+                print(f"Warning: Enhanced preprocessing failed: {e}")
+        
         # Apply feature selection if available
         if self.feature_selector is not None:
             try:

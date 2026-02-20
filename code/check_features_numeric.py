@@ -1,6 +1,6 @@
 """Utility: check that a features CSV contains only numeric entries (except 'Label').
 
-Usage: python3 code/check_features_numeric.py features.csv
+Usage: python3 code/check_features_numeric.py enhanced_features.csv
 Exit code 0 -> numeric-only (success). Non-zero -> found non-numeric value.
 """
 import sys
@@ -23,7 +23,7 @@ def is_numeric_csv(path):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('Usage: check_features_numeric.py <features.csv>')
+        print('Usage: check_features_numeric.py <enhanced_features.csv>')
         sys.exit(2)
     path = sys.argv[1]
     ok = is_numeric_csv(path)
