@@ -41,7 +41,6 @@ Thumbs.db
 
 # Project specific
 models_out/
-*.csv
 *.pkl
 *.joblib
 *.npy
