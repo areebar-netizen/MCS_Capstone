@@ -1,0 +1,7 @@
+filename,n_windows,total_seconds,relaxed_seconds,neutral_seconds,concentrating_seconds,predicted_label,confidence
+eeg_table_1_concentrating.csv,120,60.0,26.5,33.5,0.0,neutral,0.8159109
+eeg_table_1_neutral2.csv,118,59.0,53.0,6.0,0.0,relaxed,0.92722505
+eeg_table_1_relaxed_2.csv,118,59.0,41.5,17.5,0.0,relaxed,0.9070052
+eeg_table_concentrating.csv,119,59.5,40.0,19.5,0.0,relaxed,0.8206816
+eeg_table_neutral.csv,118,59.0,3.5,27.5,28.0,concentrating,0.77137786
+eeg_table_relaxed.csv,118,59.0,37.0,18.0,4.0,relaxed,0.8926415

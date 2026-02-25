@@ -1,0 +1,4 @@
+filename,n_windows,total_seconds,relaxed_seconds,neutral_seconds,concentrating_seconds,predicted_label,confidence
+eeg_table_1_concentrated3.csv,358,179.0,123.5,55.5,0.0,relaxed,0.87328166
+eeg_table_1_neutral3.csv,359,179.5,75.5,104.0,0.0,neutral,0.865436
+eeg_table_1_relaxed3.csv,359,179.5,79.5,100.0,0.0,neutral,0.92171407

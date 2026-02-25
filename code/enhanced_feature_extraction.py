@@ -82,6 +82,7 @@ def select_top_features(X, y, feature_names, n_features=100):
         X_selected: Selected feature matrix
         selected_names: Selected feature names
         feature_importance: Feature importance scores
+        original_indices: Indices of selected features from ORIGINAL space
     """
     print(f"Selecting top {n_features} features using Random Forest...")
     
@@ -92,8 +93,10 @@ def select_top_features(X, y, feature_names, n_features=100):
     # Get feature importance
     importance = rf.feature_importances_
     
-    # Select top features
+    # Get indices of top features
     indices = np.argsort(importance)[::-1][:n_features]
+    
+    # Select features using these indices
     selected_names = [feature_names[i] for i in indices]
     X_selected = X[:, indices]
     selected_importance = importance[indices]
@@ -105,7 +108,7 @@ def select_top_features(X, y, feature_names, n_features=100):
     for i, (name, imp) in enumerate(zip(selected_names[:10], selected_importance[:10])):
         print(f"  {i+1:2d}. {name}: {imp:.4f}")
     
-    return X_selected, selected_names, selected_importance
+    return X_selected, selected_names, selected_importance, indices
 
 def apply_feature_scaling(X, method='standard'):
     """
@@ -194,9 +197,22 @@ def generate_enhanced_features_from_directory(directory_path, output_file,
     
     # Step 4: Feature selection
     print("\nStep 4: Feature selection...")
-    X_selected, selected_names, importance = select_top_features(
+    # Capture the indices returned by the function
+    X_selected, selected_names, importance, reduced_indices = select_top_features(
         X_reduced, y, reduced_names, n_features
     )
+    
+    # Map reduced indices back to original indices
+    # We need to find which original features correspond to the selected reduced features
+    original_to_reduced_mapping = {}
+    for orig_idx, orig_name in enumerate(feature_names):
+        for red_idx, red_name in enumerate(reduced_names):
+            if orig_name == red_name:
+                original_to_reduced_mapping[red_idx] = orig_idx
+                break
+    
+    # Convert reduced indices to original indices
+    original_indices = [original_to_reduced_mapping[red_idx] for red_idx in reduced_indices]
     
     # Step 5: Create final enhanced features dataframe
     print("\nStep 5: Creating final feature matrix...")
@@ -224,7 +240,8 @@ def generate_enhanced_features_from_directory(directory_path, output_file,
         'correlation_pairs': corr_pairs,
         'original_feature_count': len(feature_names),
         'after_correlation_removal': len(reduced_names),
-        'final_feature_count': len(selected_names)
+        'final_feature_count': len(selected_names),
+        'selected_indices': original_indices  # Save the mapped original indices
     }
     
     pd.to_pickle(feature_info, os.path.join(artifact_dir, 'feature_selection_info.pkl'))
@@ -295,32 +312,24 @@ def apply_feature_pipeline(X, scaler, feature_info):
     """
     import pandas as pd
     
-    # Convert to DataFrame for easier processing
-    # Generate generic feature names that match the training format
-    feature_names = [f"feature_{i}" for i in range(X.shape[1])]
-    df = pd.DataFrame(X, columns=feature_names)
+    # 1. Apply scaling
+    X_scaled = scaler.transform(X)
     
-    # Apply scaling
-    X_scaled = scaler.transform(df.values)
+    # 2. Apply feature selection using saved INDICES
+    selected_indices = feature_info.get('selected_indices')
     
-    # Apply feature selection
-    selected_features = feature_info['selected_features']
-    
-    # For enhanced features, we expect exactly the selected features
-    # So we'll use the first len(selected_features) columns
-    n_features_to_use = min(len(selected_features), X_scaled.shape[1])
-    X_selected = X_scaled[:, :n_features_to_use]
-    
-    # If we have fewer features than expected, pad with zeros
-    if X_scaled.shape[1] < len(selected_features):
-        print(f"Warning: Only {X_scaled.shape[1]} of {len(selected_features)} features available")
-        X_full = np.zeros((X_selected.shape[0], len(selected_features)))
-        X_full[:, :X_selected.shape[1]] = X_selected
-        X_selected = X_full
-    elif X_scaled.shape[1] > len(selected_features):
-        print(f"Truncating from {X_scaled.shape[1]} to {len(selected_features)} features")
+    if selected_indices is not None:
+        # Ensure we have enough columns (handle edge cases)
+        if X_scaled.shape[1] >= len(selected_indices):
+            X_selected = X_scaled[:, selected_indices]
+        else:
+            raise ValueError(f"Input features ({X_scaled.shape[1]}) fewer than required indices ({len(selected_indices)})")
+    else:
+        # Fallback for old artifacts (will have the bug, but won't crash)
+        print("Warning: 'selected_indices' not found in feature_info. Using fallback slicing.")
+        selected_features = feature_info['selected_features']
         X_selected = X_scaled[:, :len(selected_features)]
-    
+        
     return X_selected
 
 def main():

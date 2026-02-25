@@ -147,7 +147,7 @@ python code/train_models.py enhanced_features.csv models_out
 
 **Test with enhanced preprocessing (Recommended)**
 ```bash
-python3 code/predict_test.py --models models_out --testdir dataset/test --model xgboost
+python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/our_data --summary-out live_prediction_summary.csv
 ```
 
 ### Step 4: Visualization
@@ -211,7 +211,7 @@ Model Size: 5.61 MB
 python code/test_models.py dataset/test/10sec.csv models_out preprocessing_artifacts
 
 # Batch prediction with optimized features
-python code/predict_test.py --models models_out --model xgboost --testdir dataset/test --out prediction_summary.csv
+python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/our_data --summary-out live_prediction_summary.csv
 
 # Live testing with CSV directory
 python3 live_data/live_predict.py --csv-dir dataset/test --models models_out --model xgboost
@@ -238,7 +238,7 @@ python live_data/live_predict.py --eeg --auto-stream --models models_out --model
 **feature_extraction.py (Optimized Pipeline)**
 ```bash
 # Generate features from raw data
-python code/enhanced_feature_extraction.py dataset/original_data features.csv 100 0.95
+python code/enhanced_feature_extraction.py dataset/original_data enhanced_features.csv 100 0.95
 
 # Custom feature selection with different parameters
 python code/enhanced_feature_extraction.py dataset/original_data custom_features.csv 150 0.90
@@ -252,7 +252,7 @@ python code/enhanced_feature_extraction.py dataset/original_data custom_features
 
 ```bash
 # Train with optimized features (Recommended)
-python code/train_models.py features.csv models_out
+python code/train_models.py enhanced_features.csv models_out
 
 # Training automatically:
 # - Detects optimized vs basic features
@@ -358,17 +358,18 @@ if 'Label' in df.columns:
 
 ```bash
 # 1. Feature Extraction (Recommended)
-python code/enhanced_feature_extraction.py dataset/original_data features.csv 100 0.95
+python3 code/enhanced_feature_extraction.py dataset/original_data enhanced_features.csv 100 0.95
 
 # 2. Train Models with Optimized Features
-python code/train_models.py features.csv models_out
+python3 code/train_models.py enhanced_features.csv models_out
 
 # 3. Test Models with Preprocessing
-python live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/test
+python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/original_data
+
 # (wont work on 1sec cause window is set for 10sec)
 
 # 4. Live Prediction
-python live_data/live_predict.py --models models_out --model xgboost --eeg --auto-stream
+python3 live_data/live_predict.py --models models_out --model xgboost --eeg --auto-stream
 
 # 5. Check Performance Metrics
 cat visualization/model_accuracy_summary.txt

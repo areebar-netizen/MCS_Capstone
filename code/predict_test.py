@@ -60,13 +60,15 @@ def load_model_artifacts(models_dir: Path, model_name: str) -> Tuple[Any, Any, A
     model = joblib.load(model_path)
     selector = joblib.load(selector_path) if selector_path.exists() else None
     
-    # Load preprocessing artifacts for enhanced features
-    try:
-        scaler, feature_info = load_preprocessing_artifacts('preprocessing_artifacts')
-    except Exception as e:
-        print(f"Warning: Could not load preprocessing artifacts: {e}")
-        scaler = None
-        feature_info = None
+    # Check for enhanced preprocessing artifacts
+    # Only load if they exist and match the model type intended
+    scaler, feature_info = None, None
+    if os.path.exists('preprocessing_artifacts'):
+        try:
+            scaler, feature_info = load_preprocessing_artifacts('preprocessing_artifacts')
+            print("Loaded enhanced preprocessing artifacts.")
+        except Exception as e:
+            print(f"Warning: Could not load preprocessing artifacts: {e}")
     
     # Get the expected number of features from the model
     expected_features = getattr(model, 'n_features_in_', None)
@@ -101,9 +103,10 @@ def process_file(model: Any, file_path: Path, selector: Any, expected_features: 
         data = df.drop(columns=['time', 'timestamp'], errors='ignore').values
     
     # Use enhanced feature extraction pipeline if artifacts are available
-    if preprocessing_artifacts[0] is not None and preprocessing_artifacts[1] is not None:
+    # BUT only if we don't have a feature selector (meaning model was trained on enhanced features)
+    if preprocessing_artifacts[0] is not None and preprocessing_artifacts[1] is not None and selector is None:
         try:
-            # Apply enhanced feature extraction pipeline
+            # Model was trained on enhanced features, so we need to apply the same pipeline
             # Generate raw features first
             vectors, _ = generate_feature_vectors_from_matrix(
                 data,
@@ -118,13 +121,23 @@ def process_file(model: Any, file_path: Path, selector: Any, expected_features: 
                 print(f"  No feature vectors generated for {file_path.name}")
                 return None
             
-            # Apply enhanced preprocessing (scaling + feature selection)
+            # Apply simplified preprocessing: scaling + feature selection using saved indices
             scaler, feature_info = preprocessing_artifacts
-            X_processed = apply_feature_pipeline(vectors, scaler, feature_info)
             
-            if X_processed is None:
-                print(f"  Enhanced preprocessing failed for {file_path.name}")
-                return None
+            # Step 1: Apply scaling (scaler was fitted on raw features)
+            X_scaled = scaler.transform(vectors)
+            
+            # Step 2: Apply feature selection using saved indices directly
+            selected_indices = feature_info.get('selected_indices')
+            if selected_indices is not None:
+                if X_scaled.shape[1] >= len(selected_indices):
+                    X_processed = X_scaled[:, selected_indices]
+                else:
+                    raise ValueError(f"Input features ({X_scaled.shape[1]}) fewer than required indices ({len(selected_indices)})")
+            else:
+                print("Warning: 'selected_indices' not found in feature_info. Using fallback slicing.")
+                selected_features = feature_info['selected_features']
+                X_processed = X_scaled[:, :len(selected_features)]
                 
             X = X_processed
             
@@ -132,7 +145,7 @@ def process_file(model: Any, file_path: Path, selector: Any, expected_features: 
             print(f"  Enhanced feature extraction failed: {e}")
             return None
     else:
-        # Fallback to old method if no preprocessing artifacts
+        # Fallback to old method or when model has its own feature selector
         try:
             vectors, _ = generate_feature_vectors_from_matrix(
                 data,
