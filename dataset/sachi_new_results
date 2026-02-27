@@ -1,0 +1,16 @@
+filename,n_windows,total_seconds,relaxed_seconds,neutral_seconds,concentrating_seconds,predicted_label,confidence
+sachi_concentrate_1min.csv,125,62.5,0.0,24.5,38.0,concentrating,0.89895827
+sachi_concentrate_2min.csv,243,121.5,0.0,0.5,121.0,concentrating,0.98291105
+sachi_concentrate_3min.csv,363,181.5,0.0,12.0,169.5,concentrating,0.9236677
+sachi_concentrate_4min.csv,481,240.5,0.0,9.0,231.5,concentrating,0.9380512
+sachi_concentrate_5min.csv,602,301.0,0.0,121.0,180.0,concentrating,0.8744667
+sachi_neutral_1min.csv,130,65.0,31.0,34.0,0.0,neutral,0.8278167
+sachi_neutral_2min.csv,239,119.5,35.5,84.0,0.0,neutral,0.7831505
+sachi_neutral_3min.csv,358,179.0,11.0,131.0,37.0,neutral,0.8974149
+sachi_neutral_4min.csv,481,240.5,66.5,153.0,21.0,neutral,0.8814176
+sachi_neutral_5min.csv,599,299.5,22.5,242.0,35.0,neutral,0.89198935
+sachi_relax_1min.csv,124,62.0,40.5,21.5,0.0,relaxed,0.88092697
+sachi_relax_2min.csv,247,123.5,116.0,7.5,0.0,relaxed,0.9250255
+sachi_relax_3min.csv,365,182.5,98.5,83.5,0.5,relaxed,0.8260158
+sachi_relax_4min.csv,482,241.0,212.0,28.5,0.5,relaxed,0.86619437
+sachi_relax_5min.csv,603,301.5,184.5,116.5,0.5,relaxed,0.86871874
