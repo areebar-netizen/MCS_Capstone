@@ -20,7 +20,11 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Union
 from scipy import stats
 
-# Import feature extraction functions
+# Import enhanced feature extraction functions
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
 from EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
 
 # Constants
@@ -45,7 +49,7 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_model_artifacts(models_dir: Path, model_name: str) -> Tuple[Any, Any, int]:
+def load_model_artifacts(models_dir: Path, model_name: str) -> Tuple[Any, Any, Any, int]:
     """Load model and feature selector with error handling."""
     model_path = models_dir / f"{model_name}.joblib"
     selector_path = models_dir / "feature_selector.joblib"
@@ -56,6 +60,16 @@ def load_model_artifacts(models_dir: Path, model_name: str) -> Tuple[Any, Any, i
     model = joblib.load(model_path)
     selector = joblib.load(selector_path) if selector_path.exists() else None
     
+    # Check for enhanced preprocessing artifacts
+    # Only load if they exist and match the model type intended
+    scaler, feature_info = None, None
+    if os.path.exists('preprocessing_artifacts'):
+        try:
+            scaler, feature_info = load_preprocessing_artifacts('preprocessing_artifacts')
+            print("Loaded enhanced preprocessing artifacts.")
+        except Exception as e:
+            print(f"Warning: Could not load preprocessing artifacts: {e}")
+    
     # Get the expected number of features from the model
     expected_features = getattr(model, 'n_features_in_', None)
     if expected_features is None and selector is not None:
@@ -65,10 +79,10 @@ def load_model_artifacts(models_dir: Path, model_name: str) -> Tuple[Any, Any, i
         raise ValueError("Could not determine expected number of features")
     
     print(f"Loaded {model_name} with {expected_features} features")
-    return model, selector, expected_features
+    return model, selector, expected_features, (scaler, feature_info)
 
 
-def process_file(model: Any, file_path: Path, selector: Any, expected_features: int) -> Optional[Dict]:
+def process_file(model: Any, file_path: Path, selector: Any, expected_features: int, preprocessing_artifacts: Any) -> Optional[Dict]:
     """Process a single file and return prediction results."""
     print(f"Processing {file_path.name}...")
     
@@ -88,35 +102,78 @@ def process_file(model: Any, file_path: Path, selector: Any, expected_features: 
     if 'time' in df.columns or 'timestamp' in df.columns:
         data = df.drop(columns=['time', 'timestamp'], errors='ignore').values
     
-    # Generate feature vectors using the same parameters as live prediction
-    try:
-        vectors, _ = generate_feature_vectors_from_matrix(
-            data,
-            nsamples=150,
-            period=1.0,
-            state=None,
-            remove_redundant=True,
-            cols_to_ignore=-1
-        )
-    except Exception as e:
-        print(f"  Feature extraction failed: {e}")
-        return None
-    
-    if vectors is None or len(vectors) == 0:
-        print(f"  No feature vectors generated for {file_path.name}")
-        return None
-    
-    X = np.asarray(vectors, dtype=float)
-    if X.ndim == 1:
-        X = X.reshape(1, -1)
-    
-    # Apply feature selection if available
-    if selector is not None:
+    # Use enhanced feature extraction pipeline if artifacts are available
+    # BUT only if we don't have a feature selector (meaning model was trained on enhanced features)
+    if preprocessing_artifacts[0] is not None and preprocessing_artifacts[1] is not None and selector is None:
         try:
-            X = selector.transform(X)
+            # Model was trained on enhanced features, so we need to apply the same pipeline
+            # Generate raw features first
+            vectors, _ = generate_feature_vectors_from_matrix(
+                data,
+                nsamples=150,
+                period=1.0,
+                state=None,
+                remove_redundant=True,
+                cols_to_ignore=-1
+            )
+            
+            if vectors is None or len(vectors) == 0:
+                print(f"  No feature vectors generated for {file_path.name}")
+                return None
+            
+            # Apply simplified preprocessing: scaling + feature selection using saved indices
+            scaler, feature_info = preprocessing_artifacts
+            
+            # Step 1: Apply scaling (scaler was fitted on raw features)
+            X_scaled = scaler.transform(vectors)
+            
+            # Step 2: Apply feature selection using saved indices directly
+            selected_indices = feature_info.get('selected_indices')
+            if selected_indices is not None:
+                if X_scaled.shape[1] >= len(selected_indices):
+                    X_processed = X_scaled[:, selected_indices]
+                else:
+                    raise ValueError(f"Input features ({X_scaled.shape[1]}) fewer than required indices ({len(selected_indices)})")
+            else:
+                print("Warning: 'selected_indices' not found in feature_info. Using fallback slicing.")
+                selected_features = feature_info['selected_features']
+                X_processed = X_scaled[:, :len(selected_features)]
+                
+            X = X_processed
+            
         except Exception as e:
-            print(f"  Feature selection failed: {e}")
+            print(f"  Enhanced feature extraction failed: {e}")
             return None
+    else:
+        # Fallback to old method or when model has its own feature selector
+        try:
+            vectors, _ = generate_feature_vectors_from_matrix(
+                data,
+                nsamples=150,
+                period=1.0,
+                state=None,
+                remove_redundant=True,
+                cols_to_ignore=-1
+            )
+        except Exception as e:
+            print(f"  Feature extraction failed: {e}")
+            return None
+        
+        if vectors is None or len(vectors) == 0:
+            print(f"  No feature vectors generated for {file_path.name}")
+            return None
+        
+        X = np.asarray(vectors, dtype=float)
+        if X.ndim == 1:
+            X = X.reshape(1, -1)
+        
+        # Apply feature selection if available
+        if selector is not None:
+            try:
+                X = selector.transform(X)
+            except Exception as e:
+                print(f"  Feature selection failed: {e}")
+                return None
     
     # Get predictions
     try:
@@ -184,13 +241,13 @@ def main() -> int:
     
     try:
         # Load model and get expected feature count
-        model, selector, expected_features = load_model_artifacts(models_dir, args.model)
+        model, selector, expected_features, preprocessing_artifacts = load_model_artifacts(models_dir, args.model)
         results = []
         
         # Process each CSV file in test directory
         for file_path in sorted(test_dir.glob('*.csv')):
             if file_path.is_file():
-                result = process_file(model, file_path, selector, expected_features)
+                result = process_file(model, file_path, selector, expected_features, preprocessing_artifacts)
                 if result:
                     results.append(result)
                     print(f"  Processed {file_path.name}: {result}")

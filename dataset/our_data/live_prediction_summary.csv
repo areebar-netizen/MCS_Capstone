@@ -1,0 +1,12 @@
+filename,n_windows,total_seconds,relaxed_seconds,neutral_seconds,concentrating_seconds,predicted_label,confidence
+concentrate_areeba.csv,238,119.0,0.0,110.0,9.0,neutral,0.8440581
+concentrate_sachi.csv,238,119.0,3.5,0.0,115.5,concentrating,0.9481054
+concentre_rakshitha.csv,238,119.0,0.0,15.5,103.5,concentrating,0.94039017
+neutral_areeba.csv,238,119.0,0.0,72.0,47.0,neutral,0.7877644
+neutral_rakshitha.csv,239,119.5,41.0,74.5,4.0,neutral,0.80159384
+neutral_sachi.csv,238,119.0,90.5,26.0,2.5,relaxed,0.8448797
+neutral_wesley.csv,238,119.0,0.0,17.5,101.5,concentrating,0.94363725
+relaxed_areeba.csv,239,119.5,0.0,13.5,106.0,concentrating,0.95605844
+relaxed_rakshitha.csv,238,119.0,36.5,77.0,5.5,neutral,0.79172754
+relaxed_sachi.csv,238,119.0,116.0,3.0,0.0,relaxed,0.9677161
+relaxed_wesley.csv,239,119.5,0.0,25.0,94.5,concentrating,0.94871664

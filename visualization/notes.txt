@@ -1,0 +1,20 @@
+Feature Extraction Overview
+Dataset: 2,479 samples with 854 features each
+Classes: Balanced dataset (Relaxed: 33%, Neutral: 33.5%, Concentrating: 33.5%)
+Storage: Features saved in enhanced_features.csv
+
+Feature Types Extracted
+Statistical features: mean, std, skew, kurtosis, min, max per channel
+Frequency features: FFT-based top frequencies and power spectrum
+Band power features: Delta, Theta, Alpha, Beta, Gamma bands with multiple metrics
+Connectivity features: covariance matrices, eigenvalues, log-covariance
+Temporal features: lag-1 features for temporal dynamics
+Hjorth parameters: activity, mobility, complexity per band
+Entropy features: Shannon entropy per frequency band
+
+Most Important Features
+Beta_rms_pow - Beta band RMS power
+Beta_entropy - Beta band Shannon entropy
+Gamma_entropy - Gamma band Shannon entropy
+Band power features across Delta, Theta, Alpha, Beta, Gamma
+Frequency domain features around 12.2Hz and 10.1Hz
