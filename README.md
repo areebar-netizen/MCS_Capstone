@@ -118,294 +118,115 @@ secondBrain/
 
 **Generate enhanced features from raw data (Recommended)**
 ```bash
-python code/enhanced_feature_extraction.py dataset/original_data enhanced_features.csv 100 0.95
+python3 code/enhanced_feature_extraction.py dataset/original_data enhanced_features.csv 100 0.95
 ```
-**Parameters:**
-- `dataset/original_data`: Input directory with raw EEG files
-- `enhanced_features.csv`: Output file for optimized features
+
+**Arguments:**
+- `dataset/original_data`: Training data directory
+- `enhanced_features.csv`: Output features file
 - `100`: Number of top features to select
 - `0.95`: Correlation threshold for redundancy removal
 
 
 ### Step 2: Model Training
 
-**Train with enhanced features **
 ```bash
-python code/train_models.py enhanced_features.csv models_out
+python3 code/train_models.py enhanced_features.csv models_out
 ```
 
+**What happens:**
+- Trains RandomForest, XGBoost, and Stacked models
+- Saves models to `models_out/`
+- Saves preprocessing artifacts to `preprocessing_artifacts/`
+- Generates performance metrics in `visualization/`
 
+### 4. Recording Your EEG Data
 
-**What happens during training:**
-- **Feature Detection**: Automatically detects enhanced vs basic features
-- **Per-Class Accuracy**: Shows accuracy for Relaxed, Neutral, Concentrating
-- **Model Training**: RandomForest, XGBoost, and Stacked ensemble
-- **Performance Tracking**: Saves accuracy metrics to `visualization/`
-- **Feature Importance**: Generates importance plots and rankings
-
-### Step 3: Model Testing
-
-**Test with enhanced preprocessing (Recommended)**
+**Step 4.1: Start Muse Stream**
 ```bash
-python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/our_data --summary-out live_prediction_summary.csv
+python3 -m muselsl stream
 ```
 
-### Step 4: Visualization
-
-**View model performance**
+**Step 4.2: Record Your Sessions**
 ```bash
-# Performance metrics are automatically saved to visualization/
-ls visualization/
-# - feature_distributions.png
-# - correlation_matrix.png
-# - pca_visualization.png
-# - model_accuracy_summary.txt
+# Record 1-5 minutes for each mental state
+python3 live_data/live_predict.py --eeg --models models_out --model xgboost --duration 1 --raw-out dataset/our_data/[your_name]_new/[your_name]_relaxed_1min.csv
+
+python3 live_data/live_predict.py --eeg --models models_out --model xgboost --duration 2 --raw-out dataset/our_data/[your_name]_new/[your_name]_neutral_2min.csv
+
+python3 live_data/live_predict.py --eeg --models models_out --model xgboost --duration 3 --raw-out dataset/our_data/[your_name]_new/[your_name]_concentrating_3min.csv
 ```
 
----
+**Arguments:**
+- `--eeg`: Use live EEG mode
+- `--models models_out`: Model directory
+- `--model xgboost`: Model type (xgboost/random_forest/stacked_model)
+- `--duration X`: Recording duration in minutes (1-5)
+- `--raw-out`: Output file for raw EEG data
 
-## 📊 Model Performance Results
+**Repeat for different durations (1-5 minutes) and mental states (relaxed/neutral/concentrating)**
 
-### Enhanced Feature Extraction Results
-```
-Original features: 854
-After correlation removal: 807
-After feature selection: 100
-Training samples: 2,479
-Class distribution: Balanced (819 relaxed, 830 neutral, 830 concentrating)
-```
-
-### Cross-Validation Performance
-
-**RandomForest:**
-```
-Overall Accuracy: 95.72%
-Relaxed: 97.81%
-Neutral: 92.19%
-Concentrating: 97.40%
-Macro F1-Score: 95.72%
-```
-
-**XGBoost:**
-```
-Overall Accuracy: 96.53%
-Relaxed: 97.73%
-Neutral: 93.68%
-Concentrating: 98.32%
-Macro F1-Score: 96.53%
-```
-
-**Stacked Model:**
-```
-CV Accuracy: ~96%
-Model Size: 5.61 MB
-```
-
----
-
-## 🧪 Testing and Evaluation
-
-### Testing Pipeline
-```bash
-# Test models with preprocessing (Recommended)
-python code/test_models.py dataset/test/10sec.csv models_out preprocessing_artifacts
-
-# Batch prediction with optimized features
-python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/our_data --summary-out live_prediction_summary.csv
-
-# Live testing with CSV directory
-python3 live_data/live_predict.py --csv-dir dataset/test --models models_out --model xgboost
-```
-
-### Live Testing
-```bash
-# Live prediction with preprocessing
-python live_data/live_predict.py --eeg --models models_out --model xgboost
-
-# Mock mode with preprocessing
-python live_data/live_predict.py --eeg --mock --replay dataset/test/10sec.csv --models models_out --model xgboost
-
-# With automatic stream start
-python live_data/live_predict.py --eeg --auto-stream --models models_out --model stacked_model
-```
-
----
-
-## 🔧 Advanced Usage
-
-### Feature Extraction Pipeline
-
-**feature_extraction.py (Optimized Pipeline)**
-```bash
-# Generate features from raw data
-python code/enhanced_feature_extraction.py dataset/original_data enhanced_features.csv 100 0.95
-
-# Custom feature selection with different parameters
-python code/enhanced_feature_extraction.py dataset/original_data custom_features.csv 150 0.90
-
-# Parameters:
-# - 150: Select top 150 features
-# - 0.90: Remove features with >0.90 correlation
-```
-
-### Model Training
+### 5. Process Recorded Data
 
 ```bash
-# Train with optimized features (Recommended)
-python code/train_models.py enhanced_features.csv models_out
-
-# Training automatically:
-# - Detects optimized vs basic features
-# - Applies appropriate preprocessing
-# - Shows per-class accuracy
-# - Saves performance metrics to visualization/
+# Process all your recorded files and save summary
+python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/our_data/[your_name]_new --summary-out dataset/[your_name]_results.csv
 ```
 
----
+**Arguments:**
+- `--csv-dir`: Directory with your recorded CSV files
+- `--summary-out`: Output file for prediction summary
 
-## 📈 Performance Improvements
+## 📊 Expected Performance
 
-### Feature Quality Enhancements
-- ✅ **Feature Scaling**: StandardScaler normalization
-- ✅ **Redundancy Removal**: 47 highly correlated features eliminated
-- ✅ **Feature Selection**: Top 100 most important features retained
-- ✅ **Dimensionality Reduction**: 854 → 100 features (88% reduction)
-- ✅ **Performance Gain**: Improved accuracy with fewer features
+**Model Accuracy:**
+- XGBoost: 96.53% (Relaxed: 97.73%, Neutral: 93.68%, Concentrating: 98.32%)
+- RandomForest: 95.72% (Relaxed: 97.81%, Neutral: 92.19%, Concentrating: 97.40%)
 
-### Training Improvements
-- ✅ **Per-Class Accuracy**: Detailed metrics for each mental state
-- ✅ **Better Generalization**: Reduced overfitting through feature selection
-- ✅ **Faster Training**: Fewer features = faster training and inference
-- ✅ **Model Size**: Smaller models with better performance
+**Features:**
+- Original: 854 features
+- After optimization: 100 features (88% reduction)
 
----
+## 🔧 Troubleshooting
 
-## 🎯 Key Files and Their Purposes
+**Common Issues:**
+- **No EEG stream**: Run `python3 -m muselsl stream` first
+- **Import errors**: Run from repository root, activate venv
+- **Model loading failed**: Ensure `models_out/` and `preprocessing_artifacts/` exist
+- **Feature mismatch**: Re-run feature extraction and training
 
-### Core Processing
-- **`EEG_feature_extraction_adv.py`**: Core feature extraction engine with ICA cleaning
-- **`enhanced_feature_extraction.py`**: 🆕 Optimized pipeline with scaling and selection
-- **`EEG_generate_training_matrix.py`**: Builds training matrix from raw CSV files
-
-### Training and Testing
-- **`train_models.py`**: Training with per-class accuracy reporting
-- **`predict_test.py`**: 🆕 Batch prediction with preprocessing pipeline
-- **`test_models.py`**: Testing with preprocessing pipeline
-
-### Visualization and Live Processing
-- **`live_predict.py`**: 🆕 Real-time LSL processing with optimized features
-- **`save_accuracy_summary.py`**: 🆕 Automatic performance tracking
-
----
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-| Problem | Solution |
-|---------|----------|
-| **No EEG stream found** | Ensure device is broadcasting LSL (e.g., `muselsl stream`) |
-| **Feature shape mismatch** | Ensure preprocessing artifacts exist in `preprocessing_artifacts/` |
-| **Import errors** | Run from repository root directory |
-| **No predictions generated** | Check if test data has enough samples (min 150 samples) |
-| **Preprocessing failed** | Verify `preprocessing_artifacts/` directory contains `feature_scaler.joblib` and `feature_selection_info.pkl` |
-| **Model expects different features** | Ensure you're using the same preprocessing pipeline as training |
-
-### Pipeline Verification
-
+**Verification:**
 ```bash
-# Check if preprocessing artifacts exist
-ls -la preprocessing_artifacts/
+# Check models exist
+ls models_out/
+ls preprocessing_artifacts/
 
-# Verify feature dimensions
+# Test feature extraction
 python3 -c "
-from enhanced_feature_extraction import load_preprocessing_artifacts
-scaler, info = load_preprocessing_artifacts('preprocessing_artifacts')
-print(f'Scaler features: {scaler.n_features_in_}')
-print(f'Selected features: {len(info[\"selected_features\"])}')
-"
-```
-
-### Feature Extraction Issues
-```bash
-# Check feature extraction works
-python -c "
 from EEG_feature_extraction_adv import generate_feature_vectors_from_samples
-try:
-    vectors, headers = generate_feature_vectors_from_samples('dataset/test/10sec.csv', 150, 1.0)
-    print(f'Success: {vectors.shape}')
-except Exception as e:
-    print(f'Error: {e}')
+vectors, headers = generate_feature_vectors_from_samples('dataset/test/10sec.csv', 150, 1.0)
+print(f'Success: {vectors.shape}')
 "
 ```
 
-### Model Training Issues
-```bash
-# Verify training data
-python -c "
-import pandas as pd
-df = pd.read_csv('enhanced_features.csv')
-print(f'Data shape: {df.shape}')
-print(f'Columns: {list(df.columns)[:5]}...')
-if 'Label' in df.columns:
-    print(f'Label distribution: {df.Label.value_counts().to_dict()}')
-"
-```
-
----
-
-## 📋 Example End-to-End Workflow
+## 📝 Quick Reference Commands
 
 ```bash
-# 1. Feature Extraction (Recommended)
+# Setup
+python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+
+# Training (one-time)
 python3 code/enhanced_feature_extraction.py dataset/original_data enhanced_features.csv 100 0.95
-
-# 2. Train Models with Optimized Features
 python3 code/train_models.py enhanced_features.csv models_out
 
-# 3. Test Models with Preprocessing
-python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/original_data
+# Recording
+python3 -m muselsl stream
+python3 live_data/live_predict.py --eeg --models models_out --model xgboost --duration 1 --raw-out dataset/our_data/name_new/name_relaxed_1min.csv
 
-# (wont work on 1sec cause window is set for 10sec)
-
-# 4. Live Prediction
-python3 live_data/live_predict.py --models models_out --model xgboost --eeg --auto-stream
-
-# 5. Check Performance Metrics
-cat visualization/model_accuracy_summary.txt
+# Processing
+python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/our_data/name_new --summary-out dataset/name_results.csv
 ```
 
 ---
 
-## 🎉 Success Indicators
-
-When everything is working correctly, you should see:
-
-1. **Feature Extraction**: 
-   ```
-   Feature Extraction COMPLETED
-   Final shape: (2479, 101)
-   Selected 100 most important features
-   ```
-
-2. **Model Training**:
-   ```
-   Per-Class Accuracy:
-     Relaxed     : 97.81%
-     Neutral     : 92.19%
-     Concentrating: 97.40%
-   Overall Accuracy: 95.72%
-   ```
-
----
-
-## 📚 Additional Resources
-
-- **Feature Analysis**: Check `visualization/` for detailed feature importance plots
-- **Model Artifacts**: Preprocessing artifacts saved in `preprocessing_artifacts/`
-- **Performance Logs**: Training metrics saved in `visualization/model_accuracy_summary.txt`
-- **Live Data**: Recordings saved during live sessions for later analysis
-
----
-
-**The enhanced pipeline provides state-of-the-art EEG mental state classification with improved accuracy, reduced complexity, and comprehensive performance tracking.**
+**System provides real-time EEG mental state classification with 96%+ accuracy using advanced feature extraction and ensemble machine learning.**

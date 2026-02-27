@@ -63,7 +63,7 @@ LABEL_COLORS = {
 }
 
 # -----------------------------------------------------------------------------
-# Denoiser Class (As provided)
+# Denoiser Class 
 # -----------------------------------------------------------------------------
 class Denoiser:
     """
@@ -235,14 +235,14 @@ class Predictor:
         self.last_prediction = None
         self.last_confidence = 0.0
 
-    def predict_from_rows(self, rows: List[List[float]], nsamples: int = 150, period: float = 1.0, cols_to_ignore: int = -1) -> Tuple[np.ndarray, int]:
+    def predict_from_rows(self, rows: List[List[float]], nsamples: int = 150, period: float = 1.0, cols_to_ignore: int = -1) -> Tuple[np.ndarray, int, float]:
         """Process raw rows, extract features, and predict."""
         if not rows or len(rows) < 2:
-            return None, 0
+            return None, 0, 0.0
 
         arr = np.array(rows, dtype=float)
         if arr.size == 0:
-            return None, 0
+            return None, 0, 0.0
 
         # 1. Feature Extraction
         try:
@@ -256,10 +256,10 @@ class Predictor:
             )
         except Exception as e:
             print(f"Feature extraction error: {e}")
-            return None, 0
+            return None, 0, 0.0
 
         if vectors is None or len(vectors) == 0:
-            return None, 0
+            return None, 0, 0.0
 
         X = np.asarray(vectors, dtype=float)
         if X.ndim == 1:
@@ -392,10 +392,17 @@ class Visualizer(QtWidgets.QWidget):
         self.plot_widget.setXRange(max(0, self.idx - 10), self.idx + 5)
 
     def set_preds(self, preds, warning_msg=None):
-        self.preds = np.asarray(preds, dtype=int)
-        self.n = len(self.preds)
-        if self.n > 0:
+        if preds is not None:
+            # Append new predictions to existing ones for continuous timeline
+            new_preds = np.asarray(preds, dtype=int)
+            if len(self.preds) == 0:
+                self.preds = new_preds
+            else:
+                self.preds = np.concatenate([self.preds, new_preds])
+            self.n = len(self.preds)
             self.prediction_count += 1
+        else:
+            self.n = len(self.preds)
         
         self.idx = max(0, self.n - 1) # Jump to latest
         
@@ -404,8 +411,6 @@ class Visualizer(QtWidgets.QWidget):
         else:
             self.warning_label.clear()
             
-        self.update_display()
-
         # Build image bar
         if self.n == 0:
             img = np.zeros((1, 1, 3), dtype=np.uint8)
@@ -418,6 +423,9 @@ class Visualizer(QtWidgets.QWidget):
         
         self.image.setImage(img)
         self.plot_widget.setXRange(-1, max(10, self.n))
+        
+        # Update display last to ensure text color matches timeline
+        self.update_display()
 
 
 # -----------------------------------------------------------------------------
@@ -530,6 +538,21 @@ def run_eeg_mode(args):
     # Connect to LSL
     acq = EEGAcquirer()
     
+    # Setup duration timer if specified
+    duration_timer = None
+    if args.duration is not None:
+        duration_seconds = args.duration * 60  # Convert minutes to seconds
+        print(f"Recording will stop after {args.duration} minutes ({duration_seconds} seconds)")
+        
+        def stop_recording():
+            print(f"\nRecording duration of {args.duration} minutes reached. Stopping...")
+            viz.set_preds([], "Recording completed")
+            app.quit()
+        
+        duration_timer = QtCore.QTimer()
+        duration_timer.timeout.connect(stop_recording)
+        duration_timer.start(int(duration_seconds * 1000))  # Convert to milliseconds
+    
     try:
         print("Connecting to EEG stream...")
         acq.connect()
@@ -558,7 +581,7 @@ def run_eeg_mode(args):
         rows = den.process(rows)
         
         # Predict
-        preds, _, confidence = pred.predict_from_rows(rows, nsamples=args.nsamples, period=args.period)
+        preds, n_windows, confidence = pred.predict_from_rows(rows, nsamples=args.nsamples, period=args.period)
         
         if preds is not None:
             viz.set_preds(preds)
@@ -589,6 +612,7 @@ def main():
     # EEG specific
     p.add_argument('--raw-out', type=str, default=None, help='Path to save raw EEG CSV')
     p.add_argument('--summary-out', type=str, default=None, help='Path to save prediction summary CSV')
+    p.add_argument('--duration', type=float, default=None, help='Recording duration in minutes (if not specified, runs indefinitely)')
     
     args = p.parse_args()
     
