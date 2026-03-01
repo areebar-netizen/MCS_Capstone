@@ -1,0 +1,16 @@
+filename,n_windows,total_seconds,relaxed_seconds,neutral_seconds,concentrating_seconds,predicted_label,confidence
+areeba_concentrated_4min.csv,482,241.0,2.0,62.5,176.5,concentrating,0.8209735
+areeba_concentrated_5min.csv,602,301.0,0.0,41.5,259.5,concentrating,0.81033784
+areeba_concentrating_1min.csv,192,96.0,0.0,38.0,58.0,concentrating,0.847982
+areeba_concentrating_2min.csv,370,185.0,0.0,34.5,150.5,concentrating,0.8563648
+areeba_concentrating_3min.csv,381,190.5,0.0,95.0,95.5,concentrating,0.8699331
+areeba_neutral_1min.csv,118,59.0,0.0,50.5,8.5,neutral,0.79466784
+areeba_neutral_2min.csv,242,121.0,0.0,71.0,50.0,neutral,0.7339793
+areeba_neutral_3min.csv,360,180.0,0.0,172.5,7.5,neutral,0.9208479
+areeba_neutral_4min.csv,490,245.0,0.0,237.5,7.5,neutral,0.9624524
+areeba_neutral_5min.csv,637,318.5,0.0,312.0,6.5,neutral,0.9417106
+areeba_relaxed_1min.csv,118,59.0,35.0,22.5,1.5,relaxed,0.8766425
+areeba_relaxed_2min.csv,238,119.0,63.0,51.0,5.0,relaxed,0.7997003
+areeba_relaxed_3min.csv,362,181.0,129.0,44.0,8.0,relaxed,0.8784288
+areeba_relaxed_4min.csv,478,239.0,209.0,27.5,2.5,relaxed,0.92602366
+areeba_relaxed_5min.csv,373,186.5,131.0,53.5,2.0,relaxed,0.90746635
