@@ -1,0 +1,16 @@
+filename,n_windows,total_seconds,relaxed_seconds,neutral_seconds,concentrating_seconds,predicted_label,confidence
+rakshitha_concentrating_1min.csv,123,61.5,0.0,0.5,61.0,concentrating,0.9791703
+rakshitha_concentrating_2min.csv,245,122.5,6.5,12.0,104.0,concentrating,0.9063643
+rakshitha_concentrating_3min.csv,367,183.5,13.5,47.0,123.0,concentrating,0.7426474
+rakshitha_concentrating_4min.csv,486,243.0,3.0,0.5,239.5,concentrating,0.9742764
+rakshitha_concentrating_5min.csv,609,304.5,10.0,10.0,284.5,concentrating,0.95509076
+rakshitha_neutral_1min.csv,125,62.5,13.0,45.0,4.5,neutral,0.7895058
+rakshitha_neutral_2min.csv,247,123.5,46.0,72.5,5.0,neutral,0.74829227
+rakshitha_neutral_3min.csv,258,129.0,26.5,93.5,9.0,neutral,0.71517175
+rakshitha_neutral_4min.csv,483,241.5,34.0,187.0,20.5,neutral,0.71873796
+rakshitha_neutral_5min.csv,606,303.0,47.0,220.5,35.5,neutral,0.72141916
+rakshitha_relaxed_1min.csv,129,64.5,52.0,12.0,0.5,relaxed,0.82534957
+rakshitha_relaxed_2min.csv,251,125.5,94.5,30.0,1.0,relaxed,0.80859303
+rakshitha_relaxed_3min.csv,369,184.5,118.5,62.5,3.5,relaxed,0.7951192
+rakshitha_relaxed_4min.csv,489,244.5,201.5,40.0,3.0,relaxed,0.83941376
+rakshitha_relaxed_5min.csv,605,302.5,234.5,63.5,4.5,relaxed,0.83209443
