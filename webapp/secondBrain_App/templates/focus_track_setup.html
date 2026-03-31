@@ -1,0 +1,54 @@
+<!-- Focus Track Setup Component -->
+<div class="card focus-track-setup">
+    <div class="card-header">
+        <h2 class="card-title">Focus Track Session</h2>
+        <p class="card-subtitle">Start a new focus session</p>
+    </div>
+    
+    <div class="card-content">
+        <!-- Duration Selection -->
+        <div class="duration-section">
+            <h3 class="section-title">Select Duration</h3>
+            <div class="duration-grid">
+                <button class="duration-btn btn-deselected" data-duration="15">15 min</button>
+                <button class="duration-btn btn-deselected" data-duration="25">25 min</button>
+                <button class="duration-btn btn-deselected" data-duration="30">30 min</button>
+                <button class="duration-btn btn-deselected" data-duration="45">45 min</button>
+                <button class="duration-btn btn-deselected" data-duration="60">60 min</button>
+                <button class="duration-btn btn-deselected" data-duration="90">90 min</button>
+            </div>
+        </div>
+
+        <!-- Session Controls -->
+        <div class="session-controls">
+            <button class="btn-primary btn-start" id="startSessionBtn">
+                <span>Start Focus Session</span>
+            </button>
+        </div>
+
+        <!-- Active Session Display (Hidden by default) -->
+        <div class="active-session" id="activeSession" style="display: none;">
+            <div class="timer-display">
+                <span id="sessionTimer">00:00</span>
+            </div>
+            <div class="session-stats">
+                <div class="stat">
+                    <span class="stat-label">Elapsed</span>
+                    <span class="stat-value" id="elapsedTime">00:00</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Check-ins</span>
+                    <span class="stat-value" id="checkIns">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Avg Focus</span>
+                    <span class="stat-value" id="avgFocus">--</span>
+                </div>
+            </div>
+            <div class="session-controls">
+                <button class="btn-secondary" id="pauseBtn">Pause</button>
+                <button class="btn-danger" id="endBtn">End Session</button>
+            </div>
+        </div>
+    </div>
+</div>

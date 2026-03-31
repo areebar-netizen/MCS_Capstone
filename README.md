@@ -6,21 +6,53 @@ This project develops a personalized study optimization system using consumer-gr
 
 A comprehensive toolkit for real‑time EEG signal processing, enhanced feature extraction, and classification of cognitive states (relaxed / neutral / concentrating). The pipeline includes **advanced feature preprocessing** with scaling, redundancy removal, and intelligent feature selection for optimal model performance.
 
----
+## Project Structure
 
-## 🆕 Major Updates
-
-### Enhanced Feature Extraction Pipeline
-- **Feature Scaling**: StandardScaler normalization for consistent feature ranges
-- **Redundancy Removal**: Automatic removal of highly correlated features (>0.95 threshold)
-- **Intelligent Feature Selection**: Top 100 most important features using Random Forest importance
-- **Improved Performance**: 96.53% accuracy with 100 features vs 854 original features
-- **Per-Class Accuracy Reporting**: Detailed accuracy metrics for each mental state
-
-### Updated Model Performance
-- **RandomForest**: 95.72% overall (Relaxed: 97.81%, Neutral: 92.19%, Concentrating: 97.40%)
-- **XGBoost**: 96.53% overall (Relaxed: 97.73%, Neutral: 93.68%, Concentrating: 98.32%)
-- **Stacked Model**: ~96% accuracy with ensemble benefits
+```
+secondBrain/
+├── core_engine/
+│   ├── __init__.py                       # Python package initialization
+│   ├── EEG_feature_extraction_adv.py      # Advanced EEG feature extraction
+│   ├── enhanced_feature_extraction.py    # Enhanced preprocessing pipeline
+│   ├── EEG_generate_training_matrix.py   # Training data generation
+│   ├── live_predict.py                  # Live prediction & recording pipeline
+│   └── artifacts/                        # Model files (.joblib, .pkl, .txt)
+├── data_pipeline/
+│   ├── setup/                           # Hardware connection scripts
+│   │   ├── ble_scan.py                  # Bluetooth scanning
+│   │   ├── connectmuse.py               # Muse headset connection
+│   │   └── Stream.py                    # LSL streaming
+│   └── analysis/                        # Live processing & visualization
+│       ├── vis.py                       # Data visualization
+│       ├── band_power.py                # Band power analysis
+│       └── bp.py                        # Band power utilities
+├── research/                            # Training, testing, and EDA
+│   ├── train_models.py                  # Model training script
+│   ├── predict_test.py                  # Test prediction script
+│   ├── check_features_numeric.py        # Feature validation
+│   ├── feature_analysis.py              # Feature analysis and visualization
+│   └── numeric_data.py                  # Numeric data processing utilities
+├── webapp/                              # Django web application
+│   ├── manage.py                        # Django management script
+│   ├── secondBrain/                     # Django project directory
+│   │   ├── __init__.py
+│   │   ├── asgi.py                       # ASGI config
+│   │   ├── settings.py                   # Django settings
+│   │   ├── urls.py                       # URL routing
+│   │   └── wsgi.py                       # WSGI config
+│   └── secondBrain_App/                 # Django app
+│       ├── __init__.py
+│       ├── admin.py                      # Django admin
+│       ├── apps.py                       # App config
+│       ├── migrations/                   # Database migrations
+│       ├── models.py                     # Database models
+│       ├── tests.py                      # Unit tests
+│       └── views.py                      # View logic
+├── dataset/
+│   ├── temp_logs/                       # Temporary CSV files and logs
+│   └── test/                            # Test dataset
+└── .env                                 # Environment variables (Django + AWS + DB)
+```
 
 ---
 
@@ -77,53 +109,55 @@ python3 -m venv .venv
 source .venv/bin/activate   # On Windows: .venv\Scripts\activate
 pip install --upgrade pip
 pip install -r requirements.txt
+---
+
+## Database Setup (PostgreSQL)
+
+### Step 1: Install PostgreSQL
+```bash
+# macOS
+brew install postgresql
+brew services start postgresql
+
+# Ubuntu/Debian
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl start postgresql
 ```
 
-## Project Structure
-
+### Step 2: Create Database
+```bash
+# Create database and user
+sudo -u postgres psql
+CREATE DATABASE secondbrain;
+CREATE USER your_username WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE secondbrain TO your_username;
+\q
 ```
-secondBrain/
-├── code/                          # Core processing scripts
-│   ├── EEG_feature_extraction_adv.py       # Core feature extraction + ICA cleaning
-│   ├── enhanced_feature_extraction.py       # 🆕 Enhanced pipeline with scaling/selection
-│   ├── EEG_generate_training_matrix.py     # Build feature matrix from raw CSVs
-│   ├── train_models.py                      # Enhanced training with per-class accuracy
-│   ├── predict_test.py                     # Batch prediction on test directory
-│   ├── test_models.py                      # 🆕 Testing with preprocessing pipeline
-│   └── check_features_numeric.py           # Utility: verify feature CSV is numeric
-├── live_data/                     # Live acquisition and visualization
-│   ├── live_predict.py            # Main LSL reader + live prediction GUI
-│   ├── Stream.py                  # Handles LSL stream connection to MUSE device
-│   ├── band_power.py              # Computes and visualizes band powers
-│   ├── vis.py                     # Real-time EEG signal visualization
-│   ├── bp.py                      # Band power calculation utilities
-│   └── numeric_data.py            # Numeric data processing utilities
-├── dataset/                       # Example raw EEG recordings
-│   ├── original_data/            # Labelled training files (name-state-index)
-│   ├── test/                     # Held‑out test files
-│   └── our_data/                 # User data (ignored in training)
-├── models_out/                   # Default output folder for trained models
-├── visualization/                 # 🆕 Performance metrics and visualizations
-├── preprocessing_artifacts/       # 🆕 Saved scalers and feature selection info
-├── enhanced_features.csv         # 🆕 Generated optimized features
-├── requirements.txt
-└── README.md
+
+### Step 3: Configure Environment
+```bash
+# Update .env in project root with your database credentials
+DB_NAME=secondbrain
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
 ```
 
 ---
 
-## 🚀 Complete Workflow from Scratch
+## Complete Workflow from Scratch
 
 ### Step 1: Enhanced Feature Extraction
 
 **Generate enhanced features from raw data (Recommended)**
 ```bash
-python3 code/enhanced_feature_extraction.py dataset/original_data enhanced_features.csv 100 0.95
+python3 core_engine/enhanced_feature_extraction.py dataset/original_data dataset/temp_logs/enhanced_features.csv 100 0.95
 ```
 
 **Arguments:**
 - `dataset/original_data`: Training data directory
-- `enhanced_features.csv`: Output features file
+- `dataset/temp_logs/enhanced_features.csv`: Output features file
 - `100`: Number of top features to select
 - `0.95`: Correlation threshold for redundancy removal
 
@@ -131,14 +165,14 @@ python3 code/enhanced_feature_extraction.py dataset/original_data enhanced_featu
 ### Step 2: Model Training
 
 ```bash
-python3 code/train_models.py enhanced_features.csv models_out
+python3 research/train_models.py dataset/temp_logs/enhanced_features.csv core_engine/artifacts
 ```
 
 **What happens:**
 - Trains RandomForest, XGBoost, and Stacked models
-- Saves models to `models_out/`
-- Saves preprocessing artifacts to `preprocessing_artifacts/`
-- Generates performance metrics in `visualization/`
+- Saves models to `core_engine/artifacts/`
+- Saves preprocessing artifacts to `core_engine/artifacts/`
+- Generates performance metrics in `dataset/temp_logs/`
 
 ### 4. Recording Your EEG Data
 
@@ -150,16 +184,16 @@ python3 -m muselsl stream
 **Step 4.2: Record Your Sessions**
 ```bash
 # Record 1-5 minutes for each mental state
-python3 live_data/live_predict.py --eeg --models models_out --model xgboost --duration 1 --raw-out dataset/our_data/[your_name]_new/[your_name]_relaxed_1min.csv
+python3 core_engine/live_predict.py --eeg --models core_engine/artifacts --model xgboost --duration 1 --raw-out dataset/our_data/[your_name]_new/[your_name]_relaxed_1min.csv
 
-python3 live_data/live_predict.py --eeg --models models_out --model xgboost --duration 2 --raw-out dataset/our_data/[your_name]_new/[your_name]_neutral_2min.csv
+python3 core_engine/live_predict.py --eeg --models core_engine/artifacts --model xgboost --duration 2 --raw-out dataset/our_data/[your_name]_new/[your_name]_neutral_2min.csv
 
-python3 live_data/live_predict.py --eeg --models models_out --model xgboost --duration 3 --raw-out dataset/our_data/[your_name]_new/[your_name]_concentrating_3min.csv
+python3 core_engine/live_predict.py --eeg --models core_engine/artifacts --model xgboost --duration 3 --raw-out dataset/our_data/[your_name]_new/[your_name]_concentrating_3min.csv
 ```
 
 **Arguments:**
 - `--eeg`: Use live EEG mode
-- `--models models_out`: Model directory
+- `--models core_engine/artifacts`: Model directory
 - `--model xgboost`: Model type (xgboost/random_forest/stacked_model)
 - `--duration X`: Recording duration in minutes (1-5)
 - `--raw-out`: Output file for raw EEG data
@@ -170,14 +204,33 @@ python3 live_data/live_predict.py --eeg --models models_out --model xgboost --du
 
 ```bash
 # Process all your recorded files and save summary
-python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/our_data/[your_name]_new --summary-out dataset/[your_name]_results.csv
+python3 core_engine/live_predict.py --models core_engine/artifacts --model xgboost --csv-dir dataset/our_data/[your_name]_new --summary-out dataset/temp_logs/[your_name]_results.csv
 ```
 
 **Arguments:**
 - `--csv-dir`: Directory with your recorded CSV files
 - `--summary-out`: Output file for prediction summary
 
-## 📊 Expected Performance
+### 6. Django Webapp Setup
+
+```bash
+# Navigate to webapp directory
+cd webapp
+
+# Run database migrations
+python manage.py makemigrations
+python manage.py migrate
+
+# Create superuser (optional)
+python manage.py createsuperuser
+
+# Start development server
+python manage.py runserver
+```
+
+Access the webapp at: http://localhost:8000
+
+## Expected Performance
 
 **Model Accuracy:**
 - XGBoost: 96.53% (Relaxed: 97.73%, Neutral: 93.68%, Concentrating: 98.32%)
@@ -187,44 +240,43 @@ python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir 
 - Original: 854 features
 - After optimization: 100 features (88% reduction)
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 **Common Issues:**
 - **No EEG stream**: Run `python3 -m muselsl stream` first
 - **Import errors**: Run from repository root, activate venv
-- **Model loading failed**: Ensure `models_out/` and `preprocessing_artifacts/` exist
+- **Model loading failed**: Ensure `core_engine/artifacts/` exists
 - **Feature mismatch**: Re-run feature extraction and training
 
 **Verification:**
 ```bash
 # Check models exist
-ls models_out/
-ls preprocessing_artifacts/
+ls core_engine/artifacts/
 
 # Test feature extraction
 python3 -c "
-from EEG_feature_extraction_adv import generate_feature_vectors_from_samples
+from core_engine.EEG_feature_extraction_adv import generate_feature_vectors_from_samples
 vectors, headers = generate_feature_vectors_from_samples('dataset/test/10sec.csv', 150, 1.0)
 print(f'Success: {vectors.shape}')
 "
 ```
 
-## 📝 Quick Reference Commands
+## Quick Reference Commands
 
 ```bash
 # Setup
 python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 
 # Training (one-time)
-python3 code/enhanced_feature_extraction.py dataset/original_data enhanced_features.csv 100 0.95
-python3 code/train_models.py enhanced_features.csv models_out
+python3 core_engine/enhanced_feature_extraction.py dataset/original_data dataset/temp_logs/enhanced_features.csv 100 0.95
+python3 research/train_models.py dataset/temp_logs/enhanced_features.csv core_engine/artifacts
 
 # Recording
 python3 -m muselsl stream
-python3 live_data/live_predict.py --eeg --models models_out --model xgboost --duration 1 --raw-out dataset/our_data/name_new/name_relaxed_1min.csv
+python3 core_engine/live_predict.py --eeg --models core_engine/artifacts --model xgboost --duration 1 --raw-out dataset/our_data/name_new/name_relaxed_1min.csv
 
 # Processing
-python3 live_data/live_predict.py --models models_out --model xgboost --csv-dir dataset/our_data/name_new --summary-out dataset/name_results.csv
+python3 core_engine/live_predict.py --models core_engine/artifacts --model xgboost --csv-dir dataset/our_data/name_new --summary-out dataset/temp_logs/name_results.csv
 ```
 
 ---

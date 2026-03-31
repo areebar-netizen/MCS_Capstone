@@ -41,9 +41,11 @@ Thumbs.db
 
 # Project specific
 models_out/
+preprocessing_artifacts/
 *.pkl
 *.joblib
 *.npy
 *.npz
+.env
 
 

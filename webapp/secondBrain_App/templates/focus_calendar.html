@@ -1,0 +1,191 @@
+<!-- Focus Calendar Component -->
+<div class="card focus-calendar">
+    <div class="card-header">
+        <h2 class="card-title">Focus Calendar</h2>
+        <p class="card-subtitle">Track your daily focus performance</p>
+    </div>
+    
+    <div class="card-content">
+        <div class="calendar-grid">
+            <!-- Calendar Header -->
+            <div class="calendar-header">
+                <button class="nav-btn" id="prevMonth">‹</button>
+                <span class="current-month" id="currentMonth">March 2026</span>
+                <button class="nav-btn" id="nextMonth">›</button>
+            </div>
+
+            <!-- Weekday Headers -->
+            <div class="weekday-headers">
+                <span>Sun</span>
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+            </div>
+
+            <!-- Calendar Days -->
+            <div class="calendar-days">
+                <!-- Empty cells for month start -->
+                <div class="calendar-day empty"></div>
+                <div class="calendar-day empty"></div>
+                <div class="calendar-day empty"></div>
+                <div class="calendar-day empty"></div>
+                <div class="calendar-day empty"></div>
+                <div class="calendar-day">
+                    <span class="day-number">1</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">2</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">3</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">4</span>
+                    <span class="focus-emoji">😐</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">5</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">6</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">7</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">8</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">9</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">10</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">11</span>
+                    <span class="focus-emoji">😐</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">12</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">13</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">14</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">15</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">16</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">17</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">18</span>
+                    <span class="focus-emoji">😐</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">19</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">20</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">21</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">22</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">23</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">24</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">25</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">26</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">27</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">28</span>
+                    <span class="focus-emoji">😐</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">29</span>
+                    <span class="focus-emoji">😊</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">30</span>
+                    <span class="focus-emoji">😄</span>
+                </div>
+                <div class="calendar-day">
+                    <span class="day-number">31</span>
+                    <span class="focus-emoji">🙂</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Focus Legend -->
+        <div class="focus-legend">
+            <div class="legend-item">
+                <span class="legend-emoji">😊</span>
+                <span class="legend-label">Excellent (≥75%)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-emoji">😄</span>
+                <span class="legend-label">Great (60-74%)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-emoji">🙂</span>
+                <span class="legend-label">Good (45-59%)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-emoji">😐</span>
+                <span class="legend-label">Fair (30-44%)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-emoji">🙁</span>
+                <span class="legend-label">Poor (15-29%)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-emoji">😩</span>
+                <span class="legend-label">Struggling (<15%)</span>
+            </div>
+        </div>
+    </div>
+</div>

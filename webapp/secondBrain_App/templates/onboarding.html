@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load secondBrain_App_templatetags %}
+
+{% block logo %}
+<div class="logo-container">
+    <img src="{% static 'secondBrain_App/images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+</div>
+{% endblock %}
+
+{% block title %}BrainWave Focus Analyzer - Onboarding{% endblock %}
+<link rel="stylesheet" href="{% static 'secondBrain_App/css/style.css' %}">
+
+{% block content %}
+<div class="onboarding-container">
+    <!-- Header Section -->
+    <header class="header">
+        <div class="logo-container">
+            <img src="{% static 'secondBrain_App/images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+        </div>
+        <h1 class="title">BrainWave Focus Analyzer</h1>
+        <p class="subtitle">Let's understand your study patterns</p>
+    </header>
+    
+    <!-- Progress Section -->
+    <div class="progress-section">
+        <span class="progress-text">Step {{ current_step|default:1 }} of 10</span>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" data-progress="{{ progress_percentage|default:10 }}"></div>
+        </div>
+        <span class="progress-percentage">{{ progress_percentage|default:10 }}% Complete</span>
+    </div>
+    
+    <!-- Form Card -->
+    <main class="form-card">
+        <h2 class="section-title">{{ section.title }}</h2>
+        
+        <form id="onboarding-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="current_step" value="{{ current_step|default:1 }}">
+            
+            {% for question in section.questions %}
+            <div class="form-group">
+                <label for="{{ question.id }}" class="form-label">{{ question.label }}</label>
+                
+                {% if question.type == 'text' %}
+                <input 
+                    type="text" 
+                    id="{{ question.id }}" 
+                    name="{{ question.id }}" 
+                    class="form-input" 
+                    placeholder="{{ question.placeholder|default:'' }}"
+                    value="{{ saved_data|get_saved_value:question.id|default:'' }}"
+                    aria-label="{{ question.label }}"
+                >
+                
+                {% elif question.type == 'number' %}
+                <div class="age-input-wrapper">
+                    <input 
+                        type="number" 
+                        id="{{ question.id }}" 
+                        name="{{ question.id }}" 
+                        class="form-input" 
+                        placeholder="{{ question.placeholder|default:'' }}"
+                        {% if question.min %}min="{{ question.min }}"{% endif %}
+                        {% if question.max %}max="{{ question.max }}"{% endif %}
+                        value="{{ saved_data|get_saved_value:question.id|default:'' }}"
+                        aria-label="{{ question.label }}"
+                    >
+                </div>
+                
+                {% elif question.type == 'range' %}
+                <div class="range-container">
+                    <div class="range-value" id="{{ question.id }}-value">{{ saved_data|get_saved_value:question.id|default:question.default|default:5 }}</div>
+                    <input 
+                        type="range" 
+                        id="{{ question.id }}" 
+                        name="{{ question.id }}" 
+                        class="range-slider"
+                        {% if question.min %}min="{{ question.min }}"{% endif %}
+                        {% if question.max %}max="{{ question.max }}"{% endif %}
+                        value="{{ saved_data|get_saved_value:question.id|default:question.default|default:5 }}"
+                        aria-label="{{ question.label }}"
+                    >
+                    <div class="range-labels">
+                        <span>1</span>
+                        <span>{{ question.max }}</span>
+                    </div>
+                </div>
+                
+                {% elif question.type == 'radio' %}
+                <div class="button-options">
+                    {% for option in question.options %}
+                    <button 
+                        type="button" 
+                        id="{{ question.id }}-{{ forloop.counter0 }}"
+                        name="{{ question.id }}" 
+                        value="{{ forloop.counter0 }}"
+                        class="{% if saved_data|get_saved_value:question.id != None and saved_data|get_saved_value:question.id == forloop.counter0|stringformat:'0' %}btn-selected{% else %}btn-deselected{% endif %}"
+                        aria-label="{{ option }}"
+                    >
+                        {{ option }}
+                    </button>
+                    {% endfor %}
+                </div>
+                
+                {% elif question.type == 'checkbox' %}
+                <div class="checkbox-options">
+                    {% for option in question.options %}
+                    <label 
+                        for="{{ question.id }}-{{ forloop.counter0 }}"
+                        class="{% if forloop.counter0|stringformat:'0' in saved_data|get_saved_value:question.id %}btn-selected{% else %}btn-deselected{% endif %}"
+                    >
+                        {{ option }}
+                    </label>
+                    <input 
+                        type="checkbox" 
+                        id="{{ question.id }}-{{ forloop.counter0 }}" 
+                        name="{{ question.id }}" 
+                        value="{{ forloop.counter0 }}"
+                        {% if forloop.counter0|stringformat:'0' in saved_data|get_saved_value:question.id %}checked{% endif %}
+                        style="display: none;"
+                        aria-label="{{ option }}"
+                    >
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <!-- Hidden input for radio button tracking -->
+            <input type="hidden" id="radio-selection" name="radio_selection" value="">
+        </form>
+    </main>
+    
+    <!-- Continue Button -->
+    <button type="button" id="continue-btn" class="continue-btn" disabled aria-label="Continue to next step">
+        Continue
+        <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+    </button>
+    
+    <!-- Session History (if available) -->
+    {% if session_history %}
+    <div class="session-history">
+        <h3>Recent Sessions</h3>
+        <ul>
+            {% for session in session_history %}
+            <li>{{ session.date }} - {{ session.duration }}min - {{ session.focus_percentage }}% focus</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <!-- Focus Percentage Header (if available) -->
+    {% if focus_percentage %}
+    <div class="focus-header">
+        <span>Current Focus Level: {{ focus_percentage }}%</span>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Dynamic form handling for multi-step questionnaire
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set progress bar width from data attribute
+        const progressBar = document.querySelector('.progress-bar-fill');
+        if (progressBar) {
+            const progress = progressBar.dataset.progress || 10;
+            progressBar.style.width = progress + '%';
+        }
+        
+        const continueBtn = document.getElementById('continue-btn');
+        const form = document.getElementById('onboarding-form');
+        
+        // Function to check if form is valid and enable/disable continue button
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = form.querySelectorAll('input[required], input[type="text"], input[type="number"]');
+            
+            // Check if required text/number fields are filled
+            requiredFields.forEach(field => {
+                if (field.type === 'text' || field.type === 'number') {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                    }
+                    // Check number range
+                    if (field.type === 'number') {
+                        const value = parseInt(field.value);
+                        const min = parseInt(field.min);
+                        const max = parseInt(field.max);
+                        if (value < min || value > max) {
+                            isValid = false;
+                        }
+                    }
+                }
+            });
+            
+            // Check if at least one button is selected for each button group
+            const buttonGroups = {};
+            form.querySelectorAll('button[type="button"]').forEach(button => {
+                if (!buttonGroups[button.name]) {
+                    buttonGroups[button.name] = false;
+                }
+                if (button.classList.contains('btn-selected')) {
+                    buttonGroups[button.name] = true;
+                }
+            });
+            
+            Object.values(buttonGroups).forEach(selected => {
+                if (selected === false && Object.keys(buttonGroups).length > 0) {
+                    isValid = false;
+                }
+            });
+            
+            // Enable/disable continue button
+            continueBtn.disabled = !isValid;
+        }
+        
+        // Add event listeners for real-time validation
+        form.addEventListener('input', validateForm);
+        form.addEventListener('change', validateForm);
+        
+        // Handle button selection for radio-style buttons
+        form.querySelectorAll('button[type="button"]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Get all buttons with the same name
+                const buttonName = this.name;
+                const sameNameButtons = form.querySelectorAll(`button[name="${buttonName}"]`);
+                
+                // Only update if this button isn't already selected
+                if (!this.classList.contains('btn-selected')) {
+                    // Remove selected class from all buttons with same name
+                    sameNameButtons.forEach(btn => {
+                        btn.classList.remove('btn-selected');
+                        btn.classList.add('btn-deselected');
+                    });
+                    
+                    // Add selected class to clicked button
+                    this.classList.remove('btn-deselected');
+                    this.classList.add('btn-selected');
+                    
+                    // Update hidden input for form submission
+                    const hiddenInput = document.getElementById('radio-selection');
+                    if (hiddenInput) {
+                        hiddenInput.value = this.value;
+                        hiddenInput.name = buttonName;
+                    }
+                    
+                    validateForm();
+                }
+            });
+        });
+        
+        // Handle range slider value display
+        form.querySelectorAll('input[type="range"]').forEach(slider => {
+            const valueDisplay = document.getElementById(`${slider.id}-value`);
+            slider.addEventListener('input', function() {
+                valueDisplay.textContent = this.value;
+            });
+        });
+        
+        // Handle continue button
+        continueBtn.addEventListener('click', function() {
+            if (this.disabled) return;
+            
+            // Submit form
+            form.submit();
+        });
+        
+        // Handle Enter key in form inputs
+        form.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !continueBtn.disabled) {
+                continueBtn.click();
+            }
+        });
+        
+        // Initial form validation
+        validateForm();
+    });
+</script>
+{% endblock %}
