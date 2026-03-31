@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="onboarding-container">
+    <div class="form-card">
+        <header class="form-header">
+            <div class="logo-container">
+                <img src="{% static 'images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+            </div>
+            <h1>Verify Your Email</h1>
+            <p>We've sent a 6-digit code to {{ email }}. Enter it below to continue.</p>
+        </header>
+
+        <form id="otp-form" method="post" action="/verify-otp/">
+            {% csrf_token %}
+            <input type="hidden" name="email" value="{{ email }}">
+            
+            <div class="form-group">
+                <label for="otp_code" class="form-label">Enter OTP Code</label>
+                <div class="otp-input-container">
+                    <input 
+                        type="text" 
+                        id="otp_code" 
+                        name="otp_code" 
+                        class="form-input otp-input" 
+                        placeholder="000000"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+                <small class="otp-hint">Check your server console for the OTP code</small>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="continue-btn">
+                    Verify & Continue
+                    <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+                
+                <a href="/" class="back-link">← Back to Email Entry</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('otp-form');
+    const otpInput = document.getElementById('otp_code');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    // Auto-format and validate OTP
+    function validateOTP() {
+        let otp = otpInput.value.replace(/\D/g, ''); // Remove non-digits
+        otpInput.value = otp;
+        
+        const isValid = otp.length === 6;
+        submitBtn.disabled = !isValid;
+    }
+    
+    otpInput.addEventListener('input', validateOTP);
+    otpInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '');
+        otpInput.value = pastedData.slice(0, 6);
+        validateOTP();
+    });
+    
+    validateOTP(); // Initial validation
+});
+</script>
+
+{% block extra_css %}
+<style>
+.otp-input-container {
+    display: flex;
+    justify-content: center;
+}
+
+.otp-input {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 8px;
+    max-width: 200px;
+}
+
+.otp-hint {
+    display: block;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.back-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+}
+</style>
+{% endblock %}
+{% endblock %}
