@@ -1,0 +1,243 @@
+<!-- Focus Track History Component -->
+<div class="card focus-track-history">
+    <div class="card-header">
+        <h2 class="card-title">Focus Track History</h2>
+        <p class="card-subtitle">Your recent focus sessions</p>
+    </div>
+    
+    <div class="card-content">
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-btn btn-selected" data-tab="overview">Overview</button>
+            <button class="tab-btn btn-deselected" data-tab="brainwaves">Brainwaves</button>
+            <button class="tab-btn btn-deselected" data-tab="recommendations">Recommendations</button>
+            <button class="tab-btn btn-deselected" data-tab="profile">Profile</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Overview Tab -->
+            <div class="tab-panel active" id="overviewTab">
+                <div class="session-list">
+                    <div class="session-item">
+                        <div class="session-info">
+                            <h4 class="session-name">Morning Study Session</h4>
+                            <div class="session-meta">
+                                <span class="session-time">Today, 9:30 AM</span>
+                                <span class="session-duration">45 min</span>
+                                <span class="session-focus">Focus: 8.2/10</span>
+                            </div>
+                        </div>
+                        <div class="session-states">
+                            <div class="state-item">
+                                <span class="state-label">Concentrated</span>
+                                <span class="state-value">65%</span>
+                            </div>
+                            <div class="state-item">
+                                <span class="state-label">Neutral</span>
+                                <span class="state-value">25%</span>
+                            </div>
+                            <div class="state-item">
+                                <span class="state-label">Relaxed</span>
+                                <span class="state-value">10%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="session-item">
+                        <div class="session-info">
+                            <h4 class="session-name">Afternoon Review</h4>
+                            <div class="session-meta">
+                                <span class="session-time">Today, 2:15 PM</span>
+                                <span class="session-duration">30 min</span>
+                                <span class="session-focus">Focus: 6.8/10</span>
+                            </div>
+                        </div>
+                        <div class="session-states">
+                            <div class="state-item">
+                                <span class="state-label">Concentrated</span>
+                                <span class="state-value">45%</span>
+                            </div>
+                            <div class="state-item">
+                                <span class="state-label">Neutral</span>
+                                <span class="state-value">40%</span>
+                            </div>
+                            <div class="state-item">
+                                <span class="state-label">Relaxed</span>
+                                <span class="state-value">15%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="session-item">
+                        <div class="session-info">
+                            <h4 class="session-name">Evening Practice</h4>
+                            <div class="session-meta">
+                                <span class="session-time">Yesterday, 7:45 PM</span>
+                                <span class="session-duration">60 min</span>
+                                <span class="session-focus">Focus: 7.5/10</span>
+                            </div>
+                        </div>
+                        <div class="session-states">
+                            <div class="state-item">
+                                <span class="state-label">Concentrated</span>
+                                <span class="state-value">55%</span>
+                            </div>
+                            <div class="state-item">
+                                <span class="state-label">Neutral</span>
+                                <span class="state-value">30%</span>
+                            </div>
+                            <div class="state-item">
+                                <span class="state-label">Relaxed</span>
+                                <span class="state-value">15%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brainwaves Tab (Hidden by default) -->
+            <div class="tab-panel" id="brainwavesTab">
+                <div class="brainwave-analysis">
+                    <h3 class="analysis-title">Average Brainwaves</h3>
+                    <div class="brainwave-bars">
+                        <div class="brainwave-item">
+                            <div class="brainwave-info">
+                                <span class="brainwave-label">Delta</span>
+                                <span class="brainwave-value">15</span>
+                            </div>
+                            <div class="brainwave-bar">
+                                <div class="brainwave-progress delta" style="width: 15%;"></div>
+                            </div>
+                        </div>
+                        <div class="brainwave-item">
+                            <div class="brainwave-info">
+                                <span class="brainwave-label">Theta</span>
+                                <span class="brainwave-value">28</span>
+                            </div>
+                            <div class="brainwave-bar">
+                                <div class="brainwave-progress theta" style="width: 28%;"></div>
+                            </div>
+                        </div>
+                        <div class="brainwave-item">
+                            <div class="brainwave-info">
+                                <span class="brainwave-label">Alpha</span>
+                                <span class="brainwave-value">42</span>
+                            </div>
+                            <div class="brainwave-bar">
+                                <div class="brainwave-progress alpha" style="width: 42%;"></div>
+                            </div>
+                        </div>
+                        <div class="brainwave-item">
+                            <div class="brainwave-info">
+                                <span class="brainwave-label">Beta</span>
+                                <span class="brainwave-value">58</span>
+                            </div>
+                            <div class="brainwave-bar">
+                                <div class="brainwave-progress beta" style="width: 58%;"></div>
+                            </div>
+                        </div>
+                        <div class="brainwave-item">
+                            <div class="brainwave-info">
+                                <span class="brainwave-label">Gamma</span>
+                                <span class="brainwave-value">35</span>
+                            </div>
+                            <div class="brainwave-bar">
+                                <div class="brainwave-progress gamma" style="width: 35%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations Tab (Hidden by default) -->
+            <div class="tab-panel" id="recommendationsTab">
+                <div class="recommendations-list">
+                    <div class="recommendation-item success">
+                        <div class="rec-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        </div>
+                        <div class="rec-content">
+                            <h4 class="rec-title">Focus Improving!</h4>
+                            <p class="rec-description">Your beta waves are consistently above 50, indicating strong concentration. Keep up the great work!</p>
+                        </div>
+                    </div>
+
+                    <div class="recommendation-item warning">
+                        <div class="rec-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                        </div>
+                        <div class="rec-content">
+                            <h4 class="rec-title">Consider Breaks</h4>
+                            <p class="rec-description">Extended focus sessions are showing declining gamma waves. Try 25-minute Pomodoro intervals.</p>
+                        </div>
+                    </div>
+
+                    <div class="recommendation-item info">
+                        <div class="rec-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="16" x2="12" y2="12"/>
+                                <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            </svg>
+                        </div>
+                        <div class="rec-content">
+                            <h4 class="rec-title">Optimal Environment</h4>
+                            <p class="rec-description">Your alpha waves peak in quiet environments. Consider noise-cancelling headphones for better focus.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab (Hidden by default) -->
+            <div class="tab-panel" id="profileTab">
+                <div class="profile-snapshot">
+                    <h3 class="snapshot-title">Session Profile Snapshot</h3>
+                    <div class="profile-data">
+                        <div class="data-row">
+                            <span class="data-label">Name:</span>
+                            <span class="data-value">{{ user.get_full_name|default:"User" }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Age:</span>
+                            <span class="data-value">{{ user_profile.age|default:"--" }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Academic Level:</span>
+                            <span class="data-value">{{ user_profile.academic_level|default:"--" }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Sleep:</span>
+                            <span class="data-value">{{ user_profile.sleep_hours|default:"--" }} hours • {{ user_profile.sleep_quality|default:"--" }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Learning Style:</span>
+                            <span class="data-value">{{ user_profile.learning_style|default:"--" }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Caffeine:</span>
+                            <span class="data-value">
+                                {% if user_profile.caffeine_servings %}{{ user_profile.caffeine_servings }} servings/day{% else %}None{% endif %}
+                            </span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Procrastination:</span>
+                            <span class="data-value">{{ user_profile.procrastination_level|default:"--" }}/10</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Primary Goal:</span>
+                            <span class="data-value">{{ user_profile.main_goals.0|default:"Not Set" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

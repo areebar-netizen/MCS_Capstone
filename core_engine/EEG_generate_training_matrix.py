@@ -3,8 +3,10 @@
 
 import os, sys
 import numpy as np
+# Add parent directory to path for core_engine imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # use the enhanced feature extraction implementation
-from EEG_feature_extraction_adv import generate_feature_vectors_from_samples
+from core_engine.EEG_feature_extraction_adv import generate_feature_vectors_from_samples
 
 
 def gen_training_matrix(directory_path, output_file, cols_to_ignore):

@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load secondBrain_App_templatetags %}
+
+{% block logo %}
+<div class="logo-container">
+    <img src="{% static 'secondBrain_App/images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+</div>
+{% endblock %}
+
+{% block title %}BrainWave Focus Analyzer - Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">BrainWave Focus Analyzer</h1>
+            <p class="header-greeting">Welcome back, {{ user.get_full_name|default:"User" }}!</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-demo" onclick="loadDemoData()">
+                <span>Load Demo Data</span>
+            </button>
+            <button class="btn-reset" onclick="resetProfile()">
+                <span>Reset Profile</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Grid Layout -->
+    <div class="dashboard-grid">
+        <!-- Row 1: Focus Track Setup & User Profile -->
+        <div class="grid-row">
+            <div class="col-span-8">
+                {% include 'focus_track_setup.html' %}
+            </div>
+            <div class="col-span-4">
+                {% include 'user_profile.html' %}
+            </div>
+        </div>
+
+        <!-- Row 2: Study Time Histogram & Focus Calendar -->
+        <div class="grid-row">
+            <div class="col-span-6">
+                {% include 'study_time_histogram.html' %}
+            </div>
+            <div class="col-span-6">
+                {% include 'focus_calendar.html' %}
+            </div>
+        </div>
+
+        <!-- Row 3: Progress Tracker -->
+        <div class="grid-row">
+            <div class="col-span-12">
+                {% include 'progress_tracker.html' %}
+            </div>
+        </div>
+
+        <!-- Row 4: Focus Track History -->
+        <div class="grid-row">
+            <div class="col-span-12">
+                {% include 'focus_track_history.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Demo data loading
+function loadDemoData() {
+    console.log('Loading demo data...');
+    // Add demo data loading logic here
+    alert('Demo data loaded successfully!');
+}
+
+// Profile reset
+function resetProfile() {
+    if (confirm('Are you sure you want to reset your profile? This will clear all your data.')) {
+        console.log('Resetting profile...');
+        // Add profile reset logic here
+        alert('Profile reset successfully!');
+    }
+}
+
+// Duration button selection
+document.addEventListener('DOMContentLoaded', function() {
+    // Duration buttons
+    const durationBtns = document.querySelectorAll('.duration-btn');
+    durationBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            durationBtns.forEach(b => {
+                b.classList.remove('btn-selected');
+                b.classList.add('btn-deselected');
+            });
+            this.classList.remove('btn-deselected');
+            this.classList.add('btn-selected');
+        });
+    });
+
+    // View toggle buttons
+    const viewBtns = document.querySelectorAll('.view-btn');
+    viewBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+            
+            // Update button states
+            viewBtns.forEach(b => {
+                b.classList.remove('btn-selected');
+                b.classList.add('btn-deselected');
+            });
+            this.classList.remove('btn-deselected');
+            this.classList.add('btn-selected');
+            
+            // Show/hide views
+            document.querySelectorAll('.histogram-view').forEach(v => v.style.display = 'none');
+            const targetView = document.getElementById(view + 'View');
+            if (targetView) {
+                targetView.style.display = 'block';
+            }
+        });
+    });
+
+    // Tab navigation
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tab = this.dataset.tab;
+            
+            // Update button states
+            tabBtns.forEach(b => {
+                b.classList.remove('btn-selected');
+                b.classList.add('btn-deselected');
+            });
+            this.classList.remove('btn-deselected');
+            this.classList.add('btn-selected');
+            
+            // Show/hide tab panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            const targetPanel = document.getElementById(tab + 'Tab');
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+        });
+    });
+
+    // Start session button
+    const startBtn = document.getElementById('startSessionBtn');
+    const activeSession = document.getElementById('activeSession');
+    const setupSection = document.querySelector('.duration-section');
+    
+    if (startBtn) {
+        startBtn.addEventListener('click', function() {
+            // Get selected duration
+            const selectedDuration = document.querySelector('.duration-btn.btn-selected');
+            if (selectedDuration) {
+                const duration = selectedDuration.dataset.duration;
+                console.log('Starting session for', duration, 'minutes');
+                
+                // Hide setup, show active session
+                if (setupSection) setupSection.style.display = 'none';
+                if (startBtn) startBtn.style.display = 'none';
+                if (activeSession) activeSession.style.display = 'block';
+                
+                // Start timer (mock implementation)
+                startTimer(duration);
+            } else {
+                alert('Please select a duration first!');
+            }
+        });
+    }
+
+    // Calendar navigation
+    const prevBtn = document.getElementById('prevMonth');
+    const nextBtn = document.getElementById('nextMonth');
+    const currentMonth = document.getElementById('currentMonth');
+    
+    if (prevBtn && nextBtn && currentMonth) {
+        let monthIndex = 2; // March (0-based)
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        prevBtn.addEventListener('click', function() {
+            monthIndex = (monthIndex - 1 + 12) % 12;
+            currentMonth.textContent = months[monthIndex] + ' 2026';
+        });
+        
+        nextBtn.addEventListener('click', function() {
+            monthIndex = (monthIndex + 1) % 12;
+            currentMonth.textContent = months[monthIndex] + ' 2026';
+        });
+    }
+
+    // Calendar day clicks
+    const calendarDays = document.querySelectorAll('.calendar-day:not(.empty)');
+    calendarDays.forEach(day => {
+        day.addEventListener('click', function() {
+            const dayNumber = this.querySelector('.day-number').textContent;
+            const focusEmoji = this.querySelector('.focus-emoji').textContent;
+            console.log('Day', dayNumber, 'focus:', focusEmoji);
+        });
+    });
+});
+
+// Timer functionality
+let timerInterval;
+let timeRemaining = 0;
+
+function startTimer(duration) {
+    timeRemaining = duration * 60; // Convert to seconds
+    const timerDisplay = document.getElementById('sessionTimer');
+    const elapsedTimeDisplay = document.getElementById('elapsedTime');
+    
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(function() {
+        timeRemaining--;
+        
+        if (timerDisplay) {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            timerDisplay.textContent = 
+                String(minutes).padStart(2, '0') + ':' + 
+                String(seconds).padStart(2, '0');
+        }
+        
+        if (elapsedTimeDisplay) {
+            const elapsed = (duration * 60) - timeRemaining;
+            const elapsedMinutes = Math.floor(elapsed / 60);
+            const elapsedSeconds = elapsed % 60;
+            elapsedTimeDisplay.textContent = 
+                String(elapsedMinutes).padStart(2, '0') + ':' + 
+                String(elapsedSeconds).padStart(2, '0');
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            alert('Session completed!');
+            // Reset display
+            if (document.getElementById('activeSession')) {
+                document.getElementById('activeSession').style.display = 'none';
+            }
+            if (document.querySelector('.duration-section')) {
+                document.querySelector('.duration-section').style.display = 'block';
+            }
+            if (document.getElementById('startSessionBtn')) {
+                document.getElementById('startSessionBtn').style.display = 'block';
+            }
+        }
+    }, 1000);
+}
+
+// Pause/End session controls
+document.addEventListener('DOMContentLoaded', function() {
+    const pauseBtn = document.getElementById('pauseBtn');
+    const endBtn = document.getElementById('endBtn');
+    
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', function() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                this.textContent = 'Resume';
+            } else {
+                startTimer(Math.floor(timeRemaining / 60));
+                this.textContent = 'Pause';
+            }
+        });
+    }
+    
+    if (endBtn) {
+        endBtn.addEventListener('click', function() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+            
+            // Reset display
+            if (document.getElementById('activeSession')) {
+                document.getElementById('activeSession').style.display = 'none';
+            }
+            if (document.querySelector('.duration-section')) {
+                document.querySelector('.duration-section').style.display = 'block';
+            }
+            if (document.getElementById('startSessionBtn')) {
+                document.getElementById('startSessionBtn').style.display = 'block';
+            }
+            if (pauseBtn) pauseBtn.textContent = 'Pause';
+            
+            alert('Session ended!');
+        });
+    }
+});
+</script>
+{% endblock %}

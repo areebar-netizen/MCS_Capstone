@@ -1,0 +1,88 @@
+<!-- User Profile Component -->
+<div class="card user-profile">
+    <div class="card-header">
+        <h2 class="card-title">User Profile</h2>
+        <p class="card-subtitle">Your study preferences</p>
+    </div>
+    
+    <div class="card-content">
+        <div class="profile-stats">
+            <div class="profile-stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Academic Level</span>
+                    <span class="stat-value">{{ user_profile.academic_level|default:"Not Set" }}</span>
+                </div>
+            </div>
+
+            <div class="profile-stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Sleep</span>
+                    <span class="stat-value">{{ user_profile.sleep_hours|default:"--" }} hours • {{ user_profile.sleep_quality|default:"--" }}</span>
+                </div>
+            </div>
+
+            <div class="profile-stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2zm5 0A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Learning Style</span>
+                    <span class="stat-value">{{ user_profile.learning_style|default:"Not Set" }}</span>
+                </div>
+            </div>
+
+            <div class="profile-stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6h-1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h1m-6-14h1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1m-6-14h1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Caffeine</span>
+                    <span class="stat-value">
+                        {% if user_profile.caffeine_servings %}{{ user_profile.caffeine_servings }} servings/day{% else %}None{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="profile-stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Procrastination</span>
+                    <span class="stat-value">{{ user_profile.procrastination_level|default:"--" }}/10</span>
+                </div>
+            </div>
+
+            <div class="profile-stat">
+                <div class="stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Primary Goal</span>
+                    <span class="stat-value">{{ user_profile.main_goals.0|default:"Not Set" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

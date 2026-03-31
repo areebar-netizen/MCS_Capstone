@@ -39,9 +39,9 @@ import pyqtgraph as pg
 
 # Setup paths
 ROOT = Path(__file__).resolve().parents[1]
-CODE_DIR = ROOT / 'code'
-if str(CODE_DIR) not in sys.path:
-    sys.path.insert(0, str(CODE_DIR))
+SETUP_DIR = ROOT / 'data_pipeline' / 'setup'
+if str(SETUP_DIR) not in sys.path:
+    sys.path.insert(0, str(SETUP_DIR))
 
 # Import custom modules
 from EEG_feature_extraction_adv import generate_feature_vectors_from_matrix

@@ -18,6 +18,9 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Import the original feature extraction
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from EEG_feature_extraction_adv import generate_feature_vectors_from_samples
 
 def remove_highly_correlated_features(X, feature_names, threshold=0.95):
@@ -165,6 +168,9 @@ def generate_enhanced_features_from_directory(directory_path, output_file,
     
     # Step 1: Generate original features
     print("\nStep 1: Generating original features...")
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     from EEG_generate_training_matrix import gen_training_matrix
     
     # Generate temporary features file
