@@ -1,10 +1,17 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.utils import timezone
+from django.conf import settings
 import random
 import string
+import json
+from pathlib import Path
+from .services.prediction_service import PredictionService
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
+
+MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'models_out', model_name='xgboost')
 
 def email_entry(request):
     """Landing page for email entry"""
@@ -475,3 +482,43 @@ def onboarding_view(request):
     }
     
     return render(request, 'onboarding.html', context)
+
+@csrf_exempt
+def prediction_view(request):
+    """Generates the live preditictions for EEG data streamed from the device"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    #Live prediction integration
+    try:
+        data = json.loads(request.body)
+        rows = data.get('rows', [])
+
+        if not rows:
+            return JsonResponse({'error': 'No rows provided'}, status = 400)
+
+        result = MODEL_SERVICE.run(rows)
+
+        return JsonResponse(result)
+    
+    except Exception as e:
+        print(f'Error in prediction view: {e}')
+        return JsonResponse({'error': str(e)}, status = 500)
+    
+import csv
+
+def test_csv():
+    print("Running test_csv...")  # add this
+
+    rows = []
+    with open(r"C:\Users\binom\OneDrive\Desktop\KeystoneProject\MCS_Capstone\dataset\our_data\areeba_new\areeba_concentrating_3min.csv") as f:
+        reader = csv.reader(f)
+        next(reader)
+        for row in reader:
+            rows.append([float(x) for x in row])
+
+    result = MODEL_SERVICE.run(rows)
+    print("RESULT:", result)
+
+
+

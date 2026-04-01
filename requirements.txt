@@ -31,3 +31,6 @@ PyQt5
 # --- DATA PROCESSING ---
 imblearn
 tqdm
+
+#-----FILE ACCESS----
+Pathlib
