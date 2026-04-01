@@ -8,4 +8,5 @@ urlpatterns = [
     path('verify-otp/', views.verify_otp, name='verify_otp'),
     path('', views.email_entry, name='home'),  # Default to email entry
     path('api/predict/', views.prediction_view, name='prediction_view'),
+    path('upload_csv/', views.upload_csv_view, name='upload_csv_views'),
 ]

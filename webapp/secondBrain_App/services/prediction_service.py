@@ -214,13 +214,13 @@ class PredictionService:
         
         # Create result dict like predict_test.py
         result = {
-            'n_windows': n_windows,
-            'total_seconds': total_seconds,
-            'relaxed_seconds': durations.get('relaxed', 0),
-            'neutral_seconds': durations.get('neutral', 0),
-            'concentrating_seconds': durations.get('concentrating', 0),
-            'predicted_label': predicted_label,
-            'confidence': confidence
+            'n_windows': int(n_windows),
+            'total_seconds': float(total_seconds),
+            'relaxed_seconds': float(durations.get('relaxed', 0)),
+            'neutral_seconds': float(durations.get('neutral', 0)),
+            'concentrating_seconds': float(durations.get('concentrating', 0)),
+            'predicted_label': str(predicted_label),
+            'confidence': float(confidence),
         }
         print(f"  Full result: {result}")
 

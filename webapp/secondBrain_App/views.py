@@ -6,8 +6,11 @@ import random
 import string
 import json
 from pathlib import Path
+
+from urllib3 import request
 from .services.prediction_service import PredictionService
 from django.views.decorators.csrf import csrf_exempt
+import csv
 
 # Create your views here.
 
@@ -505,7 +508,28 @@ def prediction_view(request):
         print(f'Error in prediction view: {e}')
         return JsonResponse({'error': str(e)}, status = 500)
     
-import csv
+
+def upload_csv_view(request):
+    """Upload csv online and recvieve predictions for it"""
+
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        file = request.FILES['csv_file']
+        try:
+            rows = []
+            dfile = file.read().decode('utf-8').splitlines()
+            reader = csv.reader(dfile)
+            next(reader)
+
+            for row in reader:
+                rows.append([float(x) for x in row])
+            result = MODEL_SERVICE.run(rows)
+
+            return JsonResponse(result)
+        
+        except Exception as e:
+            print(f'Error processsing uploaded csv: {e}')
+            return JsonResponse({'error': str(e)}, status=500)
+    return render(request, 'upload_csv.html')
 
 def test_csv():
     print("Running test_csv...")  # add this
