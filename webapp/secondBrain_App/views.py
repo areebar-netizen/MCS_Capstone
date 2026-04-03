@@ -26,10 +26,7 @@ def send_otp(request):
         EmailOTP.objects.filter(email=email).delete()  # Remove any existing OTPs
         EmailOTP.objects.create(email=email, otp_code=otp_code)
         
-        # Debug: Print OTP to console
-        print(f"DEBUG: OTP for {email} is {otp_code}")
-        
-        # Try to send email (optional - will fail if email not configured)
+        # Send OTP email
         try:
             from django.core.mail import send_mail
             subject = 'BrainWave - Your OTP Code'
@@ -44,9 +41,13 @@ def send_otp(request):
                 recipient_list,
                 fail_silently=False,
             )
-            print(f"Email sent to {email}")
+            print(f"OTP email sent successfully to {email}")
         except Exception as e:
-            print(f"Email failed (using console OTP): {e}")
+            print(f"Failed to send OTP email: {e}")
+            # For development, you might want to still show the OTP in console
+            print(f"DEBUG: OTP for {email} is {otp_code}")
+            # In production, you might want to handle this differently
+            # For now, we'll continue with the flow even if email fails
         
         # Redirect to OTP verification page
         return render(request, 'otp_verification.html', {'email': email})
