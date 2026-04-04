@@ -11,4 +11,10 @@ urlpatterns = [
     path('upload_csv/', views.upload_csv_view, name='upload_csv_views'),
     path('start_eeg/', views.start_live_eeg_view, name='start_eeg'),
     path('stop_eeg/', views.stop_live_eeg_view, name='stop_eeg'),
+    path('eeg_status/', views.eeg_task_status_view, name='eeg_status'),
+    
+    # New real-time endpoints
+    path('start_realtime_eeg/', views.start_realtime_eeg_view, name='start_realtime_eeg'),
+    path('stop_realtime_eeg/', views.stop_realtime_eeg_view, name='stop_realtime_eeg'),
+    path('realtime_eeg_status/', views.get_realtime_eeg_status_view, name='realtime_eeg_status'),
 ]

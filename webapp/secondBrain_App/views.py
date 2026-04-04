@@ -11,6 +11,9 @@ from pathlib import Path
 
 from urllib3 import request
 from .services.prediction_service import PredictionService
+from .services.eeg_service import EEGService
+from .tasks import run_live_inference, get_task_status
+from .tasks_realtime import run_live_inference_streaming
 from django.views.decorators.csrf import csrf_exempt
 import csv
 
@@ -19,7 +22,7 @@ from .services.eeg_service import EEGService
 
 # Create your views here.
 
-MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'models_out', model_name='xgboost')
+MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts', model_name='xgboost')
 
 def email_entry(request):
     """Landing page for email entry"""
@@ -516,44 +519,234 @@ def prediction_view(request):
         print(f'Error in prediction view: {e}')
         return JsonResponse({'error': str(e)}, status = 500)
 
-EEGSERVICE = EEGService()  
 @csrf_exempt
-def start_live_eeg_view(request):
-    """Endpoint will recieve live EEG data from the device and return the predicted labels for each window of data"""
-    print("EEG View Hit")
+def start_realtime_eeg_view(request):
+    """Start real-time EEG inference with per-second streaming"""
+    print("🧠 Starting Real-time EEG Session")
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=400)
     
     try:
+        # Get duration from request
+        data = json.loads(request.body) if request.body else {}
+        duration = data.get('duration', 1)
         
-        session_result = EEGSERVICE.start(user_email)
-        status=200 if session_result.get('ok') else 400
-        return JsonResponse(session_result, status=status)
+        # Trigger real-time Celery task
+        task = run_live_inference_streaming.delay(user_email, duration)
+        
+        # Store task ID in session
+        request.session['current_eeg_task_id'] = task.id
+        request.session['realtime_session_active'] = True
+        request.session.modified = True
+        
+        return JsonResponse({
+            'ok': True,
+            'message': 'Real-time EEG inference started',
+            'task_id': task.id,
+            'duration_minutes': duration,
+            'session_type': 'realtime',
+            'status': 'initializing'
+        })
+        
     except Exception as e:
+        print(f'Error starting real-time EEG task: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
-def stop_live_eeg_view(request):
-    """Endpoint to stop live EEG streaming and return the final predictions for the session"""
-    print("Stopping EEG session")
+def stop_realtime_eeg_view(request):
+    """Stop real-time EEG session and get final summary"""
+    print("🛑 Stopping Real-time EEG Session")
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
     try:
-        session_result = EEGSERVICE.stop()
-        rows = session_result.get('rows', [])
-        prediction_result = MODEL_SERVICE.run(rows) 
+        # Clear realtime session flag
+        request.session['realtime_session_active'] = False
+        request.session.modified = True
+        
+        # Get task ID from session
+        task_id = request.session.get('current_eeg_task_id')
+        if not task_id:
+            return JsonResponse({'error': 'No active EEG task found'}, status=400)
+        
+        # Check task status
+        task_result = get_task_status(task_id)
+        
+        if task_result['status'] == 'SUCCESS':
+            result = task_result['result']
+            return JsonResponse({
+                'ok': True,
+                'status': 'completed',
+                'session_id': result.get('session_id'),
+                'final_summary': result.get('final_summary'),
+                'csv_file_path': result.get('csv_file_path'),
+                'duration_minutes': result.get('duration_minutes')
+            })
+        elif task_result['status'] == 'FAILURE':
+            return JsonResponse({
+                'ok': False,
+                'status': 'error',
+                'message': 'EEG inference task failed',
+                'error': str(task_result.get('result', 'Unknown error'))
+            })
+        else:
+            return JsonResponse({
+                'ok': True,
+                'status': task_result['status'],
+                'message': 'EEG inference still in progress',
+                'task_id': task_id
+            })
+            
+    except Exception as e:
+        print(f'Error stopping real-time EEG task: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def get_realtime_eeg_status_view(request):
+    """Get real-time status and current focus data"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Get task ID from session
+        task_id = request.session.get('current_eeg_task_id')
+        if not task_id:
+            return JsonResponse({'error': 'No active EEG task found'}, status=400)
+        
+        # Check if realtime session is active
+        is_active = request.session.get('realtime_session_active', False)
+        
+        # Get task status
+        task_result = get_task_status(task_id)
         
         return JsonResponse({
             'ok': True,
-            'prediction_result': prediction_result,
-            'session_id': session_result.get('session_id'),
-            'samples_collected': len(rows)
-
+            'task_id': task_id,
+            'status': task_result['status'],
+            'is_realtime_active': is_active,
+            'result': task_result.get('result') if task_result['status'] == 'SUCCESS' else None
         })
+        
     except Exception as e:
+        print(f'Error getting real-time EEG status: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+EEGSERVICE = EEGService()  
+@csrf_exempt
+def start_live_eeg_view(request):
+    """Start EEG inference as a Celery task"""
+    print("Starting EEG inference task")
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    
+    try:
+        # Get duration from request (default to 1 minute)
+        data = json.loads(request.body) if request.body else {}
+        duration = data.get('duration', 1)
+        
+        # Trigger Celery task
+        task = run_live_inference.delay(user_email, duration)
+        
+        # Store task ID in session for status checking
+        request.session['current_eeg_task_id'] = task.id
+        request.session.modified = True
+        
+        return JsonResponse({
+            'ok': True,
+            'message': 'EEG inference task started',
+            'task_id': task.id,
+            'duration_minutes': duration,
+            'status': 'processing'
+        })
+        
+    except Exception as e:
+        print(f'Error starting EEG task: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def stop_live_eeg_view(request):
+    """Check EEG inference task status and return results"""
+    print("Checking EEG task status")
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Get task ID from session
+        task_id = request.session.get('current_eeg_task_id')
+        if not task_id:
+            return JsonResponse({'error': 'No active EEG task found'}, status=400)
+        
+        # Check task status
+        task_result = get_task_status(task_id)
+        
+        if task_result['status'] == 'SUCCESS':
+            # Task completed successfully
+            result = task_result['result']
+            return JsonResponse({
+                'ok': True,
+                'status': 'completed',
+                'session_id': result.get('session_id'),
+                'final_result': result.get('final_result'),
+                'raw_data_path': result.get('raw_data_path'),
+                'duration_minutes': result.get('duration_minutes')
+            })
+        elif task_result['status'] == 'PENDING':
+            # Task still running
+            return JsonResponse({
+                'ok': True,
+                'status': 'processing',
+                'message': 'EEG inference still in progress',
+                'task_id': task_id
+            })
+        elif task_result['status'] == 'FAILURE':
+            # Task failed
+            return JsonResponse({
+                'ok': False,
+                'status': 'error',
+                'message': 'EEG inference task failed',
+                'error': str(task_result.get('result', 'Unknown error'))
+            })
+        else:
+            return JsonResponse({
+                'ok': True,
+                'status': task_result['status'],
+                'task_id': task_id
+            })
+            
+    except Exception as e:
+        print(f'Error checking EEG task status: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def eeg_task_status_view(request):
+    """Check the status of an ongoing EEG inference task"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Get task ID from session or request parameter
+        task_id = request.GET.get('task_id') or request.session.get('current_eeg_task_id')
+        if not task_id:
+            return JsonResponse({'error': 'No task ID provided'}, status=400)
+        
+        # Check task status
+        task_result = get_task_status(task_id)
+        
+        return JsonResponse({
+            'ok': True,
+            'task_id': task_id,
+            'status': task_result['status'],
+            'result': task_result['result'] if task_result['status'] == 'SUCCESS' else None
+        })
+        
+    except Exception as e:
+        print(f'Error checking task status: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
     
