@@ -270,6 +270,115 @@ Access the webapp at: http://localhost:8000
 
 ---
 
+## Celery-Based Asynchronous EEG Processing
+
+The system now uses Celery for non-blocking EEG inference processing. This allows the frontend to remain responsive while ML processing runs in the background.
+
+### Setup Requirements
+
+**Additional Dependencies** (already in requirements.txt):
+- `celery` - Asynchronous task queue
+- `redis` - Message broker and result backend
+
+### Step 1: Start Redis Server
+
+```bash
+# On macOS with Homebrew
+brew services start redis
+
+# Or start manually
+redis-server
+
+# Verify Redis is running
+redis-cli ping
+# Should return: PONG
+```
+
+### Step 2: Update Environment Variables
+
+Add to `.env` file (already configured):
+```bash
+# Celery Configuration
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+```
+
+### Step 3: Start Celery Worker
+
+```bash
+cd webapp
+source ../.venv/bin/activate
+
+# Start Celery worker (in new terminal)
+celery -A secondBrain worker -l info
+
+# For development with auto-reload
+celery -A secondBrain worker -l info --reload
+```
+
+### Step 4: Start Django Server
+
+```bash
+cd webapp
+source ../.venv/bin/activate
+python manage.py runserver
+```
+
+### New API Endpoints
+
+**Start EEG Session** (POST `/start_eeg/`):
+```json
+{
+  "duration": 2
+}
+```
+Response:
+```json
+{
+  "ok": true,
+  "message": "EEG inference task started",
+  "task_id": "abc123",
+  "duration_minutes": 2,
+  "status": "processing"
+}
+```
+
+**Check Task Status** (GET `/eeg_status/`):
+```json
+{
+  "ok": true,
+  "task_id": "abc123",
+  "status": "SUCCESS",
+  "result": {
+    "session_id": "20240403_143022",
+    "final_result": {...}
+  }
+}
+```
+
+**Get Final Results** (POST `/stop_eeg/`):
+Returns complete prediction results with session data.
+
+### Key Features
+
+- **Dynamic File Naming**: `dataset/our_data/{user_prefix}_{timestamp}_session.csv`
+- **Non-blocking UI**: Frontend stays responsive during ML processing
+- **Real-time Status**: Poll every 2 seconds for task progress
+- **Database Integration**: Automatic saving to Prediction table
+- **Error Handling**: Graceful failure with user-friendly messages
+
+### Frontend Integration
+
+Use the provided `eeg_integration.js` for async UI updates:
+```javascript
+const eegManager = new EEGSessionManager();
+await eegManager.startSession(2); // 2 minutes
+const status = await eegManager.checkStatus();
+const results = await eegManager.getResults();
+```
+
+---
+
 ## Complete Workflow from Scratch
 
 ### Step 1: Enhanced Feature Extraction
@@ -397,16 +506,28 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 brew services start postgresql
 createdb -h localhost -U postgres secondbrain
 
+# Redis Setup (for Celery)
+brew services start redis
+
 # Webapp Setup
 cd webapp && source ../.venv/bin/activate
 python manage.py makemigrations && python manage.py migrate
+
+# Start Services (3 terminals needed)
+# Terminal 1: Django server
 python manage.py runserver
+
+# Terminal 2: Celery worker
+celery -A secondBrain worker -l info
+
+# Terminal 3: Redis (if not running as service)
+redis-server
 
 # Training (one-time)
 python3 core_engine/enhanced_feature_extraction.py dataset/original_data dataset/temp_logs/enhanced_features.csv 100 0.95
 python3 research/train_models.py dataset/temp_logs/enhanced_features.csv core_engine/artifacts
 
-# Recording
+# Recording (old way - blocking)
 python3 -m muselsl stream
 python3 core_engine/live_predict.py --eeg --models core_engine/artifacts --model xgboost --duration 1 --raw-out dataset/our_data/name_new/name_relaxed_1min.csv
 
@@ -427,6 +548,13 @@ python3 core_engine/live_predict.py --models core_engine/artifacts --model xgboo
 - `GET /dashboard/` - Main dashboard (requires authentication)
 - `GET /onboarding/` - 10-section survey (requires authentication)
 - `POST /onboarding/` - Save survey data (requires authentication)
+
+### EEG Processing (Celery-based)
+- `POST /start_eeg/` - Start asynchronous EEG inference session
+- `GET /eeg_status/` - Check status of ongoing EEG task
+- `POST /stop_eeg/` - Get final results of completed EEG session
+- `POST /api/predict/` - Direct prediction from EEG data rows
+- `POST /upload_csv/` - Upload CSV file for batch prediction
 
 ### Data Services
 - Real-time PostgreSQL integration

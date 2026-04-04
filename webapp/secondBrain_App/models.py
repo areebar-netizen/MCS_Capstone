@@ -81,6 +81,25 @@ class Prediction(models.Model):
     class Meta:
         db_table = 'prediction'
 
+class SessionSummary(models.Model):
+    session_id = models.CharField(max_length=100, unique=True)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    task_id = models.CharField(max_length=100, null=True, blank=True)
+    csv_file_path = models.CharField(max_length=500)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
+    total_duration_seconds = models.FloatField()
+    average_focus_score = models.FloatField()
+    peak_focus_score = models.FloatField()
+    relaxed_seconds = models.FloatField()
+    neutral_seconds = models.FloatField()
+    concentrating_seconds = models.FloatField()
+    data_points_count = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'session_summary'
+
 class Recommendation(models.Model):
     recommendation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)

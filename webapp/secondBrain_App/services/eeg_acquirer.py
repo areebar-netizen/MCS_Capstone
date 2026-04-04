@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.signal import butter, filtfilt, iirnotch
-from Stream import Stream
+from .Stream import Stream
 from pylsl import StreamInlet, resolve_byprop
 
 
