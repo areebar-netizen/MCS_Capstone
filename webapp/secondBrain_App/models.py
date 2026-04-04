@@ -65,6 +65,22 @@ class UserProfile(models.Model):
     class Meta:
         db_table = 'user_profile'
 
+class Prediction(models.Model):
+    prediction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    session_id = models.CharField(max_length=100)
+    predicted_label = models.CharField(max_length=50)
+    confidence = models.FloatField()
+    n_windows = models.IntegerField()
+    total_seconds = models.FloatField()
+    relaxed_seconds = models.FloatField()
+    neutral_seconds = models.FloatField()
+    concentrating_seconds = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'prediction'
+
 class Recommendation(models.Model):
     recommendation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
