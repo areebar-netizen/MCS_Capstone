@@ -1,10 +1,25 @@
+from uuid import uuid4
+
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.utils import timezone
+from django.conf import settings
 import random
 import string
+import json
+from pathlib import Path
+
+from urllib3 import request
+from .services.prediction_service import PredictionService
+from django.views.decorators.csrf import csrf_exempt
+import csv
+
+from .models import UserProfile, Recommendation, Prediction
+from .services.eeg_service import EEGService
 
 # Create your views here.
+
+MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'models_out', model_name='xgboost')
 
 def email_entry(request):
     """Landing page for email entry"""
@@ -476,3 +491,114 @@ def onboarding_view(request):
     }
     
     return render(request, 'onboarding.html', context)
+
+@csrf_exempt
+def prediction_view(request):
+    """Generates the live preditictions for EEG data streamed from the device"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    #Live prediction integration
+    try:
+        data = json.loads(request.body)
+        rows = data.get('rows', [])
+
+        if not rows:
+            return JsonResponse({'error': 'No rows provided'}, status = 400)
+
+        user_profile = UserProfile.objects.get(email=user_email)
+
+        result = MODEL_SERVICE.run(rows)
+        if result.get('ok') == False:
+            return JsonResponse(result, status=400)
+        
+    except Exception as e:
+        print(f'Error in prediction view: {e}')
+        return JsonResponse({'error': str(e)}, status = 500)
+
+EEGSERVICE = EEGService()  
+@csrf_exempt
+def start_live_eeg_view(request):
+    """Endpoint will recieve live EEG data from the device and return the predicted labels for each window of data"""
+    print("EEG View Hit")
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    
+    try:
+        
+        session_result = EEGSERVICE.start(user_email)
+        status=200 if session_result.get('ok') else 400
+        return JsonResponse(session_result, status=status)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def stop_live_eeg_view(request):
+    """Endpoint to stop live EEG streaming and return the final predictions for the session"""
+    print("Stopping EEG session")
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        session_result = EEGSERVICE.stop()
+        rows = session_result.get('rows', [])
+        prediction_result = MODEL_SERVICE.run(rows) 
+        
+        return JsonResponse({
+            'ok': True,
+            'prediction_result': prediction_result,
+            'session_id': session_result.get('session_id'),
+            'samples_collected': len(rows)
+
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+    
+
+def upload_csv_view(request):
+    """Upload csv online and recvieve predictions for it"""
+
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        file = request.FILES['csv_file']
+        try:
+            rows = []
+            dfile = file.read().decode('utf-8').splitlines()
+            reader = csv.reader(dfile)
+            next(reader)
+
+            for row in reader:
+                rows.append([float(x) for x in row])
+            result = MODEL_SERVICE.run(rows)
+
+            return JsonResponse(result)
+        
+        except Exception as e:
+            print(f'Error processsing uploaded csv: {e}')
+            return JsonResponse({'error': str(e)}, status=500)
+    return render(request, 'upload_csv.html')
+
+def test_csv():
+    print("Running test_csv...")  # add this
+
+    rows = []
+    with open(r"C:\Users\binom\OneDrive\Desktop\KeystoneProject\MCS_Capstone\dataset\our_data\areeba_new\areeba_concentrating_3min.csv") as f:
+        reader = csv.reader(f)
+        next(reader)
+        for row in reader:
+            rows.append([float(x) for x in row])
+
+    result = MODEL_SERVICE.run(rows)
+    print("RESULT:", result)
+
+def recommendation_view(request):
+    """Generate Recommendations based on user profile and focus data for each session"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    
+
+
+

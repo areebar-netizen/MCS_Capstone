@@ -21,7 +21,7 @@
 
         <!-- Session Controls -->
         <div class="session-controls">
-            <button class="btn-primary btn-start" id="startSessionBtn">
+            <button class="btn-primary btn-start" id="startSessionBtn" onclick = "startEEGsession()">
                 <span>Start Focus Session</span>
             </button>
         </div>
@@ -47,8 +47,41 @@
             </div>
             <div class="session-controls">
                 <button class="btn-secondary" id="pauseBtn">Pause</button>
-                <button class="btn-danger" id="endBtn">End Session</button>
+                <button type = "button" class="btn-danger" id="endBtn" onclick = " stopEEGsession()">End Session</button>
             </div>
+
+            
+        </div>
+        <div class = "session-controls">
+            <pre id = "sessionOutput"></pre>
         </div>
     </div>
 </div>
+
+<script>
+    //Collects live eeg data
+    async function startEEGsession() {
+        console.log("starting EEG session")
+        const res = await fetch('/start_eeg/', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await res.json();
+        console.log(data)
+        document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
+    }
+    async function stopEEGsession() {
+        console.log("Ending EEG session")
+        const res = await fetch('/stop_eeg/', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        const data = await res.json();
+        console.log(data)
+        document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
+    }
+</script>

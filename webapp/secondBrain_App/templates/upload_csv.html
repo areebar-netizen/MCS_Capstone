@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Upload CSV</title>
+    </head>
+    <body>
+        <h1>Upload EEG CSV</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="csv_file" accept=".csv" required>
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if error %}
+        <p style="color:red;"><strong>Error:</strong> {{ error }}</p>
+    {% endif %}
+
+    {% if result %}
+        <h2>Prediction Result</h2>
+        <p><strong>Predicted label:</strong> {{ result.predicted_label }}</p>
+        <p><strong>Confidence:</strong> {{ result.confidence }}</p>
+        <p><strong>Windows:</strong> {{ result.n_windows }}</p>
+        <p><strong>Total seconds:</strong> {{ result.total_seconds }}</p>
+        <p><strong>Relaxed seconds:</strong> {{ result.relaxed_seconds }}</p>
+        <p><strong>Neutral seconds:</strong> {{ result.neutral_seconds }}</p>
+        <p><strong>Concentrating seconds:</strong> {{ result.concentrating_seconds }}</p>
+    {% endif %}
+</body>
+</html>

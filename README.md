@@ -160,6 +160,7 @@ pip install -r requirements.txt
 
 ## Database Setup (PostgreSQL)
 
+
 ### Step 1: Install PostgreSQL
 ```bash
 # macOS
@@ -169,6 +170,15 @@ brew services start postgresql
 # Ubuntu/Debian
 sudo apt-get install postgresql postgresql-contrib
 sudo systemctl start postgresql
+
+#Windows
+#Cmd Line
+choco install postgresql --params '/Password:your_password'
+
+# Regular Installation
+https://www.postgresql.org/download/windows/
+
+#Finish installation wizard instructions...
 ```
 
 ### Step 2: Create Database
@@ -181,6 +191,13 @@ createdb -h localhost -U postgres secondbrain
 # CREATE USER your_username WITH PASSWORD 'your_password';
 # GRANT ALL PRIVILEGES ON DATABASE secondbrain TO your_username;
 # \q
+
+#Or on pgAdmin webapp
+```
+## Step 1: Add New Server
+## Step 2: Give Server any name
+## Step 3: Click Connection tab and type in localhost. user/username should ne postgres and password should be the same password you put when installing PostgreSQL. Then save the server.
+## Step 4: Right click on server and create a new database, name it secondBrain
 ```
 
 ### Step 3: Configure Environment
