@@ -9,6 +9,7 @@ from celery import shared_task
 from django.conf import settings
 import pandas as pd
 import numpy as np
+from django.core.cache import cache
 
 # Add project root and core_engine to path
 ROOT = Path(__file__).resolve().parents[2]
@@ -158,7 +159,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         streamer.start_recording()
         
         # Initialize prediction service
-        models_dir = ROOT / 'core_engine' / 'artifacts'
+        models_dir = ROOT / 'core_engine' / 'artifacts' / 'models_out'
         prediction_service = PredictionService(models_dir=models_dir, model_name='xgboost')
         
         # Initialize EEG acquirer
@@ -180,7 +181,11 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         print(f"   End: {end_time.strftime('%H:%M:%S')}")
         
         # Main processing loop - run every second
+        stop_key = f"stop eeg task{self.request.id}"
         while datetime.now() < end_time:
+            # if cache.get(stop_key, False):
+            #     print(f"stop requested{self.request.id}")
+            #     break
             try:
                 # Get buffer data
                 rows = acq.get_buffer_copy()
@@ -232,6 +237,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                         focus_score=focus_score,
                         elapsed_seconds=(datetime.now() - start_time).total_seconds()
                     )
+                    
                     
                     print(f"   {current_time} | {predicted_label:12} | {confidence:.2f} | {focus_score:.2f}")
                 
