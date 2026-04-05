@@ -34,7 +34,7 @@ class RealtimeEEGManager {
                 // Start real-time status monitoring
                 this.startRealtimeMonitoring();
                 
-                console.log('🧠 Real-time EEG session started:', result);
+                console.log('Real-time EEG session started:', result);
                 this.updateUI('initializing', result);
                 return result;
             } else {
@@ -151,7 +151,7 @@ class RealtimeEEGManager {
                 this.isRealtimeActive = false;
                 this.stopRealtimeMonitoring();
                 
-                console.log('🛑 Real-time EEG session stopped:', result);
+                console.log('Real-time EEG session stopped:', result);
                 this.showFinalResults(result);
                 return result;
             } else {
@@ -171,7 +171,7 @@ class RealtimeEEGManager {
             
             resultsContainer.innerHTML = `
                 <div class="session-summary">
-                    <h3>📊 Session Summary</h3>
+                    <h3>Session Summary</h3>
                     <div class="summary-grid">
                         <div class="summary-item">
                             <label>Session ID:</label>
@@ -193,15 +193,15 @@ class RealtimeEEGManager {
                             <label>Time Distribution:</label>
                             <div class="time-distribution">
                                 <div class="time-item relaxed">
-                                    <span>😌 Relaxed:</span>
+                                    <span>Relaxed:</span>
                                     <span>${Math.floor(summary.relaxed_seconds)}s</span>
                                 </div>
                                 <div class="time-item neutral">
-                                    <span>😐 Neutral:</span>
+                                    <span>Neutral:</span>
                                     <span>${Math.floor(summary.neutral_seconds)}s</span>
                                 </div>
                                 <div class="time-item concentrating">
-                                    <span>🎯 Concentrating:</span>
+                                    <span>Concentrating:</span>
                                     <span>${Math.floor(summary.concentrating_seconds)}s</span>
                                 </div>
                             </div>
@@ -224,9 +224,9 @@ class RealtimeEEGManager {
 
     // Get focus state text from score
     getFocusStateText(score) {
-        if (score <= 0.4) return '😌 Relaxed';
-        if (score <= 0.7) return '😐 Neutral';
-        return '🎯 Concentrating';
+        if (score <= 0.4) return 'Relaxed';
+        if (score <= 0.7) return 'Neutral';
+        return 'Concentrating';
     }
 
     // Get progress bar class based on focus level
