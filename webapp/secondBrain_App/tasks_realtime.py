@@ -66,7 +66,7 @@ class EEGDataStreamer:
                 self.csv_writer.writerow(header)
                 self.is_writing = True
                 
-                print(f"📁 Started CSV recording: {self.csv_file_path}")
+                print(f"Started CSV recording: {self.csv_file_path}")
     
     def write_data_point(self, timestamp, focus_state, confidence, probabilities):
         """Write a single data point to CSV"""
@@ -92,7 +92,7 @@ class EEGDataStreamer:
             if self.csv_file:
                 self.csv_file.close()
                 self.is_writing = False
-                print(f"📁 Stopped CSV recording: {self.csv_file_path}")
+                print(f"Stopped CSV recording: {self.csv_file_path}")
 
 
 def validate_eeg_connection():
@@ -115,7 +115,7 @@ def validate_eeg_connection():
         acq.stop()
         
         if len(buffer) > 10:  # Got some data
-            print("✅ EEG device connection validated")
+            print("EEG device connection validated")
             return True, None
         else:
             return False, "EEG Device not connected. Please check your hardware."
@@ -136,7 +136,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         session_id = f"{user_prefix}_{timestamp}"
         csv_output_path = ROOT / 'dataset' / 'our_data' / f'{user_prefix}_new' / f'{session_id}.csv'
         
-        print(f"🧠 Starting Real-time EEG Inference")
+        print(f"Starting Real-time EEG Inference")
         print(f"   User: {user_email}")
         print(f"   Duration: {duration_minutes} minutes")
         print(f"   Session ID: {session_id}")
@@ -175,7 +175,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         data_points = []
         focus_scores = []
         
-        print(f"📊 Starting real-time inference...")
+        print(f"Starting real-time inference...")
         print(f"   Start: {start_time.strftime('%H:%M:%S')}")
         print(f"   End: {end_time.strftime('%H:%M:%S')}")
         
@@ -238,7 +238,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 time.sleep(1.0)  # Process every second
                 
             except Exception as e:
-                print(f"⚠️  Error in processing loop: {e}")
+                print(f"Error in processing loop: {e}")
                 time.sleep(1.0)
                 continue
         
@@ -316,7 +316,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         }
         
     except Exception as e:
-        print(f"❌ Error in real-time inference: {e}")
+        print(f"Error in real-time inference: {e}")
         return {
             'status': 'error',
             'session_id': session_id if 'session_id' in locals() else 'unknown',
@@ -347,14 +347,14 @@ def save_session_summary(summary_data):
             data_points_count=summary_data['data_points_count']
         )
         
-        print(f"💾 Session summary saved to database: {session_summary.session_id}")
+        print(f"Session summary saved to database: {session_summary.session_id}")
         return session_summary
         
     except UserProfile.DoesNotExist:
-        print(f"❌ User profile not found: {summary_data['user_email']}")
+        print(f"User profile not found: {summary_data['user_email']}")
         return None
     except Exception as e:
-        print(f"❌ Error saving session summary: {e}")
+        print(f"Error saving session summary: {e}")
         return None
 
 
