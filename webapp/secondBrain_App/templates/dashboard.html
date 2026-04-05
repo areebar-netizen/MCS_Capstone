@@ -246,23 +246,9 @@ function startTimer(duration) {
     }, 1000);
 }
 
-// Pause/End session controls
+// End session controls
 document.addEventListener('DOMContentLoaded', function() {
-    const pauseBtn = document.getElementById('pauseBtn');
     const endBtn = document.getElementById('endBtn');
-    
-    if (pauseBtn) {
-        pauseBtn.addEventListener('click', function() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                this.textContent = 'Resume';
-            } else {
-                startTimer(Math.floor(timeRemaining / 60));
-                this.textContent = 'Pause';
-            }
-        });
-    }
     
     if (endBtn) {
         endBtn.addEventListener('click', function() {
@@ -279,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (document.getElementById('startSessionBtn')) {
                 document.getElementById('startSessionBtn').style.display = 'block';
             }
-            if (pauseBtn) pauseBtn.textContent = 'Pause';
             
             alert('Session ended!');
         });

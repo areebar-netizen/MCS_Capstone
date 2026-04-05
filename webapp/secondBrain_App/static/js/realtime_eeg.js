@@ -137,7 +137,8 @@ class RealtimeEEGManager {
     // Stop real-time session
     async stopRealtimeSession() {
         try {
-            const response = await fetch('/stop_realtime_eeg/', {
+            // Send stop signal to live_predict.py
+            const response = await fetch('/end_session/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -147,18 +148,23 @@ class RealtimeEEGManager {
 
             const result = await response.json();
             
-            if (result.ok) {
+            if (result.success) {
+                // Stop monitoring
                 this.isRealtimeActive = false;
                 this.stopRealtimeMonitoring();
                 
-                console.log('Real-time EEG session stopped:', result);
-                this.showFinalResults(result);
+                // Wait a moment for the ML script to save data
+                setTimeout(() => {
+                    // Redirect to session summary or dashboard
+                    window.location.href = '/dashboard/';
+                }, 2000);
+                
                 return result;
             } else {
-                throw new Error(result.error || 'Failed to stop real-time session');
+                throw new Error(result.error || 'Failed to end session');
             }
         } catch (error) {
-            console.error('Error stopping real-time EEG session:', error);
+            console.error('Error ending EEG session:', error);
             throw error;
         }
     }
