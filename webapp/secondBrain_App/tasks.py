@@ -8,6 +8,7 @@ from celery import shared_task
 from django.conf import settings
 import pandas as pd
 import numpy as np
+from django.core.cache import cache
 
 # Add project root and core_engine to path
 ROOT = Path(__file__).resolve().parents[2]
@@ -57,7 +58,7 @@ def run_live_inference(self, user_email, duration_minutes=1):
         raw_output_path.parent.mkdir(parents=True, exist_ok=True)
         
         # Initialize prediction service
-        models_dir = ROOT / 'core_engine' / 'artifacts'
+        models_dir = ROOT / 'core_engine' / 'artifacts' / 'models_out'
         prediction_service = PredictionService(models_dir=models_dir, model_name='xgboost')
         
         # Initialize EEG acquirer (non-GUI version)
@@ -81,8 +82,12 @@ def run_live_inference(self, user_email, duration_minutes=1):
         
         print("EEG streaming started. Processing predictions...")
         
+        stop_key = f"stop eeg task{self.request.id}"
         # Main processing loop
         while time.time() - start_time < duration_seconds:
+            # if cache.get(stop_key, False):
+            #     print(f"Stop requested for task {self.request.id}")
+            #     break
             try:
                 # Get buffer data
                 rows = acq.get_buffer_copy()
@@ -96,9 +101,11 @@ def run_live_inference(self, user_email, duration_minutes=1):
                 # Process predictions
                 result = prediction_service.run(rows, nsamples=150, period=1.0, cols_to_ignore=-1)
                 
-                if result.get('ok'):
-                    all_predictions.append(result)
-                    print(f"Prediction update: {result.get('predicted_label')} (confidence: {result.get('confidence'):.2f})")
+                if result.get('ok') is False:
+                    time.sleep(0.5)
+                    continue
+                all_predictions.append(result)
+                print(f"Prediction update: {result.get('predicted_label')} (confidence: {result.get('confidence'):.2f})")
                 
                 time.sleep(0.5)  # Update twice per second
                 

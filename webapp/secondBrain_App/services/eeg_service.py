@@ -7,7 +7,7 @@ from secondBrain_App.models import UserProfile, Recommendation
 from secondBrain_App.services.prediction_service import PredictionService
 from pathlib import Path
 
-MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts', model_name='xgboost')
+MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts' / 'models_out', model_name='xgboost')
 
 class EEGService:
     """ Manages Live EEG Streaming and buffering as a background process"""

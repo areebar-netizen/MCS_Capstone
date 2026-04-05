@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.utils import timezone
 from django.conf import settings
+from django.core.cache import cache
 import random
 import string
 import json
@@ -22,7 +23,7 @@ from .services.eeg_service import EEGService
 
 # Create your views here.
 
-MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts', model_name='xgboost')
+MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts' / 'models_out', model_name='xgboost')
 
 def email_entry(request):
     """Landing page for email entry"""
@@ -530,7 +531,7 @@ def start_realtime_eeg_view(request):
     try:
         # Get duration from request
         data = json.loads(request.body) if request.body else {}
-        duration = data.get('duration', 1)
+        duration = int(data.get('duration', 1))
         
         # Trigger real-time Celery task
         task = run_live_inference_streaming.delay(user_email, duration)
@@ -539,6 +540,7 @@ def start_realtime_eeg_view(request):
         request.session['current_eeg_task_id'] = task.id
         request.session['realtime_session_active'] = True
         request.session.modified = True
+
         
         return JsonResponse({
             'ok': True,
@@ -548,6 +550,8 @@ def start_realtime_eeg_view(request):
             'session_type': 'realtime',
             'status': 'initializing'
         })
+
+        
         
     except Exception as e:
         print(f'Error starting real-time EEG task: {e}')
@@ -643,10 +647,14 @@ def start_live_eeg_view(request):
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=400)
     
+    task_id = request.session.get('current_eeg_task_id')
+    #cache.set(f"stop eeg task{task_id}", False, timeout=60*60)
+   
+
     try:
         # Get duration from request (default to 1 minute)
         data = json.loads(request.body) if request.body else {}
-        duration = data.get('duration', 1)
+        duration = int(data.get('duration', 1))
         
         # Trigger Celery task
         task = run_live_inference.delay(user_email, duration)
@@ -681,6 +689,7 @@ def stop_live_eeg_view(request):
         if not task_id:
             return JsonResponse({'error': 'No active EEG task found'}, status=400)
         
+        
         # Check task status
         task_result = get_task_status(task_id)
         
@@ -697,11 +706,13 @@ def stop_live_eeg_view(request):
             })
         elif task_result['status'] == 'PENDING':
             # Task still running
+            result = task_result['result']
+            #cache.set(f"stop eeg task{task_id}", True, timeout=60*60)  # Reset stop flag for next check
             return JsonResponse({
                 'ok': True,
                 'status': 'processing',
                 'message': 'EEG inference still in progress',
-                'task_id': task_id
+                'task_id': task_id,
             })
         elif task_result['status'] == 'FAILURE':
             # Task failed

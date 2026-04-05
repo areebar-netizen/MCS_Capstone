@@ -102,7 +102,7 @@ def load_model(models_dir: Path, model_name: str):
     
     # Load enhanced artifacts
     try:
-        artifacts_dir = Path(models_dir).parent.parent / 'dataset' / 'temp_logs' / 'preprocessing_artifacts'
+        artifacts_dir = Path(models_dir).parent / 'preprocessing_artifacts'
         scaler, feature_info = load_preprocessing_artifacts(artifacts_dir)
     except Exception:
         scaler, feature_info = None, None
