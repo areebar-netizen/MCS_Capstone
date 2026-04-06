@@ -211,7 +211,7 @@ body {
 
 /* Selected State - Applies the Figma Gradient */
 .btn-selected {
-    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    background: linear-gradient(135deg,rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34)) !important;
     color: white !important;
     border: transparent !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
