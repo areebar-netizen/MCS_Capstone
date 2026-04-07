@@ -106,27 +106,28 @@
                         name="{{ question.id }}" 
                         value="{{ saved_data|get_saved_value:question.id|default:'' }}">
                 </div>
-            </div>
-            
-            {% elif question.type == 'checkbox' %}
-            <div class="checkbox-group-container">
-                {% for option in question.options %}
-                <div class="checkbox-row">
-                    <input 
-                        type="checkbox" 
-                        id="chk-{{ question.id }}-{{ forloop.counter0 }}" 
-                        name="{{ question.id }}" 
-                        value="{{ forloop.counter0 }}"
-                        class="hidden-input"
-                        {% if forloop.counter0|stringformat:'s' in saved_data|get_saved_value:question.id %}checked{% endif %}
-                    >
-                    <label for="chk-{{ question.id }}-{{ forloop.counter0 }}" class="custom-label">
-                        <span class="checkbox-box"></span> <span class="label-text">{{ option }}</span>
-                    </label>
+                
+                {% elif question.type == 'checkbox' %}
+                <div class="checkbox-group-container">
+                    {% for option in question.options %}
+                    <div class="checkbox-row">
+                        <label for="chk-{{ question.id }}-{{ forloop.counter0 }}" class="custom-label">
+                            <input 
+                                type="checkbox" 
+                                id="chk-{{ question.id }}-{{ forloop.counter0 }}" 
+                                name="{{ question.id }}" 
+                                value="{{ forloop.counter0 }}"
+                                class="hidden-input"
+                                {% if forloop.counter0|stringformat:'s' in saved_data|get_saved_value:question.id %}checked{% endif %}
+                            >
+                            <span class="label-text">{{ option }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+                
+                {% endif %}
             </div>
-            {% endif %}
             {% endfor %}
             
             <!-- Hidden input for radio button tracking -->
@@ -275,8 +276,8 @@
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                const buttonGroupName = this.name; // e.g., "btn-group-academic_level"
-                const questionId = buttonGroupName.replace('btn-group-', ''); // Extract "academic_level"
+                const buttonGroupName = this.name;
+                const questionId = buttonGroupName.replace('btn-group-', '');
                 const sameGroupButtons = form.querySelectorAll(`button[name="${buttonGroupName}"]`);
                 
                 if (!this.classList.contains('btn-selected')) {
@@ -288,7 +289,6 @@
                     this.classList.remove('btn-deselected');
                     this.classList.add('btn-selected');
                     
-                    // Find the specific hidden input for THIS question
                     const specificHiddenInput = document.getElementById(`hidden-${questionId}`);
                     if (specificHiddenInput) {
                         specificHiddenInput.value = this.value;
@@ -309,15 +309,13 @@
             const valueDisplay = document.getElementById(`${slider.id}-value`);
             slider.addEventListener('input', function() {
                 valueDisplay.textContent = this.value;
-                validateForm(); // Add validation trigger
+                validateForm();
             });
         });
         
         // Handle continue button
         continueBtn.addEventListener('click', function() {
             if (this.disabled) return;
-            
-            // Submit form
             form.submit();
         });
         
