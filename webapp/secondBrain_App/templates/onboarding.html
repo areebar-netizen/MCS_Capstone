@@ -40,7 +40,11 @@
             <input type="hidden" name="current_step" value="{{ current_step|default:1 }}">
             
             {% for question in section.questions %}
+            {% if question.id == 'caffeine_types' or question.id == 'caffeine_servings' or question.id == 'caffeine_timing' %}
+            <div class="form-group caffeine-dependent" style="display: none;">
+            {% else %}
             <div class="form-group">
+            {% endif %}
                 <label for="{{ question.id }}" class="form-label">{{ question.label }}</label>
                 
                 {% if question.type == 'text' %}
@@ -60,7 +64,7 @@
                         type="number" 
                         id="{{ question.id }}" 
                         name="{{ question.id }}" 
-                        class="form-input" 
+                        class="form-input {% if question.id == 'caffeine_servings' %}caffeine-detail-input{% endif %}"
                         placeholder="{{ question.placeholder|default:'' }}"
                         {% if question.min %}min="{{ question.min }}"{% endif %}
                         {% if question.max %}max="{{ question.max }}"{% endif %}
@@ -95,7 +99,7 @@
                         type="button" 
                         name="btn-group-{{ question.id }}"
                         value="{{ forloop.counter0 }}"
-                        class="level-btn {% if saved_data|get_saved_value:question.id == forloop.counter0|stringformat:'s' %}btn-selected{% else %}btn-deselected{% endif %}"
+                        class="level-btn {% if saved_data|get_saved_value:question.id == forloop.counter0|stringformat:'s' %}btn-selected{% else %}btn-deselected{% endif %} {% if question.id == 'consumes_caffeine' %}caffeine-radio-btn{% endif %}"
                     >
                         {{ option }}
                     </button>
@@ -117,7 +121,7 @@
                                 id="chk-{{ question.id }}-{{ forloop.counter0 }}" 
                                 name="{{ question.id }}" 
                                 value="{{ forloop.counter0 }}"
-                                class="hidden-input"
+                                class="hidden-input {% if question.id == 'caffeine_types' %}caffeine-detail-checkbox{% endif %}"
                                 {% if forloop.counter0|stringformat:'s' in saved_data|get_saved_value:question.id %}checked{% endif %}
                             >
                             <span class="label-text">{{ option }}</span>
@@ -183,6 +187,22 @@
             let isValid = true;
             console.log('Starting validation...');
             
+            // MASTER TOGGLE: Get caffeine consumption state
+            const caffeineConsumption = document.getElementById('hidden-consumes_caffeine');
+            const consumesCaffeine = caffeineConsumption && caffeineConsumption.value === '0'; // 0 = "Yes"
+            const userSelectedNoForCaffeine = caffeineConsumption && caffeineConsumption.value === '1'; // 1 = "No"
+            
+            console.log('CAFFEINE MASTER TOGGLE:', {
+                caffeineValue: caffeineConsumption ? caffeineConsumption.value : 'not found',
+                consumesCaffeine: consumesCaffeine,
+                userSelectedNoForCaffeine: userSelectedNoForCaffeine
+            });
+            
+            // CRITICAL SHORT-CIRCUIT: If user selected "No" for caffeine, auto-pass all caffeine validation
+            if (userSelectedNoForCaffeine) {
+                console.log('SHORT-CIRCUIT ACTIVATED: User selected No for caffeine - auto-passing caffeine validation');
+            }
+            
             // Check text fields
             const textFields = form.querySelectorAll('input[type="text"]');
             textFields.forEach(field => {
@@ -192,9 +212,15 @@
                 }
             });
             
-            // Check number fields
+            // Check number fields - with caffeine short-circuit
             const numberFields = form.querySelectorAll('input[type="number"]');
             numberFields.forEach(field => {
+                // SHORT-CIRCUIT: Auto-pass caffeine_servings if user selected No
+                if (field.name === 'caffeine_servings' && userSelectedNoForCaffeine) {
+                    console.log('SHORT-CIRCUIT: Auto-passing caffeine_servings - user selected No');
+                    return; // Skip validation for this field
+                }
+                
                 console.log('Number field:', field.name, 'value:', field.value, 'valid:', !!field.value.trim());
                 if (!field.value.trim()) {
                     isValid = false;
@@ -216,18 +242,15 @@
             console.log('All buttons found:', allButtons.length);
             
             allButtons.forEach((button, index) => {
-                console.log(`Button ${index}:`, {
-                    name: button.name,
-                    text: button.textContent.trim(),
-                    hasName: !!button.name,
-                    nameLength: button.name ? button.name.length : 0,
-                    isContinue: button.id === 'continue-btn'
-                });
-                
                 // Skip buttons without names (like continue button)
                 if (!button.name || button.name.trim() === '') {
-                    console.log('Skipping button without name:', button.textContent.trim());
                     return;
+                }
+                
+                // SHORT-CIRCUIT: Auto-pass caffeine_timing radio if user selected No
+                if (button.name === 'btn-group-caffeine_timing' && userSelectedNoForCaffeine) {
+                    console.log('SHORT-CIRCUIT: Auto-passing caffeine_timing - user selected No');
+                    return; // Skip this entire button group
                 }
                 
                 if (!buttonGroups[button.name]) {
@@ -245,7 +268,7 @@
                 }
             });
             
-            // Check checkbox groups
+            // Check checkbox groups - with caffeine short-circuit
             const checkboxGroups = {};
             form.querySelectorAll('.hidden-input[type="checkbox"]').forEach(checkbox => {
                 const groupName = checkbox.name;
@@ -256,6 +279,12 @@
             });
             
             Object.keys(checkboxGroups).forEach(groupName => {
+                // SHORT-CIRCUIT: Auto-pass caffeine_types if user selected No
+                if (groupName === 'caffeine_types' && userSelectedNoForCaffeine) {
+                    console.log('SHORT-CIRCUIT: Auto-passing caffeine_types - user selected No');
+                    return; // Skip validation for this group
+                }
+                
                 const hasSelectedCheckbox = checkboxGroups[groupName].some(checked => checked);
                 console.log('Checkbox group:', groupName, 'has selection:', hasSelectedCheckbox);
                 if (!hasSelectedCheckbox) {
@@ -265,6 +294,13 @@
             
             console.log('Final validation result:', isValid);
             continueBtn.disabled = !isValid;
+            
+            // Visual verification log
+            console.log('Continue button state:', {
+                disabled: continueBtn.disabled,
+                isValid: isValid,
+                userSelectedNoForCaffeine: userSelectedNoForCaffeine
+            });
         }
         
         // Add event listeners for real-time validation
@@ -312,6 +348,102 @@
                 validateForm();
             });
         });
+        
+        // Handle caffeine conditional visibility
+        function updateCaffeineDetailsVisibility() {
+            const caffeineRadioButtons = document.querySelectorAll('.caffeine-radio-btn');
+            const caffeineDependentElements = document.querySelectorAll('.caffeine-dependent');
+            
+            if (caffeineRadioButtons.length > 0) {
+                caffeineRadioButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const wasSelected = this.classList.contains('btn-selected');
+                        const isYes = this.textContent.trim() === 'Yes';
+                        const isNo = this.textContent.trim() === 'No';
+                        
+                        console.log('Caffeine button clicked:', {
+                            text: this.textContent.trim(),
+                            isYes: isYes,
+                            isNo: isNo,
+                            wasSelected: wasSelected
+                        });
+                        
+                        if (isYes) {
+                            // Show caffeine-dependent elements
+                            caffeineDependentElements.forEach(element => {
+                                element.style.display = 'block';
+                            });
+                            console.log('Showing caffeine-dependent elements');
+                        } else if (isNo) {
+                            // Hide caffeine-dependent elements and reset values
+                            caffeineDependentElements.forEach(element => {
+                                element.style.display = 'none';
+                            });
+                            console.log('Hiding caffeine-dependent elements');
+                            resetCaffeineDetails();
+                        }
+                        
+                        // CRITICAL: Ensure validateForm() is called after resetCaffeineDetails completes
+                        setTimeout(() => {
+                            console.log('Triggering validation after caffeine state change');
+                            validateForm();
+                        }, 50); // Small delay to ensure DOM updates complete
+                    });
+                });
+                
+                // Check initial state on page load
+                const selectedCaffeineBtn = document.querySelector('.caffeine-radio-btn.btn-selected');
+                if (selectedCaffeineBtn && selectedCaffeineBtn.textContent.trim() === 'Yes') {
+                    caffeineDependentElements.forEach(element => {
+                        element.style.display = 'block';
+                    });
+                    console.log('Initial state: Showing caffeine-dependent elements');
+                } else if (selectedCaffeineBtn && selectedCaffeineBtn.textContent.trim() === 'No') {
+                    caffeineDependentElements.forEach(element => {
+                        element.style.display = 'none';
+                    });
+                    console.log('Initial state: Hiding caffeine-dependent elements');
+                }
+            }
+        }
+        
+        function resetCaffeineDetails() {
+            console.log('Resetting caffeine details...');
+            
+            // Reset checkboxes and clear hidden input values
+            const caffeineCheckboxes = document.querySelectorAll('.caffeine-detail-checkbox');
+            caffeineCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Clear caffeine_types hidden input
+            const caffeineTypesHidden = document.getElementById('hidden-caffeine_types');
+            if (caffeineTypesHidden) {
+                caffeineTypesHidden.value = '';
+            }
+            
+            // Reset number input and clear hidden input
+            const servingsInput = document.querySelector('.caffeine-detail-input');
+            if (servingsInput) {
+                servingsInput.value = '';
+            }
+            
+            // Reset radio buttons for timing and clear hidden input
+            const timingRadios = document.querySelectorAll('button[name="btn-group-caffeine_timing"]');
+            timingRadios.forEach(radio => {
+                radio.classList.remove('btn-selected');
+                radio.classList.add('btn-deselected');
+            });
+            const timingHidden = document.getElementById('hidden-caffeine_timing');
+            if (timingHidden) {
+                timingHidden.value = '';
+            }
+            
+            console.log('Caffeine details reset completed');
+        }
+        
+        // Initialize caffeine visibility
+        updateCaffeineDetailsVisibility();
         
         // Handle continue button
         continueBtn.addEventListener('click', function() {
