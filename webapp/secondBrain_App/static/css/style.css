@@ -1,0 +1,1361 @@
+/* CSS Variables - Figma Design System */
+:root {
+    /* Colors from Figma */
+    --bg-primary: #F6F2F0;
+    --bg-card: #F1E7DD;
+    --bg-card-overlay: rgba(241, 231, 221, 0.2);
+    --bg-white-overlay: rgba(255, 255, 255, 0.4);
+    --bg-white: #FFFFFF;
+    
+    /* Text Colors */
+    --text-primary: #000000;
+    --text-secondary: rgba(0, 0, 0, 0.7);
+    --text-tertiary: rgba(0, 0, 0, 0.6);
+    --text-placeholder: rgba(0, 0, 0, 0.4);
+    
+    /* Typography */
+    --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-size: 16px; /*checkbox size*/
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s ease;
+}
+
+/* Global Styles */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-primary);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    font-weight: var(--font-weight-normal);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    background-color: #F6F2F0;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.header-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 0.25rem;
+}
+
+.header-greeting {
+    color: rgba(0, 0, 0, 0.8);
+    font-size: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+
+/* Dashboard Grid System */
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.grid-row {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+}
+
+.col-span-12 { grid-column: span 12; }
+.col-span-8 { grid-column: span 8; }
+.col-span-6 { grid-column: span 6; }
+.col-span-4 { grid-column: span 4; }
+
+/* Card Styles */
+.card {
+    background: rgba(241, 231, 221, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 145, 104, 0.7);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.card-header {
+    margin-bottom: 1.5rem;
+}
+
+.card-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 0.5rem;
+}
+
+.card-subtitle {
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 0.875rem;
+}
+
+.card-content {
+    color: #000000;
+}
+
+/* Focus Track Setup */
+.focus-track-setup .duration-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #000000;
+}
+
+.duration-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.duration-btn {
+    padding: 0.75rem;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    background: #F6F2F0;
+    color: #000000;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.duration-btn.btn-selected {
+    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34));
+    border-color: #FF9168;
+}
+
+.duration-btn.btn-deselected:hover {
+    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34));
+    border-color: rgba(254, 147, 140, 0.8);
+}
+
+.duration-btn.btn-deselected {
+    background: white;
+    border-color: rgba(254, 147, 140, 0.8);
+}
+
+.session-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+/* Base Style for all Onboarding Buttons */
+.button-options button {
+    background: white; /* Default background */
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+    transition: all 0.2s ease;
+}
+
+
+/* Selected State - Applies the Figma Gradient */
+.btn-selected {
+    background: linear-gradient(135deg,rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34)) !important;
+    color: white !important;
+    border: transparent !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.btn-danger {
+    padding: 0.5rem 1rem;
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-deselected {
+    background: #ffffff !important;
+    background-image: none !important; /* This kills any ghost gradients */
+    color: #4b5563 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+/* Active Session Display */
+.active-session {
+    text-align: center;
+}
+
+.timer-display {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 2rem;
+    font-family: 'Courier New', monospace;
+}
+
+.session-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.875rem;
+    color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #000000;
+}
+
+/* User Profile */
+.profile-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.profile-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(241, 231, 221, 0.3);
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.profile-stat:hover {
+    background: rgba(241, 231, 221, 0.5);
+}
+
+.stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 145, 104, 0.1);
+    border-radius: 50%;
+    color: #FF9168;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Study Time Histogram */
+.time-view-toggle {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.view-btn {
+    padding: 0.5rem 1rem;
+    background: #F6F2F0;
+    color: #000000;
+    border: 1px solid rgba(255, 145, 104, 0.3);
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-btn.btn-selected {
+    background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));
+    border-color: #FF9168;
+}
+
+.histogram-view {
+    margin-bottom: 1.5rem;
+}
+
+.time-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.histogram-bars {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    height: 120px;
+    align-items: end;
+}
+
+.bar {
+    height: 32px;
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.bar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.histogram-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* Focus Calendar */
+.calendar-grid {
+    margin-bottom: 1.5rem;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.current-month {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #000000;
+}
+
+.nav-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 145, 104, 0.3);
+    background: #F6F2F0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 145, 104, 0.1);
+}
+
+.weekday-headers {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.calendar-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    border: 1px solid rgba(255, 145, 104, 0.2);
+    border-radius: 0.5rem;
+    background: #F6F2F0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.calendar-day:hover {
+    background: rgba(255, 145, 104, 0.1);
+    border-color: rgba(255, 145, 104, 0.4);
+}
+
+.calendar-day.empty {
+    border: none;
+    background: transparent;
+    cursor: default;
+}
+
+.day-number {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #000000;
+    margin-bottom: 0.25rem;
+}
+
+.focus-emoji {
+    font-size: 1.25rem;
+}
+
+.focus-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.legend-emoji {
+    font-size: 1rem;
+}
+
+/* Progress Tracker */
+.current-level {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 145, 104, 0.1);
+    border-radius: 0.75rem;
+}
+
+.level-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.level-emoji {
+    font-size: 2.5rem;
+}
+
+.level-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #000000;
+}
+
+.progress-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.level-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.level-item.completed {
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.level-item.current {
+    background: rgba(255, 145, 104, 0.1);
+}
+
+.level-item.locked {
+    background: rgba(0, 0, 0, 0.05);
+    opacity: 0.6;
+}
+
+.level-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 200px;
+}
+
+.level-name {
+    font-weight: 600;
+    color: #000000;
+}
+
+.level-range {
+    font-size: 0.875rem;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.level-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.level-progress {
+    height: 100%;
+    background: linear-gradient(to right, #FC814A, #FF9168);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.study-method {
+    margin-top: 2rem;
+}
+
+.method-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #000000;
+}
+
+.method-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(255, 145, 104, 0.05);
+    border: 1px solid rgba(255, 145, 104, 0.2);
+    border-radius: 0.75rem;
+}
+
+.method-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 145, 104, 0.1);
+    border-radius: 50%;
+    color: #FF9168;
+    flex-shrink: 0;
+}
+
+.method-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 0.5rem;
+}
+
+.method-description {
+    color: rgba(0, 0, 0, 0.7);
+    line-height: 1.5;
+}
+
+/* Focus Track History */
+.tab-navigation {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 145, 104, 0.2);
+}
+
+.tab-btn {
+    padding: 0.75rem 1rem;
+    background: transparent;
+    color: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.btn-selected {
+    color: #FF9168;
+    border-bottom-color: #FF9168;
+}
+
+.tab-content {
+    position: relative;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    background: rgba(241, 231, 221, 0.3);
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.session-item:hover {
+    background: rgba(241, 231, 221, 0.5);
+}
+
+.session-info {
+    flex: 1;
+}
+
+.session-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 0.5rem;
+}
+
+.session-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.session-states {
+    display: flex;
+    gap: 1rem;
+}
+
+.state-item {
+    text-align: center;
+    min-width: 80px;
+}
+
+.state-label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 0.25rem;
+}
+
+.state-value {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000000;
+}
+
+/* Brainwave Analysis */
+.brainwave-analysis {
+    margin-bottom: 1.5rem;
+}
+
+.analysis-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #000000;
+}
+
+.onboarding-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    position: relative;
+    overflow: visible;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.brainwave-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.brainwave-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.brainwave-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 80px;
+}
+
+.brainwave-label {
+    font-weight: 600;
+    color: #000000;
+}
+
+.brainwave-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.brainwave-bar {
+    flex: 1;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.brainwave-progress {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.brainwave-progress.delta { background: #a855f7; }
+.brainwave-progress.theta { background: #3b82f6; }
+.brainwave-progress.alpha { background: #22c55e; }
+.brainwave-progress.beta { background: #eab308; }
+.brainwave-progress.gamma { background: #ef4444; }
+
+/* Recommendations */
+.recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.recommendation-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.recommendation-item.success {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.recommendation-item.warning {
+    background: rgba(234, 179, 8, 0.2);
+    border: 1px solid rgba(234, 179, 8, 0.5);
+}
+
+.recommendation-item.info {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.5);
+}
+
+.rec-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.recommendation-item.success .rec-icon { color: #22c55e; }
+.recommendation-item.warning .rec-icon { color: #eab308; }
+.recommendation-item.info .rec-icon { color: #3b82f6; }
+
+.rec-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 0.5rem;
+}
+
+.rec-description {
+    color: rgba(0, 0, 0, 0.7);
+    line-height: 1.5;
+}
+
+/* Profile Snapshot */
+.profile-snapshot {
+    margin-bottom: 1.5rem;
+}
+
+.snapshot-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #000000;
+}
+
+.profile-data {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: rgba(241, 231, 221, 0.3);
+    border-radius: 0.5rem;
+}
+
+.data-label {
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.data-value {
+    font-weight: 600;
+    color: #000000;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .grid-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .col-span-12,
+    .col-span-8,
+    .col-span-6,
+    .col-span-4 {
+        grid-column: span 1;
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .current-level {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .session-item {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .session-states {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .profile-data {
+        grid-template-columns: 1fr;
+    }
+    
+    .focus-legend {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .histogram-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.logo-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background-color:  #F6F2F0;
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    margin-bottom: var(--spacing-md);
+    border: 2px solid rgba(207, 190, 183, 0.3);
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: var(--spacing-md);
+    line-height: 1.2;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.4;
+}
+
+/* Progress Bar */
+.progress-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+}
+
+.progress-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 4px;
+    background-color: var(--bg-white-overlay);
+    border-radius: 2px;
+    margin: 0 var(--spacing-md);
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, #fe938c, #ffffff);
+    border-radius: 2px;
+    transition: all 0.3s ease-out;
+    transition: width 0.3s ease;
+    width: 0%; /* Default width, will be set by JavaScript */
+}
+
+.progress-percentage {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+/* Form Card */
+.form-card {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: var(--spacing-lg);
+    backdrop-filter: blur(10px);
+}
+
+.section-title {
+    font-size: 18px; 
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Form Inputs */
+.form-group {
+    margin-bottom: var(--spacing-lg);
+    position: relative;
+    width: 100%;
+}
+
+.form-label {
+    display: block;
+    font-size: 18px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size);
+    color: var(--text-primary);
+    background-color: var(--bg-white);
+    transition: var(--transition-smooth);
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #FF4757;
+    box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
+}
+
+.form-input::placeholder {
+    color: var(--text-placeholder);
+}
+
+/* Age Input with Dropdown */
+.age-input-wrapper {
+    position: relative;
+}
+
+.age-input-wrapper::after {
+    content: '▼';
+    position: absolute;
+    right: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-placeholder);
+    pointer-events: none;
+}
+
+/* Figma Design Specifications - Unified Button Style */
+.button-options button,
+.checkbox-options label {
+    /* Deselected/Inactive State */
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    color: #000000 !important;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    width: 100%;
+    height: 48px;
+    transition: all 0.3s ease;
+    text-align: left;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+    /*Button font size*/
+    /*font-family: var(--font-family);*/ 
+    font-size: 16px; /* Increase this value */
+    font-weight: var(--font-weight-medium);
+}
+
+.button-options button:hover {
+    /* Hover State (Inactive Buttons) */
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    color: #000000 !important;
+}
+
+/* Button Selected State */
+.button-options button.btn-selected {
+    /* Selected/Active State */
+    background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3)) !important;
+    border: 2px solid #FF9168 !important;
+    color: #000000 !important;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    width: 100%;
+    height: 48px;
+    transition: all 0.3s ease;
+    text-align: left;
+    cursor: pointer;
+    display: block;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+/* Button Selected Hover State */
+.button-options button.btn-selected:hover {
+    /* Hover State for Selected Buttons */
+    background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3)) !important;
+    border: 2px solid #FF9168 !important;
+    color: #000000 !important;
+}
+
+/* Button Default State */
+.button-options button:not(.btn-selected) {
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    color: #000000 !important;
+}
+
+/* Focus State for Text Inputs */
+.form-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #FF9168;
+}
+
+/* Range Slider Styles */
+.range-container {
+    margin-bottom: var(--spacing-lg);
+}
+
+.range-value {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.range-slider {
+    width: 100%;
+    height: 12px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34) 100%);
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin-bottom: var(--spacing-sm);
+}
+
+.range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #FF4757;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.range-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #FF4757;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Checkbox Styles */
+.checkbox-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* 1. Hide the browser's default checkbox */
+.hidden-input {
+    position: static;
+    width: 18px;
+    height: 18px;
+    opacity: 1;
+    overflow: visible;
+    accent-color: #007AFF;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+/* 2. Style the Label to look like a Button */
+.checkbox-group-container .custom-label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 48px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: 0.5rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    color: #000000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    line-height: 1.2;
+}
+
+/* 3. The Visual "Box" on the left */
+.checkbox-box {
+    display: none;
+}
+
+/* 4. Hover State - Add gradient */
+.checkbox-group-container .custom-label:hover {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 122, 255, 0.4);
+}
+
+/* 5. Selected/Checked State Logic */
+.hidden-input:checked + .custom-label {
+    background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.5)) !important;
+    border: 2px solid #FF9168 !important;
+}
+
+/* 6. Visual Box Checked State */
+.hidden-input:checked + .custom-label .checkbox-box {
+    background: #FF9168;
+    border-color: #FF9168;
+}
+
+/* 7. Add Checkmark inside the box */
+.hidden-input:checked + .custom-label .checkbox-box::after {
+    content: "✓";
+    color: white;
+}
+
+/* 8. Container Clean-up (Removing the container border you had previously) */
+.checkbox-group-container {
+    background: transparent ;
+    border: none ;
+    padding: 0;
+    width: 100%;
+}
+
+/* 9. Checkbox Row - prevent spacing and selection issues */
+.checkbox-row {
+    margin-bottom: 0.5rem;
+    position: relative;
+    width: 100%;
+}
+
+.checkbox-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Button Options Container */
+.button-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* Continue Button */
+.continue-btn {
+    width: 100%;
+    background-color: var(--bg-white);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 16px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    cursor: not-allowed;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    opacity: 0.6;
+}
+
+.continue-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.continue-btn:not(:disabled) {
+    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34) 100%);
+    border: 1px solid rgba(254, 147, 140, 0.8);
+    cursor: pointer;
+    opacity: 1;
+}
+
+.continue-btn:not(:disabled):hover {
+    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.5) 100%);
+    border-color: rgba(254, 147, 140, 1);
+    transform: translateY(-1px);
+}
+
+.continue-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.arrow-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.continue-btn:hover .arrow-icon {
+    transform: translateX(2px);
+}
+
+/* Responsive Design */
+@media (max-width: 520px) {
+    .onboarding-container {
+        padding: var(--spacing-md);
+    }
+    
+    .form-card {
+        padding: var(--spacing-lg);
+    }
+    
+    .title {
+        font-size: 22px;
+    }
+    
+    .subtitle {
+        font-size: 15px;
+    }
+}
+
+/* Accessibility */
+.btn-deselected:focus,
+.btn-selected:focus,
+.continue-btn:focus,
+.form-input:focus {
+    outline: 2px solid #FF4757;
+    outline-offset: 2px;
+}
