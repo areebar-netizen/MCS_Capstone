@@ -527,6 +527,9 @@ def run_eeg_mode(args):
     """Run live EEG acquisition and prediction."""
     print("Starting EEG Mode...")
     
+    # Path for a "stop signal" file that Django can create
+    stop_signal_path = f"/tmp/stop_session_{args.user_id}.flag"
+    
     app = QtWidgets.QApplication([])
     viz = Visualizer()
     viz.resize(900, 300)
@@ -540,17 +543,23 @@ def run_eeg_mode(args):
     
     # Setup duration timer if specified
     duration_timer = None
+    
+    def stop_recording():
+        print("\nStop signal received. Cleaning up session...")
+        viz.set_preds([], "Session ended")
+        app.quit()
+    
     if args.duration is not None:
         duration_seconds = args.duration * 60  # Convert minutes to seconds
         print(f"Recording will stop after {args.duration} minutes ({duration_seconds} seconds)")
         
-        def stop_recording():
+        def duration_stop_recording():
             print(f"\nRecording duration of {args.duration} minutes reached. Stopping...")
             viz.set_preds([], "Recording completed")
             app.quit()
         
         duration_timer = QtCore.QTimer()
-        duration_timer.timeout.connect(stop_recording)
+        duration_timer.timeout.connect(duration_stop_recording)
         duration_timer.start(int(duration_seconds * 1000))  # Convert to milliseconds
     
     try:
@@ -570,6 +579,13 @@ def run_eeg_mode(args):
 
     # Polling function
     def poll_and_predict():
+        # 1. Check if Django sent a stop signal
+        if os.path.exists(stop_signal_path):
+            print("Stop signal detected. Ending session...")
+            os.remove(stop_signal_path)  # Clean up
+            stop_recording()  # Trigger the existing stop logic
+            return
+        
         rows = acq.get_buffer_copy()
         
         # Minimum samples needed (approx 1.5s)
@@ -613,6 +629,7 @@ def main():
     p.add_argument('--raw-out', type=str, default=None, help='Path to save raw EEG CSV')
     p.add_argument('--summary-out', type=str, default=None, help='Path to save prediction summary CSV')
     p.add_argument('--duration', type=float, default=None, help='Recording duration in minutes (if not specified, runs indefinitely)')
+    p.add_argument('--user-id', type=str, default='default', help='User ID for session tracking')
     
     args = p.parse_args()
     
