@@ -1193,13 +1193,15 @@ body {
 
 /* 1. Hide the browser's default checkbox */
 .hidden-input {
-    position: absolute;
-    left: -9999px;
-    top: -9999px;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
+    position: static;
+    width: 18px;
+    height: 18px;
+    opacity: 1;
+    overflow: visible;
+    accent-color: #007AFF;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-right: 12px;
 }
 
 /* 2. Style the Label to look like a Button */
@@ -1210,35 +1212,24 @@ body {
     height: 48px;
     padding: var(--spacing-sm) var(--spacing-md);
     margin-bottom: 0.5rem;
-    background: #FFFFFF !important;
-    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-sm);
-    color: #000000 !important;
+    color: #000000;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-align: left;
     line-height: 1.2;
 }
 
 /* 3. The Visual "Box" on the left */
 .checkbox-box {
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    margin-right: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    flex-shrink: 0;
-    transition: all 0.2s ease;
+    display: none;
 }
 
 /* 4. Hover State - Add gradient */
 .checkbox-group-container .custom-label:hover {
-    background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3)) !important;
-    border: 2px solid #FF9168 !important;
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 122, 255, 0.4);
 }
 
 /* 5. Selected/Checked State Logic */
@@ -1261,10 +1252,9 @@ body {
 
 /* 8. Container Clean-up (Removing the container border you had previously) */
 .checkbox-group-container {
-    background: transparent !important;
-    border: none !important;
+    background: transparent ;
+    border: none ;
     padding: 0;
-    position: relative;
     width: 100%;
 }
 
