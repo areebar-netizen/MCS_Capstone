@@ -523,7 +523,7 @@ def prediction_view(request):
 @csrf_exempt
 def start_realtime_eeg_view(request):
     """Start real-time EEG inference with per-second streaming"""
-    print("🧠 Starting Real-time EEG Session")
+    print("Starting Real-time EEG Session")
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=400)
@@ -802,6 +802,35 @@ def recommendation_view(request):
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=400)
+    
+    return JsonResponse({'message': 'Recommendations feature coming soon'})
+
+def end_session(request):
+    """End the current EEG session by creating a stop signal file"""
+    if request.method == 'POST':
+        user_email = request.session.get('user_email')
+        if not user_email:
+            return JsonResponse({'error': 'Unauthorized'}, status=400)
+        
+        try:
+            # Create stop signal file for the user
+            import os
+            stop_signal_path = f"/tmp/stop_session_{user_email}.flag"
+            
+            # Create the stop signal file
+            with open(stop_signal_path, 'w') as f:
+                f.write('stop')
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Session termination signal sent'
+            })
+            
+        except Exception as e:
+            print(f'Error creating stop signal: {e}')
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
     
 
 
