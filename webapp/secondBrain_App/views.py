@@ -1,41 +1,253 @@
+from uuid import uuid4
+
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
+from django.utils import timezone
+from django.conf import settings
+from django.core.cache import cache
+import random
+import string
+import json
+from pathlib import Path
+
+from urllib3 import request
+from .services.prediction_service import PredictionService
+from .services.eeg_service import EEGService
+from .tasks import run_live_inference, get_task_status
+from .tasks_realtime import run_live_inference_streaming
+from django.views.decorators.csrf import csrf_exempt
+import csv
+
+from .models import UserProfile, Recommendation, Prediction
+from .services.eeg_service import EEGService
 
 # Create your views here.
 
+MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts' / 'models_out', model_name='xgboost')
+
+def email_entry(request):
+    """Landing page for email entry"""
+    return render(request, 'email_entry.html')
+
+def send_otp(request):
+    """Generate and send OTP for email verification"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+        
+        # Generate 6-digit OTP
+        otp_code = ''.join(random.choices(string.digits, k=6))
+        
+        # Save OTP to database
+        from .models import EmailOTP
+        EmailOTP.objects.filter(email=email).delete()  # Remove any existing OTPs
+        EmailOTP.objects.create(email=email, otp_code=otp_code)
+        
+        # Send OTP email
+        try:
+            from django.core.mail import send_mail
+            subject = 'BrainWave - Your OTP Code'
+            message = f'Your BrainWave verification code is: {otp_code}\n\nThis code will expire in 5 minutes.'
+            from_email = 'noreply@brainwave.com'
+            recipient_list = [email]
+            
+            send_mail(
+                subject,
+                message,
+                from_email,
+                recipient_list,
+                fail_silently=False,
+            )
+            print(f"OTP email sent successfully to {email}")
+        except Exception as e:
+            print(f"Failed to send OTP email: {e}")
+            # For development, you might want to still show the OTP in console
+            print(f"DEBUG: OTP for {email} is {otp_code}")
+            # In production, you might want to handle this differently
+            # For now, we'll continue with the flow even if email fails
+        
+        # Redirect to OTP verification page
+        return render(request, 'otp_verification.html', {'email': email})
+    
+    return redirect('/')
+
+def verify_otp(request):
+    """Verify OTP and handle user routing"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        otp_code = request.POST.get('otp_code')
+        
+        if not email or not otp_code:
+            return JsonResponse({'error': 'Email and OTP are required'}, status=400)
+        
+        from .models import EmailOTP, UserProfile
+        
+        # Verify OTP
+        try:
+            otp_record = EmailOTP.objects.get(email=email, otp_code=otp_code)
+            if not otp_record.is_valid():
+                return JsonResponse({'error': 'OTP has expired'}, status=400)
+        except EmailOTP.DoesNotExist:
+            return JsonResponse({'error': 'Invalid OTP'}, status=400)
+        
+        # OTP is valid - set session
+        request.session['user_email'] = email
+        request.session.modified = True
+        
+        # Clean up OTP
+        otp_record.delete()
+        
+        # Check if user exists and has completed survey
+        user_exists = UserProfile.objects.filter(email=email).exists()
+        if user_exists:
+            user_profile = UserProfile.objects.get(email=email)
+            # Check if profile is complete (has basic info)
+            if user_profile.name and user_profile.academic_level:
+                return redirect('/dashboard/')
+            else:
+                return redirect('/onboarding/')
+        else:
+            # New user - redirect to survey
+            return redirect('/onboarding/')
+    
+    return redirect('/')
+
 def dashboard_view(request):
     """Dashboard view with user profile and focus tracking data"""
-    # Get user profile data from session or database
-    user_profile = {}
-    if 'user_profile' in request.session:
-        user_profile = request.session['user_profile']
+    # Security check - ensure user is authenticated via OTP
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return redirect('/')
+    
+    # Get user profile data from database
+    from .models import UserProfile
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return redirect('/onboarding/')
+    
+    # Import data service
+    from .services.data_service import FocusDataService
+    data_service = FocusDataService(user_email)
+    
+    # Helper functions to map indices to human-readable text
+    def get_academic_level_text(level_id):
+        levels = {
+            0: 'High School',
+            1: 'Undergraduate', 
+            2: 'Graduate/Masters',
+            3: 'PhD/Doctoral',
+            4: 'Professional/Continuing Education',
+            5: 'Other'
+        }
+        return levels.get(int(level_id), 'Not Set')
+    
+    def get_sleep_quality_text(quality_id):
+        qualities = {
+            0: 'Poor (frequently disrupted)',
+            1: 'Fair (occasional issues)',
+            2: 'Good (generally restful)',
+            3: 'Excellent (consistently deep)'
+        }
+        return qualities.get(int(quality_id), 'Not Set')
+    
+    def get_alert_time_text(time_id):
+        times = {
+            0: 'Early Morning (5am-9am)',
+            1: 'Mid-Morning to Afternoon (9am-5pm)',
+            2: 'Evening to Late Night (5pm-12am)',
+            3: 'Late Night (12am-5am)'
+        }
+        return times.get(int(time_id), 'Not Set')
+    
+    def get_learning_style_text(style_id):
+        styles = {
+            0: 'Visual Learner',
+            1: 'Auditory Learner',
+            2: 'Kinesthetic Learner',
+            3: 'Reading/Writing Learner'
+        }
+        return styles.get(int(style_id), 'Not Set')
+    
+    def get_session_length_text(length_id):
+        lengths = {
+            0: 'Short (15-30 min)',
+            1: 'Medium (30-60 min)',
+            2: 'Long (60-90 min)',
+            3: 'Extended (90+ min)'
+        }
+        return lengths.get(int(length_id), 'Not Set')
+    
+    def get_sound_environment_text(env_id):
+        environments = {
+            0: 'Complete Silence',
+            1: 'White Noise',
+            2: 'Soft Music',
+            3: 'Nature Sounds',
+            4: 'Cafe/Background Noise',
+            5: 'Instrumental Music'
+        }
+        return environments.get(int(env_id), 'Not Set')
+    
+    def get_study_time_text(time_id):
+        times = {
+            0: 'Early Morning',
+            1: 'Morning',
+            2: 'Afternoon', 
+            3: 'Evening',
+            4: 'Night'
+        }
+        return times.get(int(time_id), 'Not Set')
+    
+    # Create user profile snapshot with human-readable text
+    profile_snapshot = {
+        'name': user_profile.name,
+        'age': user_profile.age,
+        'academic_level': get_academic_level_text(user_profile.academic_level),
+        'sleep_hours': user_profile.sleep_hours,
+        'sleep_quality': get_sleep_quality_text(user_profile.sleep_quality),
+        'learning_style': get_learning_style_text(user_profile.learning_style),
+        'caffeine_servings': user_profile.caffeine_servings,
+        'procrastination_level': user_profile.procrastination_level,
+        'main_goals': user_profile.main_goals.strip('[]').replace("'", '').split(',')[0] if user_profile.main_goals else 'Not Set',
+        'sound_environment': get_sound_environment_text(user_profile.sound_environment),
+        'study_location': user_profile.study_location.strip('[]').replace("'", '').split(',')[0] if user_profile.study_location else 'Not Set',
+        'session_length': get_session_length_text(user_profile.session_length),
+        'study_time_of_day': get_study_time_text(user_profile.study_time_of_day),
+        'alert_time': get_alert_time_text(user_profile.alert_time)
+    }
+    
+    # Get focus tracking data
+    recent_sessions = data_service.get_recent_sessions()
+    session_stats = data_service.get_session_average_stats()
+    brainwave_data = data_service.get_brainwave_averages()
+    recommendations = data_service.get_recommendations()
+    calendar_data = data_service.get_calendar_data()
     
     # Mock data for demonstration
     context = {
-        'user': request.user,
-        'user_profile': user_profile,
-        'recent_sessions': [
-            {
-                'name': 'Morning Study Session',
-                'time': 'Today, 9:30 AM',
-                'duration': '45 min',
-                'focus': 8.2,
-                'states': {'concentrated': 65, 'neutral': 25, 'relaxed': 10}
-            },
-            {
-                'name': 'Afternoon Review',
-                'time': 'Today, 2:15 PM',
-                'duration': '30 min',
-                'focus': 6.8,
-                'states': {'concentrated': 45, 'neutral': 40, 'relaxed': 15}
-            }
-        ]
+        'user': request.user if request.user.is_authenticated else None,
+        'user_profile': profile_snapshot,
+        'recent_sessions': recent_sessions,
+        'session_stats': session_stats,
+        'brainwave_data': brainwave_data,
+        'recommendations': recommendations,
+        'calendar_data': calendar_data,
+        'current_month': calendar_data[0]['day'] if calendar_data else 1,
+        'current_year': timezone.now().year if calendar_data else 2026
     }
     
     return render(request, 'dashboard.html', context)
 
 def onboarding_view(request):
     """Render the onboarding page with multi-step form handling"""
+    
+    # Security check - ensure user is authenticated via OTP
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return redirect('/')
     
     # Define all sections and their questions
     SECTIONS = {
@@ -184,7 +396,81 @@ def onboarding_view(request):
             # Redirect to next step
             return redirect(f'/onboarding/?step={next_step}')
         else:
-            # Complete onboarding - redirect to dashboard
+            # Complete onboarding - save to database and redirect to dashboard
+            try:
+                from .models import UserProfile
+                
+                # Get user email from session
+                user_email = request.session.get('user_email')
+                if not user_email:
+                    return redirect('/')
+                
+                # Get all onboarding data
+                onboarding_data = request.session.get('onboarding_data', {})
+                
+                # Handle multi-select fields (checkboxes)
+                caffeine_types_list = onboarding_data.get('caffeine_types', [])
+                study_subjects_list = onboarding_data.get('study_subjects', [])
+                distractions_list = onboarding_data.get('distractions', [])
+                
+                # Create or update UserProfile record
+                user_profile, created = UserProfile.objects.update_or_create(
+                    email=user_email,
+                    defaults={
+                        'name': onboarding_data.get('name', ''),
+                        'age': int(onboarding_data.get('age', 0)),
+                        'academic_level': onboarding_data.get('academic_level', ''),
+                        
+                        # Section 2: Rhythms
+                        'alert_time': onboarding_data.get('alert_time', ''),
+                        'sleep_hours': float(onboarding_data.get('sleep_hours', 7)),
+                        'sleep_quality': onboarding_data.get('sleep_quality', ''),
+                        
+                        # Section 3: Caffeine
+                        'consumes_caffeine': onboarding_data.get('consumes_caffeine', 'false').lower() == 'true',
+                        'caffeine_types': ', '.join(caffeine_types_list) if isinstance(caffeine_types_list, list) else str(caffeine_types_list),
+                        'caffeine_servings': int(onboarding_data.get('caffeine_servings', 0)),
+                        'caffeine_timing': onboarding_data.get('caffeine_timing', ''),
+                        
+                        # Section 4: Styles
+                        'learning_style': onboarding_data.get('learning_style', ''),
+                        'study_subjects': ', '.join(study_subjects_list) if isinstance(study_subjects_list, list) else str(study_subjects_list),
+                        
+                        # Section 5: Habits
+                        'session_length': onboarding_data.get('session_length', ''),
+                        'takes_breaks': onboarding_data.get('takes_breaks', ''),
+                        'study_time_of_day': onboarding_data.get('study_time_of_day', ''),
+                        'procrastination_level': int(onboarding_data.get('procrastination_level', 0)),
+                        
+                        # Section 6 & 7: Environment & Distractions
+                        'study_location': onboarding_data.get('study_location', ''),
+                        'sound_environment': onboarding_data.get('sound_environment', ''),
+                        'lighting_preference': onboarding_data.get('lighting_preference', ''),
+                        'phone_location': onboarding_data.get('phone_location', ''),
+                        'distractions': ', '.join(distractions_list) if isinstance(distractions_list, list) else str(distractions_list),
+                        
+                        # Section 8 & 9: Lifestyle & Health
+                        'exercise_frequency': onboarding_data.get('exercise_frequency', ''),
+                        'eating_timing': onboarding_data.get('eating_timing', ''),
+                        'health_conditions': onboarding_data.get('health_conditions', ''),
+                        
+                        # Section 10: Goals
+                        'main_goals': onboarding_data.get('main_goals', ''),
+                        'study_effectiveness': int(onboarding_data.get('study_effectiveness', 0))
+                    }
+                )
+                
+                # Clear session data
+                if 'onboarding_data' in request.session:
+                    del request.session['onboarding_data']
+                request.session.modified = True
+                
+                print(f"User profile {'created' if created else 'updated'} for {user_email}")
+                
+            except Exception as e:
+                print(f"Error saving user profile: {e}")
+                # Continue to dashboard even if save fails
+            
             return redirect('/dashboard/')
     
     # Handle GET request
@@ -209,3 +495,314 @@ def onboarding_view(request):
     }
     
     return render(request, 'onboarding.html', context)
+
+@csrf_exempt
+def prediction_view(request):
+    """Generates the live preditictions for EEG data streamed from the device"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    #Live prediction integration
+    try:
+        data = json.loads(request.body)
+        rows = data.get('rows', [])
+
+        if not rows:
+            return JsonResponse({'error': 'No rows provided'}, status = 400)
+
+        user_profile = UserProfile.objects.get(email=user_email)
+
+        result = MODEL_SERVICE.run(rows)
+        if result.get('ok') == False:
+            return JsonResponse(result, status=400)
+        
+    except Exception as e:
+        print(f'Error in prediction view: {e}')
+        return JsonResponse({'error': str(e)}, status = 500)
+
+@csrf_exempt
+def start_realtime_eeg_view(request):
+    """Start real-time EEG inference with per-second streaming"""
+    print("🧠 Starting Real-time EEG Session")
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    
+    try:
+        # Get duration from request
+        data = json.loads(request.body) if request.body else {}
+        duration = int(data.get('duration', 1))
+        
+        # Trigger real-time Celery task
+        task = run_live_inference_streaming.delay(user_email, duration)
+        
+        # Store task ID in session
+        request.session['current_eeg_task_id'] = task.id
+        request.session['realtime_session_active'] = True
+        request.session.modified = True
+
+        
+        return JsonResponse({
+            'ok': True,
+            'message': 'Real-time EEG inference started',
+            'task_id': task.id,
+            'duration_minutes': duration,
+            'session_type': 'realtime',
+            'status': 'initializing'
+        })
+
+        
+        
+    except Exception as e:
+        print(f'Error starting real-time EEG task: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def stop_realtime_eeg_view(request):
+    """Stop real-time EEG session and get final summary"""
+    print("🛑 Stopping Real-time EEG Session")
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Clear realtime session flag
+        request.session['realtime_session_active'] = False
+        request.session.modified = True
+        
+        # Get task ID from session
+        task_id = request.session.get('current_eeg_task_id')
+        if not task_id:
+            return JsonResponse({'error': 'No active EEG task found'}, status=400)
+        
+        # Check task status
+        task_result = get_task_status(task_id)
+        
+        if task_result['status'] == 'SUCCESS':
+            result = task_result['result']
+            return JsonResponse({
+                'ok': True,
+                'status': 'completed',
+                'session_id': result.get('session_id'),
+                'final_summary': result.get('final_summary'),
+                'csv_file_path': result.get('csv_file_path'),
+                'duration_minutes': result.get('duration_minutes')
+            })
+        elif task_result['status'] == 'FAILURE':
+            return JsonResponse({
+                'ok': False,
+                'status': 'error',
+                'message': 'EEG inference task failed',
+                'error': str(task_result.get('result', 'Unknown error'))
+            })
+        else:
+            return JsonResponse({
+                'ok': True,
+                'status': task_result['status'],
+                'message': 'EEG inference still in progress',
+                'task_id': task_id
+            })
+            
+    except Exception as e:
+        print(f'Error stopping real-time EEG task: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def get_realtime_eeg_status_view(request):
+    """Get real-time status and current focus data"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Get task ID from session
+        task_id = request.session.get('current_eeg_task_id')
+        if not task_id:
+            return JsonResponse({'error': 'No active EEG task found'}, status=400)
+        
+        # Check if realtime session is active
+        is_active = request.session.get('realtime_session_active', False)
+        
+        # Get task status
+        task_result = get_task_status(task_id)
+        
+        return JsonResponse({
+            'ok': True,
+            'task_id': task_id,
+            'status': task_result['status'],
+            'is_realtime_active': is_active,
+            'result': task_result.get('result') if task_result['status'] == 'SUCCESS' else None
+        })
+        
+    except Exception as e:
+        print(f'Error getting real-time EEG status: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+EEGSERVICE = EEGService()  
+@csrf_exempt
+def start_live_eeg_view(request):
+    """Start EEG inference as a Celery task"""
+    print("Starting EEG inference task")
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    
+    task_id = request.session.get('current_eeg_task_id')
+    #cache.set(f"stop eeg task{task_id}", False, timeout=60*60)
+   
+
+    try:
+        # Get duration from request (default to 1 minute)
+        data = json.loads(request.body) if request.body else {}
+        duration = int(data.get('duration', 1))
+        
+        # Trigger Celery task
+        task = run_live_inference.delay(user_email, duration)
+        
+        # Store task ID in session for status checking
+        request.session['current_eeg_task_id'] = task.id
+        request.session.modified = True
+        
+        return JsonResponse({
+            'ok': True,
+            'message': 'EEG inference task started',
+            'task_id': task.id,
+            'duration_minutes': duration,
+            'status': 'processing'
+        })
+        
+    except Exception as e:
+        print(f'Error starting EEG task: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def stop_live_eeg_view(request):
+    """Check EEG inference task status and return results"""
+    print("Checking EEG task status")
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Get task ID from session
+        task_id = request.session.get('current_eeg_task_id')
+        if not task_id:
+            return JsonResponse({'error': 'No active EEG task found'}, status=400)
+        
+        
+        # Check task status
+        task_result = get_task_status(task_id)
+        
+        if task_result['status'] == 'SUCCESS':
+            # Task completed successfully
+            result = task_result['result']
+            return JsonResponse({
+                'ok': True,
+                'status': 'completed',
+                'session_id': result.get('session_id'),
+                'final_result': result.get('final_result'),
+                'raw_data_path': result.get('raw_data_path'),
+                'duration_minutes': result.get('duration_minutes')
+            })
+        elif task_result['status'] == 'PENDING':
+            # Task still running
+            result = task_result['result']
+            #cache.set(f"stop eeg task{task_id}", True, timeout=60*60)  # Reset stop flag for next check
+            return JsonResponse({
+                'ok': True,
+                'status': 'processing',
+                'message': 'EEG inference still in progress',
+                'task_id': task_id,
+            })
+        elif task_result['status'] == 'FAILURE':
+            # Task failed
+            return JsonResponse({
+                'ok': False,
+                'status': 'error',
+                'message': 'EEG inference task failed',
+                'error': str(task_result.get('result', 'Unknown error'))
+            })
+        else:
+            return JsonResponse({
+                'ok': True,
+                'status': task_result['status'],
+                'task_id': task_id
+            })
+            
+    except Exception as e:
+        print(f'Error checking EEG task status: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def eeg_task_status_view(request):
+    """Check the status of an ongoing EEG inference task"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Get task ID from session or request parameter
+        task_id = request.GET.get('task_id') or request.session.get('current_eeg_task_id')
+        if not task_id:
+            return JsonResponse({'error': 'No task ID provided'}, status=400)
+        
+        # Check task status
+        task_result = get_task_status(task_id)
+        
+        return JsonResponse({
+            'ok': True,
+            'task_id': task_id,
+            'status': task_result['status'],
+            'result': task_result['result'] if task_result['status'] == 'SUCCESS' else None
+        })
+        
+    except Exception as e:
+        print(f'Error checking task status: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+    
+
+def upload_csv_view(request):
+    """Upload csv online and recvieve predictions for it"""
+
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        file = request.FILES['csv_file']
+        try:
+            rows = []
+            dfile = file.read().decode('utf-8').splitlines()
+            reader = csv.reader(dfile)
+            next(reader)
+
+            for row in reader:
+                rows.append([float(x) for x in row])
+            result = MODEL_SERVICE.run(rows)
+
+            return JsonResponse(result)
+        
+        except Exception as e:
+            print(f'Error processsing uploaded csv: {e}')
+            return JsonResponse({'error': str(e)}, status=500)
+    return render(request, 'upload_csv.html')
+
+def test_csv():
+    print("Running test_csv...")  # add this
+
+    rows = []
+    with open(r"C:\Users\binom\OneDrive\Desktop\KeystoneProject\MCS_Capstone\dataset\our_data\areeba_new\areeba_concentrating_3min.csv") as f:
+        reader = csv.reader(f)
+        next(reader)
+        for row in reader:
+            rows.append([float(x) for x in row])
+
+    result = MODEL_SERVICE.run(rows)
+    print("RESULT:", result)
+
+def recommendation_view(request):
+    """Generate Recommendations based on user profile and focus data for each session"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=400)
+    
+
+
+
