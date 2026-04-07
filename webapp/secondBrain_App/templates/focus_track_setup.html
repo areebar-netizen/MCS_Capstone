@@ -60,7 +60,7 @@
 
 <script>
     let selectedDuration = 1;
-    let timerInterval = null;
+    let timer_Interval = null;
     let remainingSeconds = 0;
     let elapsedSeconds = 0;
 
@@ -92,11 +92,11 @@
         document.getElementById('sessionTimer').textContent = formatTime(remainingSeconds);
         document.getElementById('elapsedTime').textContent = formatTime(elapsedSeconds);
 
-        if (timerInterval) {
-            clearInterval(timerInterval);
+        if (timer_Interval) {
+            clearInterval(timer_Interval);
         }
 
-        timerInterval = setInterval(async () => {
+        timer_Interval = setInterval(async () => {
             remainingSeconds -= 1;
             elapsedSeconds += 1;
 
@@ -104,8 +104,8 @@
             document.getElementById('elapsedTime').textContent = formatTime(elapsedSeconds);
 
             if (remainingSeconds <= 0) {
-                clearInterval(timerInterval);
-                timerInterval = null;
+                clearInterval(timer_Interval);
+                timer_Interval = null;
                 console.log("Timer ended, stopping EEG session");
                 await stopEEGsession();
             }
@@ -144,9 +144,9 @@
     async function stopEEGsession() {
         console.log("Ending EEG session");
 
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
+        if (timer_Interval) {
+            clearInterval(timer_Interval);
+            timer_Interval = null;
         }
 
         try {

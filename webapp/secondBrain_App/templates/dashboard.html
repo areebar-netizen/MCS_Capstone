@@ -62,6 +62,8 @@
 
 <script>
 // Demo data loading
+console.log("JS LOADED");
+
 function loadDemoData() {
     console.log('Loading demo data...');
     // Add demo data loading logic here
@@ -116,27 +118,34 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Tab navigation
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const tab = this.dataset.tab;
-            
-            // Update button states
-            tabBtns.forEach(b => {
-                b.classList.remove('btn-selected');
-                b.classList.add('btn-deselected');
+    const tabContainers = document.querySelectorAll('.focus-track-history')
+    tabContainers.forEach(container => {
+        
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tab = this.dataset.tab;
+                
+                // Update button states
+                tabBtns.forEach(b => {
+                    b.classList.remove('btn-selected');
+                    b.classList.add('btn-deselected');
+                });
+                this.classList.remove('btn-deselected');
+                this.classList.add('btn-selected');
+                
+                // Show/hide tab panels
+                console.log("Tab buttons found:", tabBtns.length);
+                document.querySelectorAll('.tab-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                const targetPanel = document.getElementById(tab + 'Tab');
+                if (targetPanel) {
+                    targetPanel.classList.add('active');
+                } else {
+                    console.error("Missing tab panel");
+                }
             });
-            this.classList.remove('btn-deselected');
-            this.classList.add('btn-selected');
-            
-            // Show/hide tab panels
-            document.querySelectorAll('.tab-panel').forEach(panel => {
-                panel.classList.remove('active');
-            });
-            const targetPanel = document.getElementById(tab + 'Tab');
-            if (targetPanel) {
-                targetPanel.classList.add('active');
-            }
         });
     });
 
