@@ -23,7 +23,7 @@ from .services.eeg_service import EEGService
 
 # Create your views here.
 
-MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts' / 'models_out', model_name='xgboost')
+MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts', model_name='xgboost')
 
 def email_entry(request):
     """Landing page for email entry"""
@@ -413,51 +413,68 @@ def onboarding_view(request):
                 study_subjects_list = onboarding_data.get('study_subjects', [])
                 distractions_list = onboarding_data.get('distractions', [])
                 
-                # Create or update UserProfile record
-                user_profile, created = UserProfile.objects.update_or_create(
-                    email=user_email,
-                    defaults={
-                        'name': onboarding_data.get('name', ''),
-                        'age': int(onboarding_data.get('age', 0)),
-                        'academic_level': onboarding_data.get('academic_level', ''),
-                        
-                        # Section 2: Rhythms
-                        'alert_time': onboarding_data.get('alert_time', ''),
-                        'sleep_hours': float(onboarding_data.get('sleep_hours', 7)),
-                        'sleep_quality': onboarding_data.get('sleep_quality', ''),
-                        
-                        # Section 3: Caffeine
-                        'consumes_caffeine': onboarding_data.get('consumes_caffeine', 'false').lower() == 'true',
-                        'caffeine_types': ', '.join(caffeine_types_list) if isinstance(caffeine_types_list, list) else str(caffeine_types_list),
-                        'caffeine_servings': int(onboarding_data.get('caffeine_servings', 0)),
-                        'caffeine_timing': onboarding_data.get('caffeine_timing', ''),
-                        
-                        # Section 4: Styles
-                        'learning_style': onboarding_data.get('learning_style', ''),
-                        'study_subjects': ', '.join(study_subjects_list) if isinstance(study_subjects_list, list) else str(study_subjects_list),
-                        
-                        # Section 5: Habits
-                        'session_length': onboarding_data.get('session_length', ''),
-                        'takes_breaks': onboarding_data.get('takes_breaks', ''),
-                        'study_time_of_day': onboarding_data.get('study_time_of_day', ''),
-                        'procrastination_level': int(onboarding_data.get('procrastination_level', 0)),
-                        
-                        # Section 6 & 7: Environment & Distractions
-                        'study_location': onboarding_data.get('study_location', ''),
-                        'sound_environment': onboarding_data.get('sound_environment', ''),
-                        'lighting_preference': onboarding_data.get('lighting_preference', ''),
-                        'phone_location': onboarding_data.get('phone_location', ''),
-                        'distractions': ', '.join(distractions_list) if isinstance(distractions_list, list) else str(distractions_list),
-                        
-                        # Section 8 & 9: Lifestyle & Health
-                        'exercise_frequency': onboarding_data.get('exercise_frequency', ''),
-                        'eating_timing': onboarding_data.get('eating_timing', ''),
-                        'health_conditions': onboarding_data.get('health_conditions', ''),
-                        
-                        # Section 10: Goals
-                        'main_goals': onboarding_data.get('main_goals', ''),
-                        'study_effectiveness': int(onboarding_data.get('study_effectiveness', 0))
-                    }
+                # Check if user consumes caffeine
+                consumes_caffeine = onboarding_data.get('consumes_caffeine', 'false').lower() == 'true'
+                
+                # If user doesn't consume caffeine, set caffeine details to None/empty defaults
+                if not consumes_caffeine:
+                    caffeine_types_list = None  # Explicitly set to None
+                    caffeine_servings = 0
+                    caffeine_timing = ''
+                else:
+                    # Only process caffeine data if user actually consumes caffeine
+                    caffeine_types_list = onboarding_data.get('caffeine_types', [])
+                    caffeine_servings = int(onboarding_data.get('caffeine_servings', 0))
+                    caffeine_timing = onboarding_data.get('caffeine_timing', '')
+                
+                profile_data = {
+                    'email': user_email,  # Use 'email' to match model field name
+                    'name': onboarding_data.get('name', ''),
+                    'age': int(onboarding_data.get('age', 0)),
+                    'academic_level': onboarding_data.get('academic_level', ''),
+                    
+                    # Section 2: Rhythms
+                    'alert_time': onboarding_data.get('alert_time', ''),
+                    'sleep_hours': float(onboarding_data.get('sleep_hours', 7)),
+                    'sleep_quality': onboarding_data.get('sleep_quality', ''),
+                    
+                    # Section 3: Caffeine
+                    'consumes_caffeine': consumes_caffeine,
+                    'caffeine_types': ', '.join(caffeine_types_list) if caffeine_types_list and isinstance(caffeine_types_list, list) else '',
+                    'caffeine_servings': caffeine_servings,
+                    'caffeine_timing': caffeine_timing,
+                    
+                    # Section 4: Styles
+                    'learning_style': onboarding_data.get('learning_style', ''),
+                    'study_subjects': ', '.join(study_subjects_list) if isinstance(study_subjects_list, list) else str(study_subjects_list),
+                    
+                    # Section 5: Habits
+                    'session_length': onboarding_data.get('session_length', ''),
+                    'takes_breaks': onboarding_data.get('takes_breaks', ''),
+                    'study_time_of_day': onboarding_data.get('study_time_of_day', ''),
+                    'procrastination_level': int(onboarding_data.get('procrastination_level', 0)),
+                    
+                    # Section 6 & 7: Environment & Distractions
+                    'study_location': onboarding_data.get('study_location', ''),
+                    'sound_environment': onboarding_data.get('sound_environment', ''),
+                    'lighting_preference': onboarding_data.get('lighting_preference', ''),
+                    'phone_location': onboarding_data.get('phone_location', ''),
+                    'distractions': ', '.join(distractions_list) if isinstance(distractions_list, list) else str(distractions_list),
+                    
+                    # Section 8 & 9: Lifestyle & Health
+                    'exercise_frequency': onboarding_data.get('exercise_frequency', ''),
+                    'eating_timing': onboarding_data.get('eating_timing', ''),
+                    'health_conditions': onboarding_data.get('health_conditions', ''),
+                    
+                    # Section 10: Goals
+                    'main_goals': onboarding_data.get('main_goals', ''),
+                    'study_effectiveness': int(onboarding_data.get('study_effectiveness', 0))
+                }
+                
+                # Save or update UserProfile in database
+                profile, created = UserProfile.objects.update_or_create(
+                    email=user_email,  # Use 'email' to match model field name
+                    defaults=profile_data
                 )
                 
                 # Clear session data

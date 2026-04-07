@@ -159,7 +159,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         streamer.start_recording()
         
         # Initialize prediction service
-        models_dir = ROOT / 'core_engine' / 'artifacts' / 'models_out'
+        models_dir = ROOT / 'core_engine' / 'artifacts' 
         prediction_service = PredictionService(models_dir=models_dir, model_name='xgboost')
         
         # Initialize EEG acquirer
