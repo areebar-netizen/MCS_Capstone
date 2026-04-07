@@ -4,19 +4,19 @@
 
 {% block logo %}
 <div class="logo-container">
-    <img src="{% static 'secondBrain_App/images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+    <img src="{% static 'images/logo.svg' %}" alt="BrainWave Logo" class="logo">
 </div>
 {% endblock %}
 
 {% block title %}BrainWave Focus Analyzer - Onboarding{% endblock %}
-<link rel="stylesheet" href="{% static 'secondBrain_App/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
 
 {% block content %}
 <div class="onboarding-container">
     <!-- Header Section -->
     <header class="header">
         <div class="logo-container">
-            <img src="{% static 'secondBrain_App/images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+            <img src="{% static 'images/logo.svg' %}" alt="BrainWave Logo" class="logo">
         </div>
         <h1 class="title">BrainWave Focus Analyzer</h1>
         <p class="subtitle">Let's understand your study patterns</p>
@@ -93,37 +93,39 @@
                     {% for option in question.options %}
                     <button 
                         type="button" 
-                        id="{{ question.id }}-{{ forloop.counter0 }}"
-                        name="{{ question.id }}" 
+                        name="btn-group-{{ question.id }}"
                         value="{{ forloop.counter0 }}"
-                        class="{% if saved_data|get_saved_value:question.id != None and saved_data|get_saved_value:question.id == forloop.counter0|stringformat:'0' %}btn-selected{% else %}btn-deselected{% endif %}"
-                        aria-label="{{ option }}"
+                        class="level-btn {% if saved_data|get_saved_value:question.id == forloop.counter0|stringformat:'s' %}btn-selected{% else %}btn-deselected{% endif %}"
                     >
                         {{ option }}
                     </button>
                     {% endfor %}
+                    
+                    <input type="hidden" 
+                        id="hidden-{{ question.id }}" 
+                        name="{{ question.id }}" 
+                        value="{{ saved_data|get_saved_value:question.id|default:'' }}">
                 </div>
                 
                 {% elif question.type == 'checkbox' %}
-                <div class="checkbox-options">
+                <div class="checkbox-group-container">
                     {% for option in question.options %}
-                    <label 
-                        for="{{ question.id }}-{{ forloop.counter0 }}"
-                        class="{% if forloop.counter0|stringformat:'0' in saved_data|get_saved_value:question.id %}btn-selected{% else %}btn-deselected{% endif %}"
-                    >
-                        {{ option }}
-                    </label>
-                    <input 
-                        type="checkbox" 
-                        id="{{ question.id }}-{{ forloop.counter0 }}" 
-                        name="{{ question.id }}" 
-                        value="{{ forloop.counter0 }}"
-                        {% if forloop.counter0|stringformat:'0' in saved_data|get_saved_value:question.id %}checked{% endif %}
-                        style="display: none;"
-                        aria-label="{{ option }}"
-                    >
+                    <div class="checkbox-row">
+                        <label for="chk-{{ question.id }}-{{ forloop.counter0 }}" class="custom-label">
+                            <input 
+                                type="checkbox" 
+                                id="chk-{{ question.id }}-{{ forloop.counter0 }}" 
+                                name="{{ question.id }}" 
+                                value="{{ forloop.counter0 }}"
+                                class="hidden-input"
+                                {% if forloop.counter0|stringformat:'s' in saved_data|get_saved_value:question.id %}checked{% endif %}
+                            >
+                            <span class="label-text">{{ option }}</span>
+                        </label>
+                    </div>
                     {% endfor %}
                 </div>
+                
                 {% endif %}
             </div>
             {% endfor %}
@@ -131,15 +133,15 @@
             <!-- Hidden input for radio button tracking -->
             <input type="hidden" id="radio-selection" name="radio_selection" value="">
         </form>
+        
+        <!-- Continue Button -->
+        <button type="button" id="continue-btn" class="continue-btn" disabled aria-label="Continue to next step">
+            Continue
+            <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+        </button>
     </main>
-    
-    <!-- Continue Button -->
-    <button type="button" id="continue-btn" class="continue-btn" disabled aria-label="Continue to next step">
-        Continue
-        <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
-        </svg>
-    </button>
     
     <!-- Session History (if available) -->
     {% if session_history %}
@@ -179,29 +181,55 @@
         // Function to check if form is valid and enable/disable continue button
         function validateForm() {
             let isValid = true;
-            const requiredFields = form.querySelectorAll('input[required], input[type="text"], input[type="number"]');
+            console.log('Starting validation...');
             
-            // Check if required text/number fields are filled
-            requiredFields.forEach(field => {
-                if (field.type === 'text' || field.type === 'number') {
-                    if (!field.value.trim()) {
-                        isValid = false;
-                    }
-                    // Check number range
-                    if (field.type === 'number') {
-                        const value = parseInt(field.value);
-                        const min = parseInt(field.min);
-                        const max = parseInt(field.max);
-                        if (value < min || value > max) {
-                            isValid = false;
-                        }
-                    }
+            // Check text fields
+            const textFields = form.querySelectorAll('input[type="text"]');
+            textFields.forEach(field => {
+                console.log('Text field:', field.name, 'value:', field.value, 'valid:', !!field.value.trim());
+                if (!field.value.trim()) {
+                    isValid = false;
                 }
             });
             
-            // Check if at least one button is selected for each button group
+            // Check number fields
+            const numberFields = form.querySelectorAll('input[type="number"]');
+            numberFields.forEach(field => {
+                console.log('Number field:', field.name, 'value:', field.value, 'valid:', !!field.value.trim());
+                if (!field.value.trim()) {
+                    isValid = false;
+                }
+            });
+            
+            // Check range sliders
+            const rangeFields = form.querySelectorAll('input[type="range"]');
+            rangeFields.forEach(field => {
+                console.log('Range field:', field.name, 'value:', field.value, 'valid:', !!field.value);
+                if (!field.value) {
+                    isValid = false;
+                }
+            });
+            
+            // Check button groups (radio questions)
             const buttonGroups = {};
-            form.querySelectorAll('button[type="button"]').forEach(button => {
+            const allButtons = form.querySelectorAll('button[type="button"]');
+            console.log('All buttons found:', allButtons.length);
+            
+            allButtons.forEach((button, index) => {
+                console.log(`Button ${index}:`, {
+                    name: button.name,
+                    text: button.textContent.trim(),
+                    hasName: !!button.name,
+                    nameLength: button.name ? button.name.length : 0,
+                    isContinue: button.id === 'continue-btn'
+                });
+                
+                // Skip buttons without names (like continue button)
+                if (!button.name || button.name.trim() === '') {
+                    console.log('Skipping button without name:', button.textContent.trim());
+                    return;
+                }
+                
                 if (!buttonGroups[button.name]) {
                     buttonGroups[button.name] = false;
                 }
@@ -210,13 +238,32 @@
                 }
             });
             
-            Object.values(buttonGroups).forEach(selected => {
-                if (selected === false && Object.keys(buttonGroups).length > 0) {
+            Object.keys(buttonGroups).forEach(groupName => {
+                console.log('Button group:', groupName, 'selected:', buttonGroups[groupName]);
+                if (!buttonGroups[groupName]) {
                     isValid = false;
                 }
             });
             
-            // Enable/disable continue button
+            // Check checkbox groups
+            const checkboxGroups = {};
+            form.querySelectorAll('.hidden-input[type="checkbox"]').forEach(checkbox => {
+                const groupName = checkbox.name;
+                if (!checkboxGroups[groupName]) {
+                    checkboxGroups[groupName] = [];
+                }
+                checkboxGroups[groupName].push(checkbox.checked);
+            });
+            
+            Object.keys(checkboxGroups).forEach(groupName => {
+                const hasSelectedCheckbox = checkboxGroups[groupName].some(checked => checked);
+                console.log('Checkbox group:', groupName, 'has selection:', hasSelectedCheckbox);
+                if (!hasSelectedCheckbox) {
+                    isValid = false;
+                }
+            });
+            
+            console.log('Final validation result:', isValid);
             continueBtn.disabled = !isValid;
         }
         
@@ -229,32 +276,32 @@
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Get all buttons with the same name
-                const buttonName = this.name;
-                const sameNameButtons = form.querySelectorAll(`button[name="${buttonName}"]`);
+                const buttonGroupName = this.name;
+                const questionId = buttonGroupName.replace('btn-group-', '');
+                const sameGroupButtons = form.querySelectorAll(`button[name="${buttonGroupName}"]`);
                 
-                // Only update if this button isn't already selected
                 if (!this.classList.contains('btn-selected')) {
-                    // Remove selected class from all buttons with same name
-                    sameNameButtons.forEach(btn => {
+                    sameGroupButtons.forEach(btn => {
                         btn.classList.remove('btn-selected');
                         btn.classList.add('btn-deselected');
                     });
                     
-                    // Add selected class to clicked button
                     this.classList.remove('btn-deselected');
                     this.classList.add('btn-selected');
                     
-                    // Update hidden input for form submission
-                    const hiddenInput = document.getElementById('radio-selection');
-                    if (hiddenInput) {
-                        hiddenInput.value = this.value;
-                        hiddenInput.name = buttonName;
+                    const specificHiddenInput = document.getElementById(`hidden-${questionId}`);
+                    if (specificHiddenInput) {
+                        specificHiddenInput.value = this.value;
                     }
                     
                     validateForm();
                 }
             });
+        });
+
+        // Handle checkbox validation
+        form.querySelectorAll('.hidden-input').forEach(checkbox => {
+            checkbox.addEventListener('change', validateForm);
         });
         
         // Handle range slider value display
@@ -262,14 +309,13 @@
             const valueDisplay = document.getElementById(`${slider.id}-value`);
             slider.addEventListener('input', function() {
                 valueDisplay.textContent = this.value;
+                validateForm();
             });
         });
         
         // Handle continue button
         continueBtn.addEventListener('click', function() {
             if (this.disabled) return;
-            
-            // Submit form
             form.submit();
         });
         

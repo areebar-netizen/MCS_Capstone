@@ -4,7 +4,7 @@
 
 {% block logo %}
 <div class="logo-container">
-    <img src="{% static 'secondBrain_App/images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+    <img src="{% static 'images/logo.svg' %}" alt="BrainWave Logo" class="logo">
 </div>
 {% endblock %}
 
@@ -18,15 +18,7 @@
         </div>
         <div class="header-text">
             <h1 class="header-title">BrainWave Focus Analyzer</h1>
-            <p class="header-greeting">Welcome back, {{ user.get_full_name|default:"User" }}!</p>
-        </div>
-        <div class="header-actions">
-            <button class="btn-demo" onclick="loadDemoData()">
-                <span>Load Demo Data</span>
-            </button>
-            <button class="btn-reset" onclick="resetProfile()">
-                <span>Reset Profile</span>
-            </button>
+            <p class="header-greeting">Welcome back, {{ user_profile.name|default:"User" }}!</p>
         </div>
     </header>
 

@@ -10,6 +10,7 @@
         <div class="duration-section">
             <h3 class="section-title">Select Duration</h3>
             <div class="duration-grid">
+                <button class="duration-btn btn-deselected" data-duration="1">1 min</button>
                 <button class="duration-btn btn-deselected" data-duration="15">15 min</button>
                 <button class="duration-btn btn-deselected" data-duration="25">25 min</button>
                 <button class="duration-btn btn-deselected" data-duration="30">30 min</button>
@@ -21,7 +22,7 @@
 
         <!-- Session Controls -->
         <div class="session-controls">
-            <button class="btn-primary btn-start" id="startSessionBtn">
+            <button class="btn-primary btn-start" id="startSessionBtn" onclick = "startEEGsession()">
                 <span>Start Focus Session</span>
             </button>
         </div>
@@ -47,8 +48,127 @@
             </div>
             <div class="session-controls">
                 <button class="btn-secondary" id="pauseBtn">Pause</button>
-                <button class="btn-danger" id="endBtn">End Session</button>
+                <button type = "button" class="btn-danger" id="endBtn" onclick = " stopEEGsession()">End Session</button>
             </div>
+
+            
+        </div>
+        <div class = "session-controls">
+            <pre id = "sessionOutput"></pre>
         </div>
     </div>
 </div>
+
+<script>
+    let selectedDuration = 1;
+    let timerInterval = null;
+    let remainingSeconds = 0;
+    let elapsedSeconds = 0;
+
+    document.querySelectorAll('.duration-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.duration-btn').forEach(b => {
+                b.classList.remove('btn-selected');
+                b.classList.add('btn-deselected');
+            });
+
+            btn.classList.remove('btn-deselected');
+            btn.classList.add('btn-selected');
+
+            selectedDuration = Number(btn.dataset.duration);
+            console.log("Selected:", selectedDuration);
+        });
+    });
+
+    function formatTime(totalSeconds) {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function startTimer(durationMinutes) {
+        remainingSeconds = durationMinutes * 60;
+        elapsedSeconds = 0;
+
+        document.getElementById('sessionTimer').textContent = formatTime(remainingSeconds);
+        document.getElementById('elapsedTime').textContent = formatTime(elapsedSeconds);
+
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+
+        timerInterval = setInterval(async () => {
+            remainingSeconds -= 1;
+            elapsedSeconds += 1;
+
+            document.getElementById('sessionTimer').textContent = formatTime(Math.max(remainingSeconds, 0));
+            document.getElementById('elapsedTime').textContent = formatTime(elapsedSeconds);
+
+            if (remainingSeconds <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                console.log("Timer ended, stopping EEG session");
+                await stopEEGsession();
+            }
+        }, 1000);
+    }
+
+    async function startEEGsession() {
+        console.log("starting EEG session");
+
+        try {
+            const res = await fetch('/start_eeg/', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    duration_minutes: Number(selectedDuration)
+                })
+            });
+
+            const data = await res.json();
+            console.log(data);
+
+            document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
+
+            if (res.ok) {
+                document.getElementById('activeSession').style.display = 'block';
+                startTimer(Number(selectedDuration));
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('sessionOutput').textContent = "Start error: " + err;
+        }
+    }
+
+    async function stopEEGsession() {
+        console.log("Ending EEG session");
+
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+
+        try {
+            const res = await fetch('/stop_eeg/', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await res.json();
+            console.log(data);
+            document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
+
+            if (data.status !== 'completed' && data.status !== 'no_predictions') {
+                setTimeout(stopEEGsession, 1000);
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('sessionOutput').textContent = "Stop error: " + err;
+        }
+    }
+    
+</script>
