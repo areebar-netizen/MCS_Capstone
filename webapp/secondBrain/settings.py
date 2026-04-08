@@ -72,6 +72,23 @@ WSGI_APPLICATION = 'secondBrain.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+<<<<<<< Updated upstream
+=======
+# Use SQLite for development (switch to PostgreSQL when ready)
+# PostgreSQL configuration
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': env('DB_NAME', default='secondbrain'),
+#         'USER': env('DB_USER', default='postgres'),
+#         'PASSWORD': env('DB_PASSWORD', default=''),
+#         'HOST': env('DB_HOST', default='localhost'),
+#         'PORT': env('DB_PORT', default='5432'),
+#     }
+# }
+
+# SQLite configuration (uncommented for development)
+>>>>>>> Stashed changes
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -110,6 +127,18 @@ USE_I18N = True
 
 USE_TZ = True
 
+<<<<<<< Updated upstream
+=======
+# Email Configuration for OTP
+# Use console backend for local development so OTP codes appear in terminal instead of being emailed.
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@brainwave.com')
+>>>>>>> Stashed changes
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
