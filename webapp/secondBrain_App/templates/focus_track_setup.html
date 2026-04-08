@@ -49,18 +49,17 @@
             <div class="session-controls">
                 <button type = "button" class="btn-danger" id="endBtn" onclick = " stopEEGsession()">End Session</button>
             </div>
-
-            
+            <div class = "session-controls">
+                <pre id = "sessionOutput"></pre>
+            </div>  
         </div>
-        <div class = "session-controls">
-            <pre id = "sessionOutput"></pre>
-        </div>
+        
     </div>
 </div>
 
 <script>
     let selectedDuration = 1;
-    let timer_Interval = null;
+    let timerInterval = null;
     let remainingSeconds = 0;
     let elapsedSeconds = 0;
 
@@ -92,11 +91,11 @@
         document.getElementById('sessionTimer').textContent = formatTime(remainingSeconds);
         document.getElementById('elapsedTime').textContent = formatTime(elapsedSeconds);
 
-        if (timer_Interval) {
-            clearInterval(timer_Interval);
+        if (timerInterval) {
+            clearInterval(timerInterval);
         }
 
-        timer_Interval = setInterval(async () => {
+        timerInterval = setInterval(async () => {
             remainingSeconds -= 1;
             elapsedSeconds += 1;
 
@@ -104,8 +103,8 @@
             document.getElementById('elapsedTime').textContent = formatTime(elapsedSeconds);
 
             if (remainingSeconds <= 0) {
-                clearInterval(timer_Interval);
-                timer_Interval = null;
+                clearInterval(timerInterval);
+                timerInterval = null;
                 console.log("Timer ended, stopping EEG session");
                 await stopEEGsession();
             }
@@ -144,9 +143,9 @@
     async function stopEEGsession() {
         console.log("Ending EEG session");
 
-        if (timer_Interval) {
-            clearInterval(timer_Interval);
-            timer_Interval = null;
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
         }
 
         try {
@@ -169,5 +168,5 @@
             document.getElementById('sessionOutput').textContent = "Stop error: " + err;
         }
     }
-    
+        
 </script>
