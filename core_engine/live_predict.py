@@ -717,16 +717,53 @@ def run_eeg_mode(args):
     
     try:
         print("Connecting to EEG stream...")
-        acq.connect()
-        acq.start()
         
-        if args.raw_out:
-            acq.start_saving_raw(args.raw_out)
+        # Add connection timeout with threading
+        import threading
+        connection_result = {'success': False, 'error': None}
+        
+        def connect_with_timeout():
+            try:
+                acq.connect()
+                acq.start()
+                connection_result['success'] = True
+            except Exception as e:
+                connection_result['error'] = str(e)
+        
+        # Start connection in separate thread with timeout
+        connection_thread = threading.Thread(target=connect_with_timeout)
+        connection_thread.daemon = True
+        connection_thread.start()
+        
+        # Wait for connection with timeout (10 seconds)
+        connection_thread.join(timeout=10)
+        
+        if connection_result['success']:
+            # Initialize session timing only after successful connection
+            global session_start_time
+            session_start_time = time.time()
+            print("Connected. Streaming data...")
             
-        print("Connected. Streaming data...")
+            if args.raw_out:
+                acq.start_saving_raw(args.raw_out)
+        else:
+            # Show sad face for connection failure/timeout
+            error_msg = connection_result.get('error', 'Connection timeout (10s)')
+            viz.set_preds([], f"😢 {error_msg}")
+            print(f"😢 Connection Failed: {error_msg}")
+            print("Please check your EEG device and try again.")
+            print("Make sure:")
+            print("  - EEG device is powered on")
+            print("  - Bluetooth is enabled")
+            print("  - Device is paired with this computer")
+            app.exec_()
+            return
         
     except Exception as e:
-        viz.set_preds([], f"Connection Failed: {e}")
+        # Show sad face for connection failure
+        viz.set_preds([], f"😢 Connection Failed: {e}")
+        print(f"😢 Connection Failed: {e}")
+        print("Please check your EEG device and try again.")
         app.exec_()
         return
 
@@ -758,29 +795,26 @@ def run_eeg_mode(args):
         if preds is not None:
             viz.set_preds(preds)
             
-            # Track session analytics
-            current_time = time.time()
-            if session_start_time is None:
-                session_start_time = current_time
-            
-            # Get the latest prediction (most recent)
-            if len(preds) > 0:
-                latest_pred = preds[-1]
-                latest_conf = confidence[-1] if len(confidence) > 0 else 0.0
-                
-                session_predictions.append(latest_pred)
-                session_confidence_scores.append(latest_conf)
-                
-                # Calculate focus streak and state switches
-                if latest_pred != last_prediction_state:
-                    state_switch_count += 1
-                    if latest_pred == 2:  # Assuming 2 = "concentrating"
-                        current_focus_streak += 1
-                        longest_focus_streak = max(longest_focus_streak, current_focus_streak)
-                    else:
-                        current_focus_streak = 0
-                
-                last_prediction_state = latest_pred
+            # Track session analytics (only if session has started)
+            if session_start_time is not None:
+                # Get the latest prediction (most recent)
+                if len(preds) > 0:
+                    latest_pred = preds[-1]
+                    latest_conf = confidence[-1] if len(confidence) > 0 else 0.0
+                    
+                    session_predictions.append(latest_pred)
+                    session_confidence_scores.append(latest_conf)
+                    
+                    # Calculate focus streak and state switches
+                    if latest_pred != last_prediction_state:
+                        state_switch_count += 1
+                        if latest_pred == 2:  # Assuming 2 = "concentrating"
+                            current_focus_streak += 1
+                            longest_focus_streak = max(longest_focus_streak, current_focus_streak)
+                        else:
+                            current_focus_streak = 0
+                    
+                    last_prediction_state = latest_pred
 
     timer = QtCore.QTimer()
     timer.timeout.connect(poll_and_predict)
