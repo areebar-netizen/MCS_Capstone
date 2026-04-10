@@ -95,10 +95,96 @@ class SessionSummary(models.Model):
     neutral_seconds = models.FloatField()
     concentrating_seconds = models.FloatField()
     data_points_count = models.IntegerField()
+    
+    # Advanced Analytics Fields
+    longest_focus_streak = models.FloatField(default=0.0, help_text="Longest continuous focus period in seconds")
+    focus_latency = models.FloatField(default=0.0, help_text="Time to reach initial focus state in seconds")
+    state_switch_count = models.IntegerField(default=0, help_text="Number of times focus state changed")
+    avg_confidence = models.FloatField(default=0.0, help_text="Mean confidence score across all windows")
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'session_summary'
+
+class PreSessionCheckIn(models.Model):
+    """Pre-session check-in data for detailed session context"""
+    check_in_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    session_id = models.CharField(max_length=100)
+    
+    # Task and Study Context
+    subject_task = models.CharField(max_length=50, choices=[
+        ('Math', 'Math'),
+        ('Reading', 'Reading'),
+        ('Writing', 'Writing'),
+        ('Coding', 'Coding'),
+        ('Research', 'Research'),
+        ('Studying', 'Studying'),
+        ('Problem Solving', 'Problem Solving'),
+        ('Creative Work', 'Creative Work'),
+        ('Other', 'Other'),
+    ])
+    task_difficulty = models.IntegerField(help_text="Task difficulty from 1-10")
+    estimated_length = models.CharField(max_length=20, choices=[
+        ('15-30m', '15-30 minutes'),
+        ('30-60m', '30-60 minutes'),
+        ('1-2h', '1-2 hours'),
+        ('2h+', '2+ hours'),
+    ])
+    assignment_deadline = models.DateTimeField(null=True, blank=True, help_text="Optional assignment deadline")
+    session_goal = models.TextField(help_text="Specific goal for this session")
+    
+    # Personal State
+    energy_level = models.IntegerField(help_text="Energy level from 1-10")
+    mood_emoji = models.CharField(max_length=50, choices=[
+        ('Happy', '😊 Happy'),
+        ('Calm', '😌 Calm'),
+        ('Focused', '🎯 Focused'),
+        ('Anxious', '😰 Anxious'),
+        ('Tired', '😴 Tired'),
+        ('Stressed', '😤 Stressed'),
+        ('Excited', '🤩 Excited'),
+        ('Neutral', '😐 Neutral'),
+    ])
+    stress_level = models.IntegerField(help_text="Stress level from 1-10")
+    
+    # Physical and Environmental Context
+    time_since_meal = models.CharField(max_length=20, choices=[
+        ('<1h', 'Less than 1 hour'),
+        ('1-2h', '1-2 hours'),
+        ('2-4h', '2-4 hours'),
+        ('4h+', '4+ hours'),
+    ])
+    caffeine_intake = models.CharField(max_length=20, choices=[
+        ('None', 'None'),
+        ('1 cup', '1 cup'),
+        ('2 cups', '2 cups'),
+        ('3-5 cups', '3-5 cups'),
+    ])
+    time_since_waking = models.CharField(max_length=20, choices=[
+        ('<1h', 'Less than 1 hour'),
+        ('1-3h', '1-3 hours'),
+        ('3-6h', '3-6 hours'),
+        ('6h+', '6+ hours'),
+    ])
+    physical_activity = models.CharField(max_length=20, choices=[
+        ('None', 'None'),
+        ('Light', 'Light'),
+        ('Moderate', 'Moderate'),
+        ('Intense', 'Intense'),
+    ])
+    
+    # New Context Fields
+    current_noise = models.CharField(max_length=100, help_text="Current noise level/description")
+    lighting_conditions = models.CharField(max_length=100, help_text="Lighting conditions")
+    study_method = models.CharField(max_length=100, help_text="Study method/approach")
+    current_location = models.CharField(max_length=100, help_text="Current study location")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'pre_session_check_in'
 
 class Recommendation(models.Model):
     recommendation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
