@@ -18,16 +18,16 @@ A comprehensive toolkit for real‑time EEG signal processing, enhanced feature 
 ### Architecture
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Django Web   │    │     Redis       │    │  Celery Worker  │
-│   Server       │◄──►│   Message       │◄──►│  Real-time      │
-│   (Frontend)   │    │     Broker       │    │  Processing     │
-│               │    │                 │    │  (Per-second)  │
+│   Django Web    │    │     Redis        │    │  Celery Worker  │
+│   Server        │◄──►│   Message        │◄──►│  Real-time      │
+│   (Frontend)    │    │     Broker       │    │  Processing     │
+│                 │    │                  │    │  (Per-second)   │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
          │                                           │
          │                                           ▼
          │                                    ┌─────────────────┐
          │                                    │   PostgreSQL    │
-         └──────────────────────────────────────►│   (User Data)   │
+         └───────────────────────────────────►│   (User Data)   │
                                               └─────────────────┘
 ```
 
@@ -347,21 +347,3 @@ python3 -m muselsl stream
    - Use batch processing for multiple predictions
    - Implement model quantization for faster inference
 
-## Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature-name`
-3. Make changes with proper testing
-4. Submit pull request with detailed description
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-For questions or support, please open an issue on GitHub or contact the development team.
-
----
-
-**System provides real-time EEG mental state classification with 96%+ accuracy using advanced feature extraction, ensemble machine learning, and a complete web application with user authentication and AI-powered recommendations.**
