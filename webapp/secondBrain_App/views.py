@@ -18,12 +18,532 @@ from .tasks_realtime import run_live_inference_streaming
 from django.views.decorators.csrf import csrf_exempt
 import csv
 
-from .models import UserProfile, Recommendation, Prediction
+from .models import UserProfile, Recommendation, Prediction, SessionSummary
 from .services.eeg_service import EEGService
 
 # Create your views here.
 
 MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts', model_name='xgboost')
+
+def calendar_view(request):
+    """Dynamic calendar view driven by SessionSummary data"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return redirect('/')
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return redirect('/onboarding/')
+    
+    # Get month and year from GET parameters or default to current date
+    from datetime import datetime
+    import calendar
+    
+    try:
+        requested_month = int(request.GET.get('month', ''))
+        requested_year = int(request.GET.get('year', ''))
+        
+        # Validate month and year ranges
+        if requested_month < 1 or requested_month > 12:
+            raise ValueError("Invalid month")
+        if requested_year < 2020 or requested_year > 2030:
+            raise ValueError("Invalid year")
+            
+        current_month = requested_month
+        current_year = requested_year
+    except (ValueError, TypeError):
+        # Default to current date if parameters are invalid or missing
+        now = datetime.now()
+        current_month = now.month
+        current_year = now.year
+    
+    # Query SessionSummary for current user and requested month/year
+    sessions = SessionSummary.objects.filter(
+        user=user_profile,
+        start_time__year=current_year,
+        start_time__month=current_month
+    ).order_by('start_time')
+    
+    # Create session data mapping by day
+    session_data_by_day = {}
+    for session in sessions:
+        day = session.start_time.day
+        
+        # Calculate focus percentage using the formula: ((Score - 1.0) / 2.0) * 100
+        focus_percentage = ((session.average_focus_score - 1.0) / 2.0) * 100
+        
+        # If multiple sessions on same day, keep the one with highest focus score
+        if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
+            session_data_by_day[day] = {
+                'session_id': session.session_id,
+                'start_time': session.start_time,
+                'average_focus_score': session.average_focus_score,
+                'focus_percentage': focus_percentage,
+                'total_duration_seconds': session.total_duration_seconds,
+                'concentrating_seconds': session.concentrating_seconds,
+                'peak_focus_score': session.peak_focus_score
+            }
+    
+    # Generate calendar weeks using calendar.monthcalendar(year, month)
+    cal = calendar.monthcalendar(current_year, current_month)
+    calendar_weeks = []
+    
+    for week in cal:
+        week_days = []
+        for day_num in week:
+            if day_num == 0:  # Day from previous/next month
+                day_obj = {
+                    'day_num': day_num,
+                    'in_month': False,
+                    'has_data': False,
+                    'image_path': None,
+                    'focus_pct': None
+                }
+            else:
+                has_data = day_num in session_data_by_day
+                if has_data:
+                    session_data = session_data_by_day[day_num]
+                    focus_pct = session_data['focus_percentage']
+                    
+                    # Map focus percentage to image path based on requirements
+                    if focus_pct >= 75:
+                        image_path = '/static/images/Master.jpg'
+                    elif focus_pct >= 60:
+                        image_path = '/static/images/LockedIn.jpg'
+                    elif focus_pct >= 45:
+                        image_path = '/static/images/Steady.jpg'
+                    elif focus_pct >= 30:
+                        image_path = '/static/images/Neutral.jpg'
+                    elif focus_pct >= 15:
+                        image_path = '/static/images/Distracted.jpg'
+                    else:
+                        image_path = '/static/images/BrainFog.jpg'
+                else:
+                    focus_pct = None
+                    image_path = None
+                
+                day_obj = {
+                    'day_num': day_num,
+                    'in_month': True,
+                    'has_data': has_data,
+                    'image_path': image_path,
+                    'focus_pct': focus_pct
+                }
+            
+            week_days.append(day_obj)
+        
+        calendar_weeks.append(week_days)
+    
+    # Calculate monthly statistics
+    sessions_count = sessions.count()
+    avg_focus = 0
+    if sessions_count > 0:
+        avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
+        avg_focus = ((avg_focus - 1.0) / 2.0) * 100  # Convert to percentage
+    
+    active_days = len(session_data_by_day)
+    
+    # Calculate navigation context
+    if current_month == 1:
+        prev_month = 12
+        prev_year = current_year - 1
+    else:
+        prev_month = current_month - 1
+        prev_year = current_year
+    
+    if current_month == 12:
+        next_month = 1
+        next_year = current_year + 1
+    else:
+        next_month = current_month + 1
+        next_year = current_year
+    
+    # Get month name for display
+    month_name = calendar.month_name[current_month]
+    
+    context = {
+        'user': request.user if request.user.is_authenticated else None,
+        'user_profile': user_profile,
+        'calendar_weeks': calendar_weeks,
+        'current_month': current_month,
+        'current_year': current_year,
+        'month_name': month_name,
+        'sessions_this_month': sessions_count,
+        'avg_focus_pct': avg_focus,
+        'active_days': active_days,
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month,
+        'next_year': next_year,
+        'focus_legend': [
+            {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
+            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
+            {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
+            {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
+            {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
+            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+        ]
+    }
+    
+    return render(request, 'focus_calendar.html', context)
+
+def calendar_api_data(request):
+    """API endpoint for calendar data used in AJAX requests"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'error': 'User profile not found'}, status=404)
+    
+    # Get month and year from GET parameters or default to current date
+    from datetime import datetime
+    import calendar
+    
+    try:
+        requested_month = int(request.GET.get('month', ''))
+        requested_year = int(request.GET.get('year', ''))
+        
+        # Validate month and year ranges
+        if requested_month < 1 or requested_month > 12:
+            raise ValueError("Invalid month")
+        if requested_year < 2020 or requested_year > 2030:
+            raise ValueError("Invalid year")
+            
+        current_month = requested_month
+        current_year = requested_year
+    except (ValueError, TypeError):
+        # Default to current date if parameters are invalid or missing
+        now = datetime.now()
+        current_month = now.month
+        current_year = now.year
+    
+    # Query SessionSummary for current user and requested month/year
+    sessions = SessionSummary.objects.filter(
+        user=user_profile,
+        start_time__year=current_year,
+        start_time__month=current_month
+    ).order_by('start_time')
+    
+    # Create session data mapping by day
+    session_data_by_day = {}
+    for session in sessions:
+        day = session.start_time.day
+        
+        # Calculate focus percentage using the formula: ((Score - 1.0) / 2.0) * 100
+        focus_percentage = ((session.average_focus_score - 1.0) / 2.0) * 100
+        
+        # If multiple sessions on same day, keep the one with highest focus score
+        if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
+            session_data_by_day[day] = {
+                'session_id': session.session_id,
+                'start_time': session.start_time,
+                'average_focus_score': session.average_focus_score,
+                'focus_percentage': focus_percentage,
+                'total_duration_seconds': session.total_duration_seconds,
+                'concentrating_seconds': session.concentrating_seconds,
+                'peak_focus_score': session.peak_focus_score
+            }
+    
+    # Generate calendar weeks using calendar.monthcalendar(year, month)
+    cal = calendar.monthcalendar(current_year, current_month)
+    calendar_weeks = []
+    
+    for week in cal:
+        week_days = []
+        for day_num in week:
+            if day_num == 0:  # Day from previous/next month
+                day_obj = {
+                    'day_num': day_num,
+                    'in_month': False,
+                    'has_data': False,
+                    'image_path': None,
+                    'focus_pct': None
+                }
+            else:
+                has_data = day_num in session_data_by_day
+                if has_data:
+                    session_data = session_data_by_day[day_num]
+                    focus_pct = session_data['focus_percentage']
+                    
+                    # Map focus percentage to image path based on requirements
+                    if focus_pct >= 75:
+                        image_path = '/static/images/Master.jpg'
+                    elif focus_pct >= 60:
+                        image_path = '/static/images/LockedIn.jpg'
+                    elif focus_pct >= 45:
+                        image_path = '/static/images/Steady.jpg'
+                    elif focus_pct >= 30:
+                        image_path = '/static/images/Neutral.jpg'
+                    elif focus_pct >= 15:
+                        image_path = '/static/images/Distracted.jpg'
+                    else:
+                        image_path = '/static/images/BrainFog.jpg'
+                else:
+                    focus_pct = None
+                    image_path = None
+                
+                day_obj = {
+                    'day_num': day_num,
+                    'in_month': True,
+                    'has_data': has_data,
+                    'image_path': image_path,
+                    'focus_pct': focus_pct
+                }
+            
+            week_days.append(day_obj)
+        
+        calendar_weeks.append(week_days)
+    
+    # Calculate monthly statistics
+    sessions_count = sessions.count()
+    avg_focus = 0
+    if sessions_count > 0:
+        avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
+        avg_focus_10_point = avg_focus * 3.33  # Scale to 10-point display
+    else:
+        avg_focus_10_point = 0
+    
+    active_days = len(session_data_by_day)
+    
+    # Calculate navigation context
+    if current_month == 1:
+        prev_month = 12
+        prev_year = current_year - 1
+    else:
+        prev_month = current_month - 1
+        prev_year = current_year
+    
+    if current_month == 12:
+        next_month = 1
+        next_year = current_year + 1
+    else:
+        next_month = current_month + 1
+        next_year = current_year
+    
+    # Get month name for display
+    month_name = calendar.month_name[current_month]
+    
+    # Return JSON response
+    return JsonResponse({
+        'calendar_weeks': calendar_weeks,
+        'current_month': current_month,
+        'current_year': current_year,
+        'month_name': month_name,
+        'sessions_this_month': sessions_count,
+        'avg_focus_10_point': avg_focus_10_point,
+        'active_days': active_days,
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month,
+        'next_year': next_year,
+        'focus_legend': [
+            {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
+            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
+            {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
+            {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
+            {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
+            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+        ]
+    })
+
+def study_time_api_data(request):
+    """API endpoint for study time analysis data"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'error': 'User profile not found'}, status=404)
+    
+    # Get scale parameter (week, month, year)
+    scale = request.GET.get('scale', 'week')
+    if scale not in ['week', 'month', 'year']:
+        scale = 'week'
+    
+    from datetime import datetime, timedelta
+    from django.db.models import Sum, Count
+    from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, Extract
+    
+    now = datetime.now()
+    
+    if scale == 'week':
+        # Get data for current week (last 7 days)
+        start_date = now - timedelta(days=6)
+        sessions = SessionSummary.objects.filter(
+            user=user_profile,
+            start_time__gte=start_date,
+            start_time__lte=now
+        ).annotate(
+            date=TruncDay('start_time')
+        ).values('date').annotate(
+            total_seconds=Sum('total_duration_seconds')
+        ).order_by('date')
+        
+        # Prepare data for each day of the week
+        week_data = []
+        day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        
+        for i in range(7):
+            date = start_date + timedelta(days=i)
+            day_sessions = [s for s in sessions if s['date'].date() == date.date()]
+            total_seconds = day_sessions[0]['total_seconds'] if day_sessions else 0
+            week_data.append({
+                'label': day_names[i],
+                'seconds': total_seconds
+            })
+        
+        # Calculate statistics
+        total_seconds = sum(item['seconds'] for item in week_data)
+        active_days = len([item for item in week_data if item['seconds'] > 0])
+        daily_avg = total_seconds / active_days if active_days > 0 else 0
+        
+        # Find best day
+        best_day_idx = max(range(len(week_data)), key=lambda i: week_data[i]['seconds'])
+        best_day = day_names[best_day_idx] if week_data[best_day_idx]['seconds'] > 0 else 'None'
+        
+    elif scale == 'month':
+        # Get data for current month grouped by week
+        sessions = SessionSummary.objects.filter(
+            user=user_profile,
+            start_time__year=now.year,
+            start_time__month=now.month
+        ).annotate(
+            week=TruncWeek('start_time')
+        ).values('week').annotate(
+            total_seconds=Sum('total_duration_seconds')
+        ).order_by('week')
+        
+        # Create consistent 4-week structure
+        month_data = []
+        week_seconds = {i: 0 for i in range(4)}  # Initialize all 4 weeks to 0
+        
+        # Map sessions to week indices
+        for session in sessions:
+            # Calculate week of month (0-3)
+            week_start = session['week'].date()
+            month_start = datetime(now.year, now.month, 1).date()
+            week_index = (week_start - month_start).days // 7
+            if 0 <= week_index <= 3:  # Ensure we don't exceed 4 weeks
+                week_seconds[week_index] = session['total_seconds'] or 0
+        
+        # Create data for all 4 weeks consistently
+        for i in range(4):
+            month_data.append({
+                'label': f'Week {i+1}',
+                'seconds': week_seconds[i]
+            })
+        
+        # Calculate statistics
+        total_seconds = sum(item['seconds'] for item in month_data)
+        active_days = SessionSummary.objects.filter(
+            user=user_profile,
+            start_time__year=now.year,
+            start_time__month=now.month
+        ).values('start_time__date').distinct().count()
+        daily_avg = total_seconds / active_days if active_days > 0 else 0
+        
+        # Find best week
+        best_week_idx = max(range(4), key=lambda i: month_data[i]['seconds'])
+        best_day = f'Week {best_week_idx + 1}' if month_data[best_week_idx]['seconds'] > 0 else 'None'
+        
+    else:  # year
+        # Get data for current year grouped by month
+        sessions = SessionSummary.objects.filter(
+            user=user_profile,
+            start_time__year=now.year
+        ).annotate(
+            month=TruncMonth('start_time')
+        ).values('month').annotate(
+            total_seconds=Sum('total_duration_seconds')
+        ).order_by('month')
+        
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        year_data = []
+        
+        # Create data for all 12 months
+        month_seconds = {i: 0 for i in range(1, 13)}
+        for session in sessions:
+            month = session['month'].month
+            month_seconds[month] = session['total_seconds'] or 0
+        
+        for i in range(1, 13):
+            year_data.append({
+                'label': month_names[i-1],
+                'seconds': month_seconds[i]
+            })
+        
+        # Calculate statistics
+        total_seconds = sum(year_data[i]['seconds'] for i in range(12))
+        
+        # For year view, calculate daily average based on days passed in current year
+        from datetime import date
+        year_start = date(now.year, 1, 1)
+        days_passed = (now.date() - year_start).days + 1  # +1 to include current day
+        
+        # Use actual active days if they exist, otherwise use days passed
+        active_days = SessionSummary.objects.filter(
+            user=user_profile,
+            start_time__year=now.year
+        ).values('start_time__date').distinct().count()
+        
+        daily_avg = total_seconds / active_days if active_days > 0 else total_seconds / days_passed
+        
+        # Find best month
+        best_month_idx = max(range(12), key=lambda i: year_data[i]['seconds'])
+        best_day = month_names[best_month_idx] if year_data[best_month_idx]['seconds'] > 0 else 'None'
+    
+    # Format time strings
+    def format_seconds(seconds):
+        if seconds < 60:
+            return f"{seconds}min"
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        if hours == 0:
+            return f"{minutes}min"
+        elif minutes == 0:
+            return f"{hours}h"
+        else:
+            return f"{hours}h {minutes}min"
+    
+    # Calculate max value for percentage scaling
+    data = week_data if scale == 'week' else (month_data if scale == 'month' else year_data)
+    max_seconds = max(item['seconds'] for item in data) if data else 1
+    
+    # Scale data to percentages
+    scaled_data = []
+    for item in data:
+        percentage = (item['seconds'] / max_seconds * 100) if max_seconds > 0 else 0
+        scaled_data.append({
+            'label': item['label'],
+            'seconds': item['seconds'],
+            'height': percentage,
+            'formatted_time': format_seconds(item['seconds'])
+        })
+    
+    # Determine the best period label based on scale
+    if scale == 'week':
+        best_period_label = 'Best Day'
+    elif scale == 'month':
+        best_period_label = 'Best Week'
+    else:  # year
+        best_period_label = 'Best Month'
+    
+    return JsonResponse({
+        'scale': scale,
+        'data': scaled_data,
+        'total_study_time': format_seconds(total_seconds),
+        'daily_average': format_seconds(daily_avg),
+        'best_day': best_day,
+        'best_period_label': best_period_label,
+        'active_days': active_days
+    })
 
 def email_entry(request):
     """Landing page for email entry"""
@@ -182,6 +702,155 @@ def dashboard_view(request):
     
     def get_sound_environment_text(env_id):
         environments = {
+            0: 'Silent',
+            1: 'Quiet',
+            2: 'Moderate Noise',
+            3: 'Background Music',
+            4: 'Cafe/Office',
+            5: 'Outdoor Environment'
+        }
+        return environments.get(int(env_id), 'Not Set')
+    
+    def get_main_goals_display(goals_string):
+        """Convert comma-separated goal indices to display text"""
+        if not goals_string:
+            return 'Not Set'
+        
+        # Define goal choices mapping
+        GOAL_CHOICES = {
+            '1': 'Improve Grades',
+            '2': 'Learn New Skill', 
+            '3': 'Complete Assignments',
+            '4': 'Prepare for Exams',
+            '5': 'Increase Study Time',
+            '6': 'Better Time Management',
+            '7': 'Reduce Distractions',
+            '8': 'Improve Focus',
+            '9': 'Career Development',
+            '10': 'Personal Growth'
+        }
+        
+        # Parse the string and map each index to text
+        try:
+            # Handle both comma-separated and bracketed formats
+            goals_str = goals_string.strip('[]').replace("'", "").replace(" ", "")
+            goal_indices = [g.strip() for g in goals_str.split(',') if g.strip()]
+            
+            # Map each index to its text
+            goal_texts = []
+            for index in goal_indices:
+                goal_text = GOAL_CHOICES.get(index.strip())
+                if goal_text:
+                    goal_texts.append(goal_text)
+            
+            return ', '.join(goal_texts) if goal_texts else 'Not Set'
+        except Exception:
+            return goals_string
+    
+    def get_study_location_display(location_string):
+        """Convert comma-separated location indices to display text"""
+        if not location_string:
+            return 'Not Set'
+        
+        # Define location choices mapping
+        LOCATION_CHOICES = {
+            '1': 'Library',
+            '2': 'Home Office',
+            '3': 'Bedroom',
+            '4': 'Living Room',
+            '5': 'Cafe/Coffee Shop',
+            '6': 'Study Room',
+            '7': 'Classroom',
+            '8': 'Co-working Space',
+            '9': 'Outdoor',
+            '10': 'Other'
+        }
+        
+        # Parse the string and map each index to text
+        try:
+            # Handle both comma-separated and bracketed formats
+            location_str = location_string.strip('[]').replace("'", "").replace(" ", "")
+            location_indices = [l.strip() for l in location_str.split(',') if l.strip()]
+            
+            # Map each index to its text
+            location_texts = []
+            for index in location_indices:
+                location_text = LOCATION_CHOICES.get(index.strip())
+                if location_text:
+                    location_texts.append(location_text)
+            
+            return ', '.join(location_texts) if location_texts else 'Not Set'
+        except Exception:
+            return location_string
+    
+    def get_health_conditions_display(health_string):
+        """Convert comma-separated health condition indices to display text"""
+        if not health_string:
+            return 'Not Set'
+        
+        # Define health condition choices mapping
+        HEALTH_CHOICES = {
+            '1': 'Anxiety',
+            '2': 'ADHD',
+            '3': 'Depression',
+            '4': 'Insomnia',
+            '5': 'Migraines',
+            '6': 'None',
+            '7': 'Other'
+        }
+        
+        # Parse the string and map each index to text
+        try:
+            # Handle both comma-separated and bracketed formats
+            health_str = health_string.strip('[]').replace("'", "").replace(" ", "")
+            health_indices = [h.strip() for h in health_str.split(',') if h.strip()]
+            
+            # Map each index to its text
+            health_texts = []
+            for index in health_indices:
+                health_text = HEALTH_CHOICES.get(index.strip())
+                if health_text:
+                    health_texts.append(health_text)
+            
+            return ', '.join(health_texts) if health_texts else 'Not Set'
+        except Exception:
+            return health_string
+    
+    def get_study_subjects_display(subjects_string):
+        """Convert comma-separated subject indices to display text"""
+        if not subjects_string:
+            return 'Not Set'
+        
+        # Define subject choices mapping
+        SUBJECT_CHOICES = {
+            '1': 'Mathematics',
+            '2': 'Science',
+            '3': 'English/Literature',
+            '4': 'History/Social Studies',
+            '5': 'Computer Science',
+            '6': 'Arts',
+            '7': 'Languages',
+            '8': 'Business',
+            '9': 'Other'
+        }
+        
+        # Parse the string and map each index to text
+        try:
+            # Handle both comma-separated and bracketed formats
+            subjects_str = subjects_string.strip('[]').replace("'", "").replace(" ", "")
+            subject_indices = [s.strip() for s in subjects_str.split(',') if s.strip()]
+            
+            # Map each index to its text
+            subject_texts = []
+            for index in subject_indices:
+                subject_text = SUBJECT_CHOICES.get(index.strip())
+                if subject_text:
+                    subject_texts.append(subject_text)
+            
+            return ', '.join(subject_texts) if subject_texts else 'Not Set'
+        except Exception:
+            return subjects_string
+        environments = {
             0: 'Complete Silence',
             1: 'White Noise',
             2: 'Soft Music',
@@ -209,17 +878,17 @@ def dashboard_view(request):
         'sleep_hours': user_profile.sleep_hours,
         'sleep_quality': get_sleep_quality_text(user_profile.sleep_quality),
         'learning_style': get_learning_style_text(user_profile.learning_style),
-        'study_subjects': user_profile.study_subjects if user_profile.study_subjects else 'Not Set',
+        'study_subjects': get_study_subjects_display(user_profile.study_subjects),
         'caffeine_servings': user_profile.caffeine_servings,
         'procrastination_level': user_profile.procrastination_level,
-        'main_goals': user_profile.main_goals if user_profile.main_goals else 'Not Set',
+        'main_goals': get_main_goals_display(user_profile.main_goals),
         'sound_environment': get_sound_environment_text(user_profile.sound_environment),
-        'study_location': user_profile.study_location if user_profile.study_location else 'Not Set',
+        'study_location': get_study_location_display(user_profile.study_location),
         'phone_location': user_profile.phone_location,
-        'distractions': user_profile.distractions if user_profile.distractions else 'Not Set',
+        'distractions': user_profile.distractions,
         'exercise_frequency': user_profile.exercise_frequency,
         'eating_timing': user_profile.eating_timing,
-        'health_conditions': user_profile.health_conditions if user_profile.health_conditions else 'Not Set',
+        'health_conditions': get_health_conditions_display(user_profile.health_conditions),
         'session_length': get_session_length_text(user_profile.session_length),
         'study_time_of_day': get_study_time_text(user_profile.study_time_of_day),
         'alert_time': get_alert_time_text(user_profile.alert_time)
@@ -230,9 +899,136 @@ def dashboard_view(request):
     session_stats = data_service.get_session_average_stats()
     brainwave_data = data_service.get_brainwave_averages()
     recommendations = data_service.get_recommendations()
-    calendar_data = data_service.get_calendar_data()
     
-    # Mock data for demonstration
+    # Generate calendar data for the requested month
+    from datetime import datetime
+    import calendar
+    
+    try:
+        requested_month = int(request.GET.get('month', ''))
+        requested_year = int(request.GET.get('year', ''))
+        
+        # Validate month and year ranges
+        if requested_month < 1 or requested_month > 12:
+            raise ValueError("Invalid month")
+        if requested_year < 2020 or requested_year > 2030:
+            raise ValueError("Invalid year")
+            
+        current_month = requested_month
+        current_year = requested_year
+    except (ValueError, TypeError):
+        # Default to current date if parameters are invalid or missing
+        now = datetime.now()
+        current_month = now.month
+        current_year = now.year
+    
+    # Query SessionSummary for current user and requested month/year
+    from .models import SessionSummary
+    sessions = SessionSummary.objects.filter(
+        user=user_profile,
+        start_time__year=current_year,
+        start_time__month=current_month
+    ).order_by('start_time')
+    
+    # Create session data mapping by day
+    session_data_by_day = {}
+    for session in sessions:
+        day = session.start_time.day
+        
+        # Calculate focus percentage using the formula: ((Score - 1.0) / 2.0) * 100
+        focus_percentage = ((session.average_focus_score - 1.0) / 2.0) * 100
+        
+        # If multiple sessions on same day, keep the one with highest focus score
+        if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
+            session_data_by_day[day] = {
+                'session_id': session.session_id,
+                'start_time': session.start_time,
+                'average_focus_score': session.average_focus_score,
+                'focus_percentage': focus_percentage,
+                'total_duration_seconds': session.total_duration_seconds,
+                'concentrating_seconds': session.concentrating_seconds,
+                'peak_focus_score': session.peak_focus_score
+            }
+    
+    # Generate calendar weeks using calendar.monthcalendar(year, month)
+    cal = calendar.monthcalendar(current_year, current_month)
+    calendar_weeks = []
+    
+    for week in cal:
+        week_days = []
+        for day_num in week:
+            if day_num == 0:  # Day from previous/next month
+                day_obj = {
+                    'day_num': day_num,
+                    'in_month': False,
+                    'has_data': False,
+                    'image_path': None,
+                    'focus_pct': None
+                }
+            else:
+                has_data = day_num in session_data_by_day
+                if has_data:
+                    session_data = session_data_by_day[day_num]
+                    focus_pct = session_data['focus_percentage']
+                    
+                    # Map focus percentage to image path based on requirements
+                    if focus_pct >= 75:
+                        image_path = '/static/images/Master.jpg'
+                    elif focus_pct >= 60:
+                        image_path = '/static/images/LockedIn.jpg'
+                    elif focus_pct >= 45:
+                        image_path = '/static/images/Steady.jpg'
+                    elif focus_pct >= 30:
+                        image_path = '/static/images/Neutral.jpg'
+                    elif focus_pct >= 15:
+                        image_path = '/static/images/Distracted.jpg'
+                    else:
+                        image_path = '/static/images/BrainFog.jpg'
+                else:
+                    focus_pct = None
+                    image_path = None
+                
+                day_obj = {
+                    'day_num': day_num,
+                    'in_month': True,
+                    'has_data': has_data,
+                    'image_path': image_path,
+                    'focus_pct': focus_pct
+                }
+            
+            week_days.append(day_obj)
+        
+        calendar_weeks.append(week_days)
+    
+    # Calculate monthly statistics
+    sessions_count = sessions.count()
+    avg_focus = 0
+    if sessions_count > 0:
+        avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
+        avg_focus_10_point = avg_focus * 3.33  # Scale to 10-point display
+    else:
+        avg_focus_10_point = 0
+    
+    active_days = len(session_data_by_day)
+    
+    # Calculate navigation context
+    if current_month == 1:
+        prev_month = 12
+        prev_year = current_year - 1
+    else:
+        prev_month = current_month - 1
+        prev_year = current_year
+    
+    if current_month == 12:
+        next_month = 1
+        next_year = current_year + 1
+    else:
+        next_month = current_month + 1
+        next_year = current_year
+    
+    # Get month name for display
+    month_name = calendar.month_name[current_month]
+    
     context = {
         'user': request.user if request.user.is_authenticated else None,
         'user_profile': profile_snapshot,
@@ -240,9 +1036,25 @@ def dashboard_view(request):
         'session_stats': session_stats,
         'brainwave_data': brainwave_data,
         'recommendations': recommendations,
-        'calendar_data': calendar_data,
-        'current_month': calendar_data[0]['day'] if calendar_data else 1,
-        'current_year': timezone.now().year if calendar_data else 2026
+        'calendar_weeks': calendar_weeks,
+        'current_month': current_month,
+        'current_year': current_year,
+        'month_name': month_name,
+        'sessions_this_month': sessions_count,
+        'avg_focus_10_point': avg_focus_10_point,
+        'active_days': active_days,
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month,
+        'next_year': next_year,
+        'focus_legend': [
+            {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
+            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
+            {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
+            {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
+            {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
+            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+        ]
     }
     
     return render(request, 'dashboard.html', context)

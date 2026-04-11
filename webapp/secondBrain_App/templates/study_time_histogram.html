@@ -13,85 +13,45 @@
         <!-- Week View -->
         <div class="histogram-view" id="weekView">
             <div class="time-labels">
-                <span>Sun</span>
-                <span>Mon</span>
-                <span>Tue</span>
-                <span>Wed</span>
-                <span>Thu</span>
-                <span>Fri</span>
-                <span>Sat</span>
+                <!-- Labels will be populated by JavaScript -->
             </div>
             <div class="histogram-bars">
-                <div class="bar" style="height: 60%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 80%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 45%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 90%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 70%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 85%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 40%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
+                <!-- Bars will be populated by JavaScript -->
             </div>
         </div>
 
         <!-- Month View (Hidden by default) -->
         <div class="histogram-view" id="monthView" style="display: none;">
             <div class="time-labels">
-                <span>Week 1</span>
-                <span>Week 2</span>
-                <span>Week 3</span>
-                <span>Week 4</span>
+                <!-- Labels will be populated by JavaScript -->
             </div>
             <div class="histogram-bars">
-                <div class="bar" style="height: 75%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 85%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 60%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 90%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
+                <!-- Bars will be populated by JavaScript -->
             </div>
         </div>
 
         <!-- Year View (Hidden by default) -->
         <div class="histogram-view" id="yearView" style="display: none;">
             <div class="time-labels">
-                <span>Jan</span>
-                <span>Feb</span>
-                <span>Mar</span>
-                <span>Apr</span>
-                <span>May</span>
-                <span>Jun</span>
-                <span>Jul</span>
-                <span>Aug</span>
-                <span>Sep</span>
-                <span>Oct</span>
-                <span>Nov</span>
-                <span>Dec</span>
+                <!-- Labels will be populated by JavaScript -->
             </div>
             <div class="histogram-bars">
-                <div class="bar" style="height: 65%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 70%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 80%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 55%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 90%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 85%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 75%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 60%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 70%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 80%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 65%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
-                <div class="bar" style="height: 70%; background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));"></div>
+                <!-- Bars will be populated by JavaScript -->
             </div>
         </div>
 
         <div class="histogram-stats">
             <div class="stat">
                 <span class="stat-label">Total Study Time</span>
-                <span class="stat-value">24h 35min</span>
+                <span class="stat-value" id="totalStudyTime">Loading...</span>
             </div>
             <div class="stat">
                 <span class="stat-label">Daily Average</span>
-                <span class="stat-value">3h 30min</span>
+                <span class="stat-value" id="dailyAverage">Loading...</span>
             </div>
             <div class="stat">
-                <span class="stat-label">Best Day</span>
-                <span class="stat-value">Wednesday</span>
+                <span class="stat-label" id="bestPeriodLabel">Best Day</span>
+                <span class="stat-value" id="bestDay">Loading...</span>
             </div>
         </div>
     </div>
