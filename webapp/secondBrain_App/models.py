@@ -95,8 +95,6 @@ class SessionSummary(models.Model):
     neutral_seconds = models.FloatField()
     concentrating_seconds = models.FloatField()
     data_points_count = models.IntegerField()
-    
-    # Advanced Analytics Fields
     longest_focus_streak = models.FloatField(default=0.0, help_text="Longest continuous focus period in seconds")
     focus_latency = models.FloatField(default=0.0, help_text="Time to reach initial focus state in seconds")
     state_switch_count = models.IntegerField(default=0, help_text="Number of times focus state changed")

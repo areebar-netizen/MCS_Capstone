@@ -175,36 +175,245 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Calendar navigation
+    // Calendar AJAX navigation
     const prevBtn = document.getElementById('prevMonth');
     const nextBtn = document.getElementById('nextMonth');
-    const currentMonth = document.getElementById('currentMonth');
+    const calendarContainer = document.querySelector('.focus-calendar-container');
     
-    if (prevBtn && nextBtn && currentMonth) {
-        let monthIndex = 2; // March (0-based)
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                      'July', 'August', 'September', 'October', 'November', 'December'];
+    if (prevBtn && nextBtn && calendarContainer) {
+        // Add loading state class to calendar container position relative
+        calendarContainer.style.position = 'relative';
         
+        async function loadCalendarData(month, year) {
+            try {
+                // Add loading state
+                calendarContainer.classList.add('loading');
+                
+                // Fetch calendar data
+                const response = await fetch(`/api/calendar-data/?month=${month}&year=${year}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load calendar data');
+                }
+                
+                const data = await response.json();
+                
+                // Update calendar grid
+                updateCalendarGrid(data);
+                
+                // Update monthly summary
+                updateMonthlySummary(data);
+                
+                // Update navigation buttons
+                updateNavigationButtons(data);
+                
+                // Update month title
+                document.getElementById('currentMonth').textContent = `${data.month_name} ${data.current_year}`;
+                
+            } catch (error) {
+                console.error('Error loading calendar data:', error);
+                // Optionally show error message to user
+            } finally {
+                // Remove loading state
+                calendarContainer.classList.remove('loading');
+            }
+        }
+        
+        function updateCalendarGrid(data) {
+            const calendarDays = document.querySelector('.calendar-days');
+            if (!calendarDays) return;
+            
+            let html = '';
+            data.calendar_weeks.forEach(week => {
+                week.forEach(day => {
+                    const dayClasses = ['calendar-day'];
+                    if (!day.in_month) dayClasses.push('empty');
+                    if (day.has_data) dayClasses.push('active');
+                    
+                    html += `<div class="${dayClasses.join(' ')}">`;
+                    if (day.in_month) {
+                        html += `<span class="day-number">${day.day_num}</span>`;
+                        if (day.has_data) {
+                            html += `<img src="${day.image_path}" 
+                                         alt="Focus: ${Math.round(day.focus_pct)}%" 
+                                         class="focus-image"
+                                         title="${Math.round(day.focus_pct)}% focus">`;
+                        }
+                    }
+                    html += `</div>`;
+                });
+            });
+            
+            calendarDays.innerHTML = html;
+        }
+        
+        function updateMonthlySummary(data) {
+            const monthlySummary = document.querySelector('.monthly-summary');
+            if (!monthlySummary) return;
+            
+            monthlySummary.innerHTML = `
+                <div class="summary-stat">
+                    <span class="stat-value">${data.sessions_this_month}</span>
+                    <span class="stat-label">Sessions This Month</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-value">${data.avg_focus_10_point.toFixed(1)}</span>
+                    <span class="stat-label">Avg Focus</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-value">${data.active_days}</span>
+                    <span class="stat-label">Active Days</span>
+                </div>
+            `;
+        }
+        
+        function updateNavigationButtons(data) {
+            prevBtn.setAttribute('data-month', data.prev_month);
+            prevBtn.setAttribute('data-year', data.prev_year);
+            nextBtn.setAttribute('data-month', data.next_month);
+            nextBtn.setAttribute('data-year', data.next_year);
+        }
+        
+        // Add event listeners
         prevBtn.addEventListener('click', function() {
-            monthIndex = (monthIndex - 1 + 12) % 12;
-            currentMonth.textContent = months[monthIndex] + ' 2026';
+            const month = this.getAttribute('data-month');
+            const year = this.getAttribute('data-year');
+            loadCalendarData(parseInt(month), parseInt(year));
         });
         
         nextBtn.addEventListener('click', function() {
-            monthIndex = (monthIndex + 1) % 12;
-            currentMonth.textContent = months[monthIndex] + ' 2026';
+            const month = this.getAttribute('data-month');
+            const year = this.getAttribute('data-year');
+            loadCalendarData(parseInt(month), parseInt(year));
         });
     }
 
     // Calendar day clicks
-    const calendarDays = document.querySelectorAll('.calendar-day:not(.empty)');
-    calendarDays.forEach(day => {
-        day.addEventListener('click', function() {
-            const dayNumber = this.querySelector('.day-number').textContent;
-            const focusEmoji = this.querySelector('.focus-emoji').textContent;
-            console.log('Day', dayNumber, 'focus:', focusEmoji);
+    document.addEventListener('click', function(e) {
+        const calendarDay = e.target.closest('.calendar-day:not(.empty)');
+        if (calendarDay) {
+            const dayNumber = calendarDay.querySelector('.day-number')?.textContent;
+            const focusImage = calendarDay.querySelector('.focus-image');
+            if (dayNumber) {
+                console.log('Day clicked:', dayNumber);
+                if (focusImage) {
+                    console.log('Focus image alt:', focusImage.alt);
+                }
+            }
+        }
+    });
+
+    // Study Time Histogram AJAX functionality
+    async function loadStudyTimeData(scale = 'week') {
+        try {
+            const response = await fetch(`/api/study-time-data/?scale=${scale}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to load study time data');
+            }
+            
+            const data = await response.json();
+            
+            // Update the appropriate view
+            updateStudyTimeView(data, scale);
+            
+            // Update statistics
+            updateStudyTimeStats(data);
+            
+        } catch (error) {
+            console.error('Error loading study time data:', error);
+        }
+    }
+    
+    function updateStudyTimeView(data, scale) {
+        // Hide all views
+        document.querySelectorAll('.histogram-view').forEach(view => {
+            view.style.display = 'none';
+        });
+        
+        // Show the selected view
+        const selectedView = document.getElementById(`${scale}View`);
+        if (selectedView) {
+            selectedView.style.display = 'block';
+            
+            // Update labels
+            const labelsContainer = selectedView.querySelector('.time-labels');
+            const barsContainer = selectedView.querySelector('.histogram-bars');
+            
+            if (labelsContainer && barsContainer) {
+                // Clear existing content and CSS classes
+                labelsContainer.innerHTML = '';
+                barsContainer.innerHTML = '';
+                
+                // Remove all view-specific classes
+                labelsContainer.classList.remove('week-view', 'month-view', 'year-view');
+                barsContainer.classList.remove('week-view', 'month-view', 'year-view');
+                
+                // Add appropriate view-specific classes
+                labelsContainer.classList.add(`${scale}-view`);
+                barsContainer.classList.add(`${scale}-view`);
+                
+                // Calculate max value for proper scaling
+                const maxSeconds = Math.max(...data.data.map(item => item.seconds));
+                
+                // Add labels and bars
+                data.data.forEach(item => {
+                    // Add label
+                    const labelSpan = document.createElement('span');
+                    labelSpan.textContent = item.label;
+                    labelsContainer.appendChild(labelSpan);
+                    
+                    // Calculate height percentage
+                    let heightPercentage;
+                    if (maxSeconds === 0) {
+                        heightPercentage = 2; // Minimum height for empty data
+                    } else {
+                        heightPercentage = Math.max(2, (item.seconds / maxSeconds) * 100);
+                    }
+                    
+                    // Add bar
+                    const barDiv = document.createElement('div');
+                    barDiv.className = 'bar';
+                    barDiv.style.height = `${heightPercentage}%`;
+                    barDiv.title = `${item.label}: ${item.formatted_time}`;
+                    barsContainer.appendChild(barDiv);
+                });
+            }
+        }
+    }
+    
+    function updateStudyTimeStats(data) {
+        const totalElement = document.getElementById('totalStudyTime');
+        const dailyElement = document.getElementById('dailyAverage');
+        const bestElement = document.getElementById('bestDay');
+        const bestLabelElement = document.getElementById('bestPeriodLabel');
+        
+        if (totalElement) totalElement.textContent = data.total_study_time;
+        if (dailyElement) dailyElement.textContent = data.daily_average;
+        if (bestElement) bestElement.textContent = data.best_day;
+        if (bestLabelElement) bestLabelElement.textContent = data.best_period_label;
+    }
+    
+    // Add event listeners to view toggle buttons
+    const viewButtons = document.querySelectorAll('.view-btn');
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update button states
+            viewButtons.forEach(b => {
+                b.classList.remove('btn-selected');
+                b.classList.add('btn-deselected');
+            });
+            this.classList.remove('btn-deselected');
+            this.classList.add('btn-selected');
+            
+            // Load data for selected view
+            const scale = this.dataset.view;
+            loadStudyTimeData(scale);
         });
     });
+    
+    // Load initial data (week view)
+    loadStudyTimeData('week');
 });
 
 // Timer functionality
