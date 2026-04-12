@@ -26,14 +26,15 @@ if str(SETUP_DIR) not in sys.path:
 
 # Import ML components
 from .services.prediction_service import PredictionService
-from EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
-from enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
+from .services.EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
+from .services.enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
 
 # Import Django models
 from secondBrain_App.models import UserProfile, Prediction
 
 # Constants
 LABEL_MAP = {0: 'relaxed', 1: 'neutral', 2: 'concentrating'}
+
 
 
 @shared_task(bind=True)
@@ -153,6 +154,40 @@ def run_live_inference(self, user_email, duration_minutes=1):
         }
 
 
+def longest_focus_streak(labels):
+    max_len = 0
+    curr_len = 0
+
+    for label in labels:
+        if str(label).strip().lower() == 'concentrating':
+            curr_len += 1
+            max_len = max(max_len, curr_len)
+        else:
+            curr_len = 0
+
+    return max_len
+
+def state_switch_count(labels):
+    count = 0
+
+    for i in range(1, len(labels)):
+        if labels[i - 1] != labels[i]:
+            count += 1
+    
+    return count
+
+def focus_latency(labels):
+    latency = 0
+
+    for p in labels:
+        if p.strip().lower() != 'concentrating':
+            latency += 1
+        else:
+            break
+    
+    return latency
+
+
 def aggregate_predictions(predictions, user_email, session_id):
     """Aggregate multiple prediction results into a single summary."""
     if not predictions:
@@ -176,6 +211,11 @@ def aggregate_predictions(predictions, user_email, session_id):
         'concentrating': concentrating_seconds
     }
     predicted_label = max(state_times, key=state_times.get)
+    window_labels = []
+    for p in predictions:
+        window_labels.extend(p.get('window_labels', []))
+    
+    
     
     return {
         'session_id': session_id,
@@ -186,6 +226,9 @@ def aggregate_predictions(predictions, user_email, session_id):
         'neutral_seconds': neutral_seconds,
         'concentrating_seconds': concentrating_seconds,
         'predicted_label': predicted_label,
+        'longest_focus_streak': longest_focus_streak(window_labels) * 0.5,
+        'focus_latency': focus_latency(window_labels) * 0.5,
+        'state_switch_count': state_switch_count(window_labels),
         'confidence': avg_confidence,
         'timestamp': datetime.now().isoformat()
     }

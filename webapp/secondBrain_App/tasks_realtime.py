@@ -27,8 +27,8 @@ if str(SETUP_DIR) not in sys.path:
 
 # Import ML components
 from .services.prediction_service import PredictionService
-from EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
-from enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
+from .services.EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
+from .services.enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
 
 # Import Django models
 from secondBrain_App.models import UserProfile, SessionSummary
@@ -123,6 +123,40 @@ def validate_eeg_connection():
             
     except Exception as e:
         return False, f"EEG Device connection failed: {str(e)}"
+
+
+def longest_focus_streak(labels):
+    max_len = 0
+    curr_len = 0
+
+    for label in labels:
+        if str(label).strip().lower() == 'concentrating':
+            curr_len += 1
+            max_len = max(max_len, curr_len)
+        else:
+            curr_len = 0
+
+    return max_len
+
+def state_switch_count(labels):
+    count = 0
+
+    for i in range(1, len(labels)):
+        if labels[i - 1] != labels[i]:
+            count += 1
+    
+    return count
+
+def focus_latency(labels):
+    latency = 0
+
+    for p in labels:
+        if p.strip().lower() != 'concentrating':
+            latency += 1
+        else:
+            break
+    
+    return latency
 
 
 @shared_task(bind=True)
@@ -221,7 +255,8 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                         'timestamp': current_time,
                         'focus_state': predicted_label,
                         'confidence': confidence,
-                        'focus_score': focus_score
+                        'focus_score': focus_score,
+                        'window_labels': result.get('window_labels', [])
                     })
                     focus_scores.append(focus_score)
                     
@@ -262,11 +297,19 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         
         # Count time spent in each state
         state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
+        window_labels = []
         for point in data_points:
             state = point.get('focus_state', 'neutral')
+            window_labels.extend(point.get('window_labels', []))
             if state in state_counts:
                 state_counts[state] += 1
         
+        #Compute longest focus streak
+
+        lfocus_streak = longest_focus_streak(window_labels) * 0.5
+        switch_count = state_switch_count(window_labels)
+        latency = focus_latency(window_labels) * 0.5
+
         # Convert to seconds (assuming 1 point per second)
         relaxed_seconds = state_counts['relaxed']
         neutral_seconds = state_counts['neutral']
@@ -300,6 +343,9 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 'relaxed_seconds': relaxed_seconds,
                 'neutral_seconds': neutral_seconds,
                 'concentrating_seconds': concentrating_seconds,
+                'longest_focus_streak': lfocus_streak,
+                'state_switch_count': switch_count,
+                'focus_latency': latency,
                 'data_points_count': len(data_points)
             }
         )
@@ -317,6 +363,9 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 'relaxed_seconds': relaxed_seconds,
                 'neutral_seconds': neutral_seconds,
                 'concentrating_seconds': concentrating_seconds,
+                'longest_focus_streak': lfocus_streak,
+                'state_switch_count': switch_count,
+                'focus_latency': latency,
                 'data_points_count': len(data_points)
             }
         }
@@ -350,6 +399,9 @@ def save_session_summary(summary_data):
             relaxed_seconds=summary_data['relaxed_seconds'],
             neutral_seconds=summary_data['neutral_seconds'],
             concentrating_seconds=summary_data['concentrating_seconds'],
+            longest_focus_streak=summary_data['longest_focus_streak'],
+            state_switch_count=summary_data['state_switch_count'],
+            focus_latency=summary_data['focus_latency'],
             data_points_count=summary_data['data_points_count']
         )
         
