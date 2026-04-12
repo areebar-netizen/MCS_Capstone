@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Create or get user profile for sachijs@uci.edu
-        email = 'sachijs@uci.edu'
+        email = 'areebaarashid31@gmail.com'
         
         try:
             user_profile = UserProfile.objects.get(email=email)
