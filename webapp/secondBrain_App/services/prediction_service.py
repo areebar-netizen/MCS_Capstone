@@ -212,6 +212,9 @@ class PredictionService:
         # Get predicted label (most common)
         predicted_label = max(counts, key=counts.get)
         
+        # Convert predictions to label names for window_labels
+        window_labels = [LABEL_MAP.get(int(p), str(p)) for p in preds]
+        
         # Create result dict like predict_test.py
         result = {
             'n_windows': int(n_windows),
@@ -221,6 +224,7 @@ class PredictionService:
             'concentrating_seconds': float(durations.get('concentrating', 0)),
             'predicted_label': str(predicted_label),
             'confidence': float(confidence),
+            'window_labels': window_labels,  # Add individual window labels
         }
         print(f"  Full result: {result}")
 
