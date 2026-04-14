@@ -295,22 +295,23 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         avg_focus = np.mean(focus_scores) if focus_scores else 0.5
         peak_focus = np.max(focus_scores) if focus_scores else 0.5
         
-        # Count time spent in each state
-        state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
-        window_labels = []
+        # Collect all window labels for proper statistics
+        all_window_labels = []
         for point in data_points:
-            state = point.get('focus_state', 'neutral')
-            window_labels.extend(point.get('window_labels', []))
-            if state in state_counts:
-                state_counts[state] += 1
+            all_window_labels.extend(point.get('window_labels', []))
         
-        #Compute longest focus streak
+        # Count time spent in each state based on window labels (each window = 0.5 seconds)
+        state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
+        for label in all_window_labels:
+            if label in state_counts:
+                state_counts[label] += 0.5  # Each window represents 0.5 seconds
+        
+        # Calculate statistics based on window labels
+        lfocus_streak = longest_focus_streak(all_window_labels) * 0.5
+        switch_count = state_switch_count(all_window_labels)
+        latency = focus_latency(all_window_labels) * 0.5
 
-        lfocus_streak = longest_focus_streak(window_labels) * 0.5
-        switch_count = state_switch_count(window_labels)
-        latency = focus_latency(window_labels) * 0.5
-
-        # Convert to seconds (assuming 1 point per second)
+        # Get final state durations in seconds
         relaxed_seconds = state_counts['relaxed']
         neutral_seconds = state_counts['neutral']
         concentrating_seconds = state_counts['concentrating']
