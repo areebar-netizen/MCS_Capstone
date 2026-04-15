@@ -22,6 +22,9 @@ from collections import deque
 from typing import List, Tuple, Optional, Union 
 import json
 
+# Define project root
+ROOT = Path(__file__).resolve().parents[1]
+
 # Django imports for database operations
 sys.path.append(str(ROOT / 'webapp'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'secondBrain.settings')
@@ -261,7 +264,9 @@ def load_model(models_dir: Path, model_name: str):
     
     # Load enhanced artifacts
     try:
-        scaler, feature_info = load_preprocessing_artifacts('preprocessing_artifacts')
+        # Look for preprocessing artifacts in the models directory
+        artifacts_dir = Path(models_dir) / 'preprocessing_artifacts'
+        scaler, feature_info = load_preprocessing_artifacts(artifacts_dir)
     except Exception:
         scaler, feature_info = None, None
     

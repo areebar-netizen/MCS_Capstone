@@ -70,12 +70,13 @@ secondBrain/
 │   ├── live_predict.py                  # Live prediction & recording pipeline
 │   ├── recommendation.py                 # AI-powered recommendation engine
 │   └── artifacts/                        # Model files (.joblib, .pkl, .txt)
+│       ├── preprocessing_artifacts/      # Feature scaling & selection artifacts
+│       │   ├── feature_scaler.joblib      # Feature scaling parameters
+│       │   └── feature_selection_info.pkl  # Selected feature indices
 │       ├── feature_importance/           # Feature analysis results
 │       ├── random_forest.joblib        # RandomForest model
 │       ├── xgboost.joblib              # XGBoost model
 │       ├── stacked_model.joblib          # Stacked ensemble model
-│       ├── feature_scaler.joblib       # Feature scaling parameters
-│       ├── feature_selection_info.pkl   # Selected feature indices
 │       └── selected_features.txt        # Feature names list
 ├── data_pipeline/
 │   ├── setup/                           # Hardware connection scripts
@@ -227,7 +228,7 @@ ls -la core_engine/artifacts/
 # Should show: random_forest.joblib, xgboost.joblib, stacked_model.joblib, feature_selector.joblib, selected_features.txt, feature_importance/
 
 # Check that preprocessing artifacts are created
-ls -la dataset/temp_logs/preprocessing_artifacts/
+ls -la core_engine/artifacts/preprocessing_artifacts/
 # Should show: feature_scaler.joblib, feature_selection_info.pkl
 ```
 
