@@ -64,7 +64,7 @@ def load_model_artifacts(models_dir: Path, model_name: str) -> Tuple[Any, Any, A
     # Check for enhanced preprocessing artifacts
     # Only load if they exist and match the model type intended
     scaler, feature_info = None, None
-    artifacts_path = Path(models_dir).parent / 'artifacts'
+    artifacts_path = Path(models_dir) / 'preprocessing_artifacts'
     if artifacts_path.exists():
         try:
             scaler, feature_info = load_preprocessing_artifacts(str(artifacts_path))

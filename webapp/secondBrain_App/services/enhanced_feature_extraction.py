@@ -9,6 +9,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
@@ -230,9 +231,11 @@ def generate_enhanced_features_from_directory(directory_path, output_file,
     print(f"\nEnhanced features saved to: {output_file}")
     print(f"Final shape: {final_df.shape}")
     
-    # Save preprocessing artifacts
-    artifact_dir = os.path.dirname(output_file) if os.path.dirname(output_file) else '.'
-    artifact_dir = os.path.join(artifact_dir, 'preprocessing_artifacts')
+    # Save preprocessing artifacts in core_engine/artifacts/
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Go up from services/ to webapp/ then to project root, then to core_engine/artifacts/
+    project_root = Path(current_dir).parents[2]
+    artifact_dir = project_root / 'core_engine' / 'artifacts' / 'preprocessing_artifacts'
     os.makedirs(artifact_dir, exist_ok=True)
     
     # Save scaler
