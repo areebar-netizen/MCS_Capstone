@@ -73,6 +73,7 @@ WSGI_APPLICATION = 'secondBrain.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
 # Use SQLite for development (switch to PostgreSQL when ready)
 # PostgreSQL configuration
@@ -86,6 +87,37 @@ WSGI_APPLICATION = 'secondBrain.wsgi.application'
 #         'PORT': env('DB_PORT', default='5432'),
 #     }
 # }
+=======
+# Defaults to PostgreSQL, but allows easy local startup with SQLite.
+db_engine = env('DB_ENGINE', default='postgresql').strip().lower()
+
+if db_engine in ('sqlite', 'sqlite3'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': env('SQLITE_PATH', default=str(BASE_DIR / 'db.sqlite3')),
+        }
+    }
+else:
+    db_host = env('DB_HOST', default='localhost')
+    db_sslmode = env('DB_SSLMODE', default='auto').strip().lower()
+    if db_sslmode == 'auto':
+        # Local PostgreSQL commonly runs without TLS; remote DBs should enforce TLS.
+        db_sslmode = 'disable' if db_host in {'localhost', '127.0.0.1', '::1'} else 'require'
+    db_options = {'sslmode': db_sslmode} if db_sslmode else {}
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('DB_NAME', default='secondbrain'),
+            'USER': env('DB_USER', default='postgres'),
+            'PASSWORD': env('DB_PASSWORD', default=''),
+            'HOST': db_host,
+            'PORT': env('DB_PORT', default='5432'),
+            'OPTIONS': db_options,
+        }
+    }
+>>>>>>> Stashed changes
 
 # SQLite configuration (uncommented for development)
 >>>>>>> Stashed changes
