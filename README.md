@@ -224,7 +224,11 @@ python3 research/train_models.py dataset/temp_logs/enhanced_features.csv core_en
 ```bash
 # Check that model files are created
 ls -la core_engine/artifacts/
-# Should show: random_forest.joblib, xgboost.joblib, stacked_model.joblib, feature_scaler.joblib, feature_selection_info.pkl, selected_features.txt, feature_importance/
+# Should show: random_forest.joblib, xgboost.joblib, stacked_model.joblib, feature_selector.joblib, selected_features.txt, feature_importance/
+
+# Check that preprocessing artifacts are created
+ls -la dataset/temp_logs/preprocessing_artifacts/
+# Should show: feature_scaler.joblib, feature_selection_info.pkl
 ```
 
 ### EEG Session Workflow
