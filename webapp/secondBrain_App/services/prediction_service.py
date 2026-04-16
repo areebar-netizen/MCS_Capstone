@@ -91,10 +91,12 @@ def load_model(models_dir: Path, model_name: str):
     }
     
     model_file = Path(models_dir) / mapping.get(model_name, f"{model_name}.joblib")
+    print(f"--- ATTEMPTING TO LOAD: {model_file} ---")
     if not model_file.exists():
         raise FileNotFoundError(f"Model not found: {model_file}")
     
     model = joblib.load(model_file)
+    print(f"{model_file} loaded---")
     
     # Load standard feature selector (used if enhanced artifacts missing)
     selector_path = Path(models_dir) / 'feature_selector.joblib'
@@ -102,6 +104,7 @@ def load_model(models_dir: Path, model_name: str):
     
     # Load enhanced artifacts
     try:
+        artifacts_dir = Path(models_dir) / 'preprocessing_artifacts'
         # Look for preprocessing artifacts in core_engine/artifacts/preprocessing_artifacts/
         artifacts_dir = Path(models_dir) / 'preprocessing_artifacts'
         scaler, feature_info = load_preprocessing_artifacts(artifacts_dir)
@@ -113,9 +116,12 @@ def load_model(models_dir: Path, model_name: str):
 
 class Predictor:
     def __init__(self, models_dir: Union[str, Path], model_name: str = 'stacked_model'):
+        print("Predictor class initilaising")
         self.model, self.feature_selector, self.preprocessing_artifacts = load_model(models_dir, model_name)
+        print("models loaded")
         self.last_prediction = None
         self.last_confidence = 0.0
+        print("Predictor class initilaised")
 
     def predict_from_rows(self, rows: List[List[float]], nsamples: int = 150, period: float = 1.0, cols_to_ignore: int = -1) -> Tuple[np.ndarray, int, float]:
         """Process raw rows, extract features, and predict."""
@@ -136,6 +142,7 @@ class Predictor:
                 remove_redundant=True,
                 cols_to_ignore=cols_to_ignore
             )
+            print("generate_feature_vectors_from_matrix done")
         except Exception as e:
             print(f"Feature extraction error: {e}")
             return None, 0, 0.0
@@ -153,6 +160,7 @@ class Predictor:
             try:
                 # This uses the corrected apply_feature_pipeline with indices
                 X = apply_feature_pipeline(X, scaler, feature_info)
+                print("apply_feature_pipeline done")
             except Exception as e:
                 print(f"Warning: Enhanced pipeline failed: {e}")
         
@@ -165,6 +173,7 @@ class Predictor:
 
         # 4. Predict
         try:
+            print("inside preditct #4")
             preds = self.model.predict(X)
             confidence = 0.0
             if hasattr(self.model, "predict_proba"):
@@ -189,11 +198,16 @@ class Predictor:
 
 class PredictionService:
     def __init__(self, models_dir: Union[str, Path], model_name: str = 'stacked_model'):
+        print("Initializing PredictionService...")
         self.denoiser = Denoiser()
+        print("Denoiser loaded.")
         self.predictor = Predictor(models_dir, model_name)
+        print("Predictor loaded.")
 
     def run(self, rows: List[List[float]], nsamples: int = 150, period: float=1.0, cols_to_ignore: int = -1):
+        print("Running Predservice")
         rows = self.denoiser.process(rows)
+        print(f"Input rows size: {len(rows)}")
         preds, n_windows, confidence = self.predictor.predict_from_rows(rows, nsamples = nsamples, period = period, cols_to_ignore=cols_to_ignore)
         if preds is None:
             return {
@@ -212,6 +226,8 @@ class PredictionService:
         
         # Get predicted label (most common)
         predicted_label = max(counts, key=counts.get)
+
+        window_labels = [LABEL_MAP.get(int(p), str(p)) for p in preds]
         
         # Convert predictions to label names for window_labels
         window_labels = [LABEL_MAP.get(int(p), str(p)) for p in preds]

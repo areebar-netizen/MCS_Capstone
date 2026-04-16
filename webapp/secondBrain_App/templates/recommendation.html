@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="mb-4">📊 Session Recommendation</h2>
+
+    {% if session_id %}
+    <p class="text-muted">Session: {{ session_id }}</p>
+    {% endif %}
+
+    <!-- LLM Recommendation Output -->
+    {% if recommendation %}
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">🧠 Your Personalized Study Recommendation</h5>
+            <div class="recommendation-text mt-3">
+                <!-- Render recommendation with line breaks -->
+                {{ recommendation|linebreaks }}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No recommendation available yet. Complete an EEG session to get personalized advice!
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="mt-4 d-flex gap-3">
+        <a href="/dashboard/" class="btn btn-primary">
+            Back to Dashboard
+        </a>
+        <a href="/start_realtime_eeg/" class="btn btn-outline-secondary">
+            Start New Session
+        </a>
+    </div>
+
+    <!-- Past Recommendations -->
+    {% if past_recommendations %}
+    <div class="mt-5">
+        <h5>📋 Past Recommendations</h5>
+        {% for rec in past_recommendations %}
+        <div class="card mb-2 border-0 bg-light">
+            <div class="card-body py-2">
+                <small class="text-muted">{{ rec.created_at|date:"M d, Y H:i" }}</small>
+                <p class="mb-0 mt-1">{{ rec.message }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

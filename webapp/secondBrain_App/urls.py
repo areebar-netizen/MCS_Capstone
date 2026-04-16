@@ -21,4 +21,5 @@ urlpatterns = [
     path('stop_realtime_eeg/', views.stop_realtime_eeg_view, name='stop_realtime_eeg'),
     path('realtime_eeg_status/', views.get_realtime_eeg_status_view, name='realtime_eeg_status'),
     path('end_session/', views.end_session, name='end_session'),
+    path('recommendation/', views.recommendation_view, name='recommendation'),
 ]
