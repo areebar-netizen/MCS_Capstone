@@ -185,6 +185,7 @@ class PreSessionCheckIn(models.Model):
         db_table = 'pre_session_check_in'
 
 class Recommendation(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
     recommendation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     session_id = models.CharField(max_length=100)
@@ -197,3 +198,50 @@ class Recommendation(models.Model):
 
     class Meta:
         db_table = 'recommendation'
+
+
+class UserFeedback(models.Model):
+    feedback_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    session_id = models.CharField(max_length=100)
+    recommendation = models.ForeignKey(
+        Recommendation, on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    feedback_type = models.CharField(max_length=50, blank=True)
+    trigger = models.CharField(max_length=100, blank=True)
+    helpfulness_rating = models.IntegerField(null=True, blank=True)
+    ease_of_use_rating = models.IntegerField(null=True, blank=True)
+    recommendation_relevance = models.IntegerField(null=True, blank=True)
+    overall_rating = models.IntegerField(null=True, blank=True)
+    sentiment = models.CharField(max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'user_feedback'
+
+class UserSummary(models.Model):
+    user = models.OneToOneField(
+        UserProfile, on_delete=models.CASCADE,
+        primary_key=True
+    )
+    total_sessions = models.IntegerField(default=0)
+    total_focus_time_minutes = models.FloatField(default=0)
+    average_focus_score = models.FloatField(default=0)
+    best_focus_score = models.FloatField(default=0)
+    optimal_focus_time_of_day = models.CharField(max_length=20, blank=True)
+    first_session_date = models.DateField(null=True, blank=True)
+    last_session_date = models.DateField(null=True, blank=True)
+    stimulus_used = models.CharField(max_length=200, blank=True)
+    recommendation_feedback = models.CharField(max_length=50, blank=True)
+    most_effective_stimulus = models.CharField(max_length=50, blank=True)
+    least_effective_stimulus = models.CharField(max_length=50, blank=True)
+    average_feedback_rating = models.IntegerField(default=0)
+    positive_feedback_count = models.IntegerField(default=0)
+    negative_feedback_count = models.IntegerField(default=0)
+    overall_sentiment_score = models.FloatField(default=0)
+    total_recommendations_rated = models.IntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'user_summary'

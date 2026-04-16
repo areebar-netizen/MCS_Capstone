@@ -10,21 +10,20 @@ Usage:
     python code/live_predict.py --eeg --models models_out --model xgboost
     python code/live_predict.py --csv-dir dataset/test --models models_out
 """
-
-from pathlib import Path
-import sys
 import time
-import warnings
-import os
 import csv
 import threading
 from collections import deque
-from typing import List, Tuple, Optional, Union 
+from typing import List, Tuple, Optional, Union
 import json
+import os
+import sys
+from pathlib import Path
 
 # Define project root
-ROOT = Path(__file__).resolve().parents[1]
+# ROOT = Path(__file__).resolve().parents[1]
 
+ROOT = Path(__file__).resolve().parents[1]
 # Django imports for database operations
 sys.path.append(str(ROOT / 'webapp'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'secondBrain.settings')
@@ -264,9 +263,7 @@ def load_model(models_dir: Path, model_name: str):
     
     # Load enhanced artifacts
     try:
-        # Look for preprocessing artifacts in the models directory
-        artifacts_dir = Path(models_dir) / 'preprocessing_artifacts'
-        scaler, feature_info = load_preprocessing_artifacts(artifacts_dir)
+        scaler, feature_info = load_preprocessing_artifacts('artifacts/preprocessing_artifacts')
     except Exception:
         scaler, feature_info = None, None
     
@@ -839,7 +836,7 @@ def main():
     mode_group.add_argument('--csv-dir', type=str, help='Process CSV files in directory')
     
     # Common arguments
-    p.add_argument('--models', default='models_out', help='Directory containing models')
+    p.add_argument('--models', default='artifacts', help='Directory containing models')
     p.add_argument('--model', default='xgboost', choices=['random_forest', 'xgboost', 'stacked_model'])
     p.add_argument('--period', type=float, default=1.0, help='Window size in seconds')
     p.add_argument('--nsamples', type=int, default=150, help='Samples per window')

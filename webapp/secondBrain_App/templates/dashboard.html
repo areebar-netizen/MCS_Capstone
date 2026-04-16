@@ -23,8 +23,8 @@
     </header>
 
     <!-- Main Grid Layout -->
-    <div class="dashboard-grid">
-        <!-- Row 1: Focus Track Setup & User Profile -->
+<div class="dashboard-grid">
+        
         <div class="grid-row">
             <div class="col-span-8">
                 {% include 'focus_track_setup.html' %}
@@ -34,8 +34,25 @@
             </div>
         </div>
 
-        <!-- Row 2: Study Time Histogram & Focus Calendar -->
-        <div class="grid-row">
+        <div class="grid-row mt-4">
+            <div class="col-span-12">
+                <div class="card shadow-sm border-0" id="recommendation-card" style="background: #f8f9fa; border-radius: 15px; border-left: 5px solid #4a90e2;">
+                    <div class="card-body">
+                        <h5 class="card-title" style="color: #4a90e2; font-weight: bold;">🧠 Latest AI Focus Recommendation</h5>
+                        <hr>
+                        <div id="recommendation-content" class="gemini-advice">
+                            {% if ai_recommendation %}
+                                {{ ai_recommendation|linebreaks }}
+                            {% else %}
+                                <p class="text-muted italic">Complete an EEG session to receive your personalized focus advice here.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-row mt-4">
             <div class="col-span-6">
                 {% include 'study_time_histogram.html' %}
             </div>
@@ -416,77 +433,112 @@ document.addEventListener('DOMContentLoaded', function() {
     loadStudyTimeData('week');
 });
 
-// Timer functionality
-// let timerInterval;
-// let timeRemaining = 0;
+// ── CSRF token helper ──
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
-// function startTimer(duration) {
-//     timeRemaining = duration * 60; // Convert to seconds
-//     const timerDisplay = document.getElementById('sessionTimer');
-//     const elapsedTimeDisplay = document.getElementById('elapsedTime');
+// ── Poll for recommendation if Celery still running ──
+function pollForRecommendation() {
+    console.log('[EEG] Polling for new recommendation...');
+    const recContent = document.getElementById('recommendation-content');
     
-//     if (timerInterval) clearInterval(timerInterval);
-    
-//     timerInterval = setInterval(function() {
-//         timeRemaining--;
-        
-//         if (timerDisplay) {
-//             const minutes = Math.floor(timeRemaining / 60);
-//             const seconds = timeRemaining % 60;
-//             timerDisplay.textContent = 
-//                 String(minutes).padStart(2, '0') + ':' + 
-//                 String(seconds).padStart(2, '0');
-//         }
-        
-//         if (elapsedTimeDisplay) {
-//             const elapsed = (duration * 60) - timeRemaining;
-//             const elapsedMinutes = Math.floor(elapsed / 60);
-//             const elapsedSeconds = elapsed % 60;
-//             elapsedTimeDisplay.textContent = 
-//                 String(elapsedMinutes).padStart(2, '0') + ':' + 
-//                 String(elapsedSeconds).padStart(2, '0');
-//         }
-        
-//         if (timeRemaining <= 0) {
-//             clearInterval(timerInterval);
-//             alert('Session completed!');
-//             // Reset display
-//             if (document.getElementById('activeSession')) {
-//                 document.getElementById('activeSession').style.display = 'none';
-//             }
-//             if (document.querySelector('.duration-section')) {
-//                 document.querySelector('.duration-section').style.display = 'block';
-//             }
-//             if (document.getElementById('startSessionBtn')) {
-//                 document.getElementById('startSessionBtn').style.display = 'block';
-//             }
-//         }
-//     }, 1000);
-// }
+    const pollInterval = setInterval(async function() {
+        try {
+            // We've updated this to hit a new endpoint or check status
+            const response = await fetch('/stop_realtime_eeg/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            const data = await response.json();
+            
+            if (data.ok && data.status === 'completed') {
+                clearInterval(pollInterval);
+                
+                // INSTEAD OF REDIRECTING: Fetch the recommendation text and update the UI
+                // We'll call a simple helper view or just reload the recommendation part
+                fetchLatestRecommendation(); 
+                
+                // Optional: Stop the loading spinner on your "Start Session" button
+                alert("Session Analysis Complete!");
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+        }
+    }, 3000);
+}
 
-// // End session controls
-// document.addEventListener('DOMContentLoaded', function() {
-//     const endBtn = document.getElementById('endBtn');
-    
-//     if (endBtn) {
-//         endBtn.addEventListener('click', function() {
-//             if (timerInterval) clearInterval(timerInterval);
-//             timerInterval = null;
-            
-//             // Reset display
-//             if (document.getElementById('activeSession')) {
-//                 document.getElementById('activeSession').style.display = 'none';
-//             }
-//             if (document.querySelector('.duration-section')) {
-//                 document.querySelector('.duration-section').style.display = 'block';
-//             }
-//             if (document.getElementById('startSessionBtn')) {
-//                 document.getElementById('startSessionBtn').style.display = 'block';
-//             }
-            
-//             alert('Session ended!');
-//         });
-//     }
-// });
+// New helper function to refresh only the recommendation text
+async function fetchLatestRecommendation() {
+    try {
+        const response = await fetch('/get_latest_recommendation_api/'); // We will create this endpoint
+        const data = await response.json();
+        if (data.recommendation) {
+            document.getElementById('recommendation-content').innerHTML = data.recommendation.replace(/\n/g, '<br>');
+        }
+    } catch (e) {
+        console.error("Could not refresh recommendation:", e);
+    }
+}
 </script>
+<style>
+    /* 1. Main Container Styling */
+    #recommendation-content {
+        color: #334155;
+        font-size: 1.05rem;
+        line-height: 1.8;
+        padding: 15px;
+        background: #ffffff;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* 2. Cleaning up the "Heading" look */
+    /* This targets text that Gemini usually bolds as headers */
+    #recommendation-content b, 
+    #recommendation-content strong {
+        display: block;
+        color: #2563eb; /* Corporate Blue */
+        font-size: 1.2rem;
+        margin-top: 20px;
+        margin-bottom: 8px;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 4px;
+    }
+
+    /* 3. Handling the first bold item as a Main Title */
+    #recommendation-content b:first-of-type,
+    #recommendation-content strong:first-of-type {
+        margin-top: 0;
+        font-size: 1.4rem;
+        color: #1e293b;
+        border-bottom-color: #3b82f6;
+    }
+
+    /* 4. Formatting Bullet Points */
+    /* Gemini often starts lines with '*' or '-' */
+    #recommendation-content {
+        white-space: pre-line; /* Preserves the line breaks Gemini sends */
+    }
+
+    /* 5. Adding a "Quote" style for observations */
+    #recommendation-card {
+        border-left: 6px solid #3b82f6 !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
 {% endblock %}

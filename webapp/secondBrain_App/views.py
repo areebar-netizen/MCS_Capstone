@@ -1029,6 +1029,18 @@ def dashboard_view(request):
     # Get month name for display
     month_name = calendar.month_name[current_month]
     
+    cache_key = f"recommendation_{user_email}"
+    cached_data = cache.get(cache_key)
+    ai_recommendation_text = cached_data.get('text') if cached_data else None
+    
+    if not ai_recommendation_text:
+        from .models import Recommendation
+        latest_rec = Recommendation.objects.filter(user__email=user_email).order_by('-created_at').first()
+        ai_recommendation_text = latest_rec.message if latest_rec else None
+        if ai_recommendation_text:
+            # Remove markdown symbols so they don't clutter the UI
+            ai_recommendation_text = ai_recommendation_text.replace('**', '').replace('###', '').replace('##', '')
+    
     context = {
         'user': request.user if request.user.is_authenticated else None,
         'user_profile': profile_snapshot,
@@ -1036,6 +1048,7 @@ def dashboard_view(request):
         'session_stats': session_stats,
         'brainwave_data': brainwave_data,
         'recommendations': recommendations,
+        'ai_recommendation': ai_recommendation_text,
         'calendar_weeks': calendar_weeks,
         'current_month': current_month,
         'current_year': current_year,
@@ -1393,51 +1406,65 @@ def start_realtime_eeg_view(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
+@csrf_exempt
 def stop_realtime_eeg_view(request):
     """Stop real-time EEG session and get final summary"""
-    print("🛑 Stopping Real-time EEG Session")
+    print("Stopping Real-time EEG Session")
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     try:
-        # Clear realtime session flag
         request.session['realtime_session_active'] = False
         request.session.modified = True
-        
-        # Get task ID from session
+
         task_id = request.session.get('current_eeg_task_id')
         if not task_id:
             return JsonResponse({'error': 'No active EEG task found'}, status=400)
-        
-        # Check task status
+
         task_result = get_task_status(task_id)
-        
+
         if task_result['status'] == 'SUCCESS':
-            result = task_result['result']
+            result       = task_result['result']
+            session_id   = result.get('session_id')
+            final_summary = result.get('final_summary', {})
+
+            # ── READ recommendation from cache (generated in tasks_realtime.py) ──
+            from django.core.cache import cache
+            cache_key       = f"recommendation_{user_email}"
+            cached_rec      = cache.get(cache_key)
+            recommendation  = cached_rec.get('text') if cached_rec else None
+
+            # Save to Django session for recommendation page
+            request.session['latest_recommendation'] = recommendation
+            request.session['latest_session_id']     = session_id
+            request.session.modified = True
+
             return JsonResponse({
-                'ok': True,
-                'status': 'completed',
-                'session_id': result.get('session_id'),
-                'final_summary': result.get('final_summary'),
-                'csv_file_path': result.get('csv_file_path'),
+                'ok'             : True,
+                'status'         : 'completed',
+                'session_id'     : session_id,
+                'final_summary'  : final_summary,
+                'recommendation' : recommendation,
+                'csv_file_path'  : result.get('csv_file_path'),
                 'duration_minutes': result.get('duration_minutes')
             })
+
         elif task_result['status'] == 'FAILURE':
             return JsonResponse({
-                'ok': False,
-                'status': 'error',
+                'ok'     : False,
+                'status' : 'error',
                 'message': 'EEG inference task failed',
-                'error': str(task_result.get('result', 'Unknown error'))
+                'error'  : str(task_result.get('result', 'Unknown error'))
             })
         else:
             return JsonResponse({
-                'ok': True,
+                'ok'    : True,
                 'status': task_result['status'],
                 'message': 'EEG inference still in progress',
                 'task_id': task_id
             })
-            
+
     except Exception as e:
         print(f'Error stopping real-time EEG task: {e}')
         return JsonResponse({'error': str(e)}, status=500)
@@ -1633,12 +1660,37 @@ def test_csv():
     print("RESULT:", result)
 
 def recommendation_view(request):
-    """Generate Recommendations based on user profile and focus data for each session"""
+    """Fetch the latest recommendation for the user"""
     user_email = request.session.get('user_email')
     if not user_email:
-        return JsonResponse({'error': 'Unauthorized'}, status=400)
+        return redirect('/')
+
+    # 1. Try to get from Cache first (for immediate results after a session)
+    cache_key = f"recommendation_{user_email}"
+    cached_data = cache.get(cache_key)
     
-    return JsonResponse({'message': 'Recommendations feature coming soon'})
+    recommendation_text = None
+    session_id = None
+    
+    if cached_data:
+        recommendation_text = cached_data.get('text')
+        session_id = cached_data.get('session_id')
+    else:
+        # 2. Fallback: Get the most recent recommendation from the database
+        latest_rec = Recommendation.objects.filter(user__email=user_email).order_by('-created_at').first()
+        if latest_rec:
+            recommendation_text = latest_rec.message
+            session_id = latest_rec.session_id
+
+    # 3. Get past recommendations for the history section
+    past_recommendations = Recommendation.objects.filter(user__email=user_email).order_by('-created_at')[1:6]
+
+    context = {
+        'recommendation': recommendation_text,
+        'session_id': session_id,
+        'past_recommendations': past_recommendations
+    }
+    return render(request, 'recommendation.html', context)
 
 def end_session(request):
     """End the current EEG session by creating a stop signal file"""
@@ -1666,7 +1718,18 @@ def end_session(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def get_latest_recommendation_api(request):
+    user_email = request.session.get('user_email')
+    cache_key = f"recommendation_{user_email}"
+    cached_data = cache.get(cache_key)
     
-
-
-
+    if cached_data:
+        return JsonResponse({'recommendation': cached_data['text']})
+    
+    latest_rec = Recommendation.objects.filter(user__email=user_email).order_by('-created_at').first()
+    if latest_rec:
+        return JsonResponse({'recommendation': latest_rec.message})
+        
+    return JsonResponse({'recommendation': None})

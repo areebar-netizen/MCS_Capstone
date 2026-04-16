@@ -31,7 +31,7 @@ from .services.EEG_feature_extraction_adv import generate_feature_vectors_from_m
 from .services.enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
 
 # Import Django models
-from secondBrain_App.models import UserProfile, SessionSummary
+# from secondBrain_App.models import UserProfile, SessionSummary
 
 # Constants
 LABEL_MAP = {0: 'relaxed', 1: 'neutral', 2: 'concentrating'}
@@ -166,6 +166,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
     """
     try:
         # Generate unique session info
+        print(f"Starting Real-time EEG Inference")
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         user_prefix = user_email.split('@')[0]
         session_id = f"{user_prefix}_{timestamp}"
@@ -191,10 +192,14 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         # Initialize data streamer
         streamer = EEGDataStreamer(csv_output_path, session_id)
         streamer.start_recording()
+        print(f"[DEBUG 1] Streamer started")
         
         # Initialize prediction service
-        models_dir = ROOT / 'core_engine' / 'artifacts' 
+        print(f"[DEBUG 2] Loading prediction service...")
+        models_dir = ROOT / 'core_engine' / 'artifacts'
+        print("Loading from {0}".format(models_dir))
         prediction_service = PredictionService(models_dir=models_dir, model_name='xgboost')
+        print(f"[DEBUG 3] Prediction service loaded")
         
         # Initialize EEG acquirer
         from .services.eeg_acquirer import EEGAcquirer
@@ -296,8 +301,19 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         peak_focus = np.max(focus_scores) if focus_scores else 0.5
         
         # Collect all window labels for proper statistics
+        # all_window_labels = []
+        # for point in data_points:
+        # Count time spent in each state
+        # state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
+        # window_labels = []
+
         all_window_labels = []
+        
         for point in data_points:
+            # state = point.get('focus_state', 'neutral')
+            # window_labels.extend(point.get('window_labels', []))
+            # if state in state_counts:
+            #     state_counts[state] += 1
             all_window_labels.extend(point.get('window_labels', []))
         
         # Count time spent in each state based on window labels (each window = 0.5 seconds)
@@ -312,6 +328,21 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         latency = focus_latency(all_window_labels) * 0.5
 
         # Get final state durations in seconds
+        # lfocus_streak = longest_focus_streak(window_labels) * 0.5
+        # switch_count = state_switch_count(window_labels)
+        # latency = focus_latency(window_labels) * 0.5
+        state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
+
+        for label in all_window_labels:
+            if label in state_counts:
+                state_counts[label] += 0.5  # Each window represents 0.5 seconds
+        
+        # Calculate statistics based on window labels
+        lfocus_streak = longest_focus_streak(all_window_labels) * 0.5
+        switch_count = state_switch_count(all_window_labels)
+        latency = focus_latency(all_window_labels) * 0.5
+
+        # Convert to seconds (assuming 1 point per second)
         relaxed_seconds = state_counts['relaxed']
         neutral_seconds = state_counts['neutral']
         concentrating_seconds = state_counts['concentrating']
@@ -381,34 +412,78 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             'error_type': 'processing_error'
         }
 
+# tasks_realtime.py
 
 def save_session_summary(summary_data):
     """Save session summary to database"""
+    from secondBrain_App.models import UserProfile, SessionSummary
     try:
         user_profile = UserProfile.objects.get(email=summary_data['user_email'])
-        
+
         session_summary = SessionSummary.objects.create(
-            session_id=summary_data['session_id'],
-            user=user_profile,
-            task_id=summary_data.get('task_id'),
-            csv_file_path=summary_data['csv_file_path'],
-            start_time=summary_data['start_time'],
-            end_time=summary_data['end_time'],
-            total_duration_seconds=summary_data['total_duration_seconds'],
-            average_focus_score=summary_data['average_focus_score'],
-            peak_focus_score=summary_data['peak_focus_score'],
-            relaxed_seconds=summary_data['relaxed_seconds'],
-            neutral_seconds=summary_data['neutral_seconds'],
-            concentrating_seconds=summary_data['concentrating_seconds'],
-            longest_focus_streak=summary_data['longest_focus_streak'],
-            state_switch_count=summary_data['state_switch_count'],
-            focus_latency=summary_data['focus_latency'],
-            data_points_count=summary_data['data_points_count']
+            session_id              = summary_data['session_id'],
+            user                    = user_profile,
+            task_id                 = summary_data.get('task_id'),
+            csv_file_path           = summary_data['csv_file_path'],
+            start_time              = summary_data['start_time'],
+            end_time                = summary_data['end_time'],
+            total_duration_seconds  = summary_data['total_duration_seconds'],
+            average_focus_score     = summary_data['average_focus_score'],
+            peak_focus_score        = summary_data['peak_focus_score'],
+            relaxed_seconds         = summary_data['relaxed_seconds'],
+            neutral_seconds         = summary_data['neutral_seconds'],
+            concentrating_seconds   = summary_data['concentrating_seconds'],
+            data_points_count       = summary_data['data_points_count']
         )
-        
-        print(f"Session summary saved to database: {session_summary.session_id}")
+
+        print(f"[SESSION] Summary saved: {session_summary.session_id}")
+
+        # ── STEP 1: Update MySQL user_summary table ──
+        try:
+            from core_engine.user_summary import main as update_summary
+            update_summary(user_id=summary_data['user_email'])
+            print(f"[SUMMARY] user_summary table updated")
+        except Exception as e:
+            print(f"[SUMMARY ERROR] {e}")
+
+        # ── STEP 2: Generate recommendation using updated summary ──
+        try:
+            from core_engine.recommendation import generate_recommendation_for_session
+            recommendation_text = generate_recommendation_for_session(
+                user_email    = summary_data['user_email'],
+                session_id    = summary_data['session_id'],
+                final_summary = {
+                    'average_focus_score'  : summary_data['average_focus_score'],
+                    'concentrating_seconds': summary_data['concentrating_seconds'],
+                    'neutral_seconds'      : summary_data['neutral_seconds'],
+                    'relaxed_seconds'      : summary_data['relaxed_seconds']
+                }
+            )
+            print(f"[RECOMMENDATION] Generated successfully")
+
+            from secondBrain_App.models import Recommendation
+            Recommendation.objects.create(
+                user=user_profile,
+                session_id=summary_data['session_id'],
+                message=recommendation_text
+            )
+            # ----------------------------------------
+
+            print(f"[RECOMMENDATION] Generated and Saved to DB successfully")
+
+            # Save recommendation text to cache so view can retrieve it
+            from django.core.cache import cache
+            cache_key = f"recommendation_{summary_data['user_email']}"
+            cache.set(cache_key, {
+                'text'      : recommendation_text,
+                'session_id': summary_data['session_id']
+            }, timeout=3600)  # store for 1 hour
+
+        except Exception as e:
+            print(f"[RECOMMENDATION ERROR] {e}")
+
         return session_summary
-        
+
     except UserProfile.DoesNotExist:
         print(f"User profile not found: {summary_data['user_email']}")
         return None
