@@ -1,0 +1,58 @@
+<!-- Study Time Histogram Component -->
+<div class="card study-time-histogram">
+    <div class="card-header">
+        <h2 class="card-title">Study Time Analysis</h2>
+        <div class="time-view-toggle">
+            <button class="view-btn btn-deselected" data-view="week">Week</button>
+            <button class="view-btn btn-deselected" data-view="month">Month</button>
+            <button class="view-btn btn-deselected" data-view="year">Year</button>
+        </div>
+    </div>
+    
+    <div class="card-content">
+        <!-- Week View -->
+        <div class="histogram-view" id="weekView">
+            <div class="time-labels">
+                <!-- Labels will be populated by JavaScript -->
+            </div>
+            <div class="histogram-bars">
+                <!-- Bars will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Month View (Hidden by default) -->
+        <div class="histogram-view" id="monthView" style="display: none;">
+            <div class="time-labels">
+                <!-- Labels will be populated by JavaScript -->
+            </div>
+            <div class="histogram-bars">
+                <!-- Bars will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Year View (Hidden by default) -->
+        <div class="histogram-view" id="yearView" style="display: none;">
+            <div class="time-labels">
+                <!-- Labels will be populated by JavaScript -->
+            </div>
+            <div class="histogram-bars">
+                <!-- Bars will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="histogram-stats">
+            <div class="stat">
+                <span class="stat-label">Total Study Time</span>
+                <span class="stat-value" id="totalStudyTime">Loading...</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Daily Average</span>
+                <span class="stat-value" id="dailyAverage">Loading...</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label" id="bestPeriodLabel">Best Day</span>
+                <span class="stat-value" id="bestDay">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>

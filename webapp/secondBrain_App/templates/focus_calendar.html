@@ -1,0 +1,79 @@
+<!-- Focus Calendar Component -->
+<div class="card focus-calendar-container">
+    <div class="card-header">
+        <h2 class="card-title">Focus Calendar</h2>
+        <p class="card-subtitle">Track your daily focus performance</p>
+    </div>
+    
+    <div class="card-content">
+        <div class="calendar-grid">
+            <!-- Calendar Header -->
+            <div class="calendar-header">
+                <button class="nav-btn" id="prevMonth" data-month="{{ prev_month }}" data-year="{{ prev_year }}">&lt;</button>
+                <span class="current-month" id="currentMonth">{{ month_name }} {{ current_year }}</span>
+                <button class="nav-btn" id="nextMonth" data-month="{{ next_month }}" data-year="{{ next_year }}">&gt;</button>
+            </div>
+
+            <!-- Weekday Headers -->
+            <div class="weekday-headers">
+                <span>Sun</span>
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div class="calendar-days">
+                {% for week in calendar_weeks %}
+                    {% for day in week %}
+                        <div class="calendar-day{% if not day.in_month %} empty{% endif %}{% if day.has_data %} active{% endif %}">
+                            {% if day.in_month %}
+                                <span class="day-number">{{ day.day_num }}</span>
+                                {% if day.has_data %}
+                                    <img src="{{ day.image_path }}" 
+                                         alt="Focus: {{ day.focus_pct|floatformat:0 }}%" 
+                                         class="focus-image"
+                                         title="{{ day.focus_pct|floatformat:0 }}% focus">
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Monthly Summary Footer -->
+        <div class="monthly-summary">
+            <div class="summary-stat">
+                <span class="stat-value">{{ sessions_this_month }}</span>
+                <span class="stat-label">Sessions This Month</span>
+            </div>
+            <div class="summary-stat">
+                <span class="stat-value">{{ avg_focus_10_point|floatformat:1 }}</span>
+                <span class="stat-label">Avg Focus</span>
+            </div>
+            <div class="summary-stat">
+                <span class="stat-value">{{ active_days }}</span>
+                <span class="stat-label">Active Days</span>
+            </div>
+        </div>
+
+        <!-- Focus Level Guide -->
+        <div class="focus-legend">
+            <h3>Focus Level Guide</h3>
+            <div class="legend-items">
+                {% for legend_item in focus_legend %}
+                <div class="legend-item">
+                    <img src="{{ legend_item.image }}" 
+                         alt="{{ legend_item.label }}" 
+                         class="legend-image">
+                    <span class="legend-text">{{ legend_item.percentage }}: {{ legend_item.label }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>

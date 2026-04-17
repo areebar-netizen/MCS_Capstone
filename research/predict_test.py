@@ -23,9 +23,10 @@ from scipy import stats
 # Import enhanced feature extraction functions
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
-from EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
+# Add parent directory to path for core_engine imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from core_engine.enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
+from core_engine.EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
 
 # Constants
 LABEL_MAP = {0: 'relaxed', 1: 'neutral', 2: 'concentrating'}
@@ -37,9 +38,9 @@ CSV_HEADER = ['filename', 'n_windows', 'total_seconds',
 def parse_arguments() -> argparse.Namespace:
     """Parse and return command line arguments."""
     parser = argparse.ArgumentParser(description='Predict labels for EEG data files.')
-    parser.add_argument('--models', default='models_out', 
+    parser.add_argument('--models', default='../core_engine/artifacts', 
                        help='directory containing model joblib files')
-    parser.add_argument('--testdir', default='dataset/test', 
+    parser.add_argument('--testdir', default='../dataset/test', 
                        help='directory with test CSV files')
     parser.add_argument('--model', default='xgboost', 
                        choices=['random_forest', 'xgboost', 'stacked_model'],
@@ -63,9 +64,10 @@ def load_model_artifacts(models_dir: Path, model_name: str) -> Tuple[Any, Any, A
     # Check for enhanced preprocessing artifacts
     # Only load if they exist and match the model type intended
     scaler, feature_info = None, None
-    if os.path.exists('preprocessing_artifacts'):
+    artifacts_path = Path(models_dir) / 'preprocessing_artifacts'
+    if artifacts_path.exists():
         try:
-            scaler, feature_info = load_preprocessing_artifacts('preprocessing_artifacts')
+            scaler, feature_info = load_preprocessing_artifacts(str(artifacts_path))
             print("Loaded enhanced preprocessing artifacts.")
         except Exception as e:
             print(f"Warning: Could not load preprocessing artifacts: {e}")

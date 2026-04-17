@@ -63,7 +63,7 @@ body {
 /* Dashboard Header */
 .dashboard-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: left;
     align-items: center;
     margin-bottom: 2rem;
 }
@@ -338,25 +338,48 @@ body {
 
 .time-labels {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
     gap: 0.5rem;
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
     color: rgba(0, 0, 0, 0.6);
 }
 
+.time-labels.week-view {
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.time-labels.month-view {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.time-labels.year-view {
+    grid-template-columns: repeat(12, 1fr);
+}
+
 .histogram-bars {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
     gap: 0.5rem;
     height: 120px;
     align-items: end;
 }
 
+.histogram-bars.week-view {
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.histogram-bars.month-view {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.histogram-bars.year-view {
+    grid-template-columns: repeat(12, 1fr);
+}
+
 .bar {
-    height: 32px;
+    min-height: 2px;
     border-radius: 0.25rem;
     transition: all 0.3s ease;
+    background: linear-gradient(to right, #fe938c, rgba(254, 147, 140, 0.3));
 }
 
 .bar:hover {
@@ -454,23 +477,286 @@ body {
     font-size: 1.25rem;
 }
 
-.focus-legend {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
-    margin-top: 1.5rem;
+/* Focus Calendar Container - Smart CSS Implementation */
+.focus-calendar-container {
+    /* Ensure consistent height to prevent page jumping */
+    min-height: 600px;
 }
 
-.legend-item {
+.focus-calendar-container .calendar-grid {
+    margin-bottom: 1.5rem;
+}
+
+.focus-calendar-container .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.focus-calendar-container .current-month {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #000000;
+}
+
+.focus-calendar-container .nav-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 145, 104, 0.3);
+    background: #F6F2F0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #000000;
+    font-size: 18px;
+    font-weight: bold;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 0;
+    margin: 0;
+}
+
+.focus-calendar-container .nav-btn:hover {
+    background: rgba(255, 145, 104, 0.1);
+    color: #000000;
+}
+
+.focus-calendar-container .nav-btn:active {
+    transform: scale(0.95);
+}
+
+.focus-calendar-container .weekday-headers {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     gap: 0.5rem;
-    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
     color: rgba(0, 0, 0, 0.6);
 }
 
-.legend-emoji {
+.focus-calendar-container .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    /* Maintain consistent height */
+    min-height: 350px;
+}
+
+.focus-calendar-container .calendar-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    /* Perfect square grid regardless of screen size */
+    border: 1px solid rgba(255, 145, 104, 0.2);
+    border-radius: 0.5rem;
+    background: #F6F2F0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.focus-calendar-container .calendar-day:hover {
+    background: rgba(255, 145, 104, 0.1);
+    border-color: rgba(255, 145, 104, 0.4);
+}
+
+.focus-calendar-container .calendar-day.empty {
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    cursor: default;
+    /* Visually distinct for out-of-month days */
+    opacity: 0.4;
+}
+
+.focus-calendar-container .calendar-day.empty:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.focus-calendar-container .calendar-day.active {
+    background: #FFFFFF;
+    border-color: rgba(255, 145, 104, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.focus-calendar-container .calendar-day.active:hover {
+    background: rgba(255, 145, 104, 0.05);
+    border-color: rgba(255, 145, 104, 0.5);
+}
+
+.focus-calendar-container .day-number {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #000000;
+    margin-bottom: 0.25rem;
+}
+
+.focus-calendar-container .calendar-day.empty .day-number {
+    color: rgba(0, 0, 0, 0.3);
+}
+
+
+/* Monthly Summary Footer */
+.focus-calendar-container .monthly-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: rgba(241, 231, 221, 0.3);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.focus-calendar-container .summary-stat {
+    text-align: center;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-sm);
+    transition: all 0.3s ease;
+}
+
+.focus-calendar-container .summary-stat:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.focus-calendar-container .stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FF9168;
+    margin-bottom: 0.25rem;
+}
+
+.focus-calendar-container .stat-label {
+    display: block;
+    font-size: 0.875rem;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 500;
+}
+
+/* Focus Level Guide */
+.focus-calendar-container .focus-legend {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(241, 231, 221, 0.3);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.focus-calendar-container .focus-legend h3 {
+    margin: 0 0 1rem 0;
     font-size: 1rem;
+    font-weight: 600;
+    color: #000000;
+}
+
+.focus-calendar-container .legend-items {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.focus-calendar-container .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-sm);
+    transition: all 0.3s ease;
+}
+
+.focus-calendar-container .legend-item:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+
+.focus-calendar-container .legend-text {
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 500;
+}
+
+/* Calendar Images - Base styling */
+.card.focus-calendar-container .focus-image,
+.card.focus-calendar-container .legend-image {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    display: block !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+/* Brain Image Color Schemes */
+.card.focus-calendar-container .focus-image[src*="Master.jpg"],
+.card.focus-calendar-container .legend-image[src*="Master.jpg"] {
+    border: 1px solid #D580FF !important;
+    box-shadow: 0 0 8px #D580FF !important;
+}
+
+.card.focus-calendar-container .focus-image[src*="LockedIn.jpg"],
+.card.focus-calendar-container .legend-image[src*="LockedIn.jpg"] {
+    border: 1px solid #00ACC1 !important;
+    box-shadow: 0 0 8px #00ACC1 !important;
+}
+
+.card.focus-calendar-container .focus-image[src*="Steady.jpg"],
+.card.focus-calendar-container .legend-image[src*="Steady.jpg"] {
+    border: 1px solid #4CAF50 !important;
+    box-shadow: 0 0 8px #4CAF50 !important;
+}
+
+.card.focus-calendar-container .focus-image[src*="Neutral.jpg"],
+.card.focus-calendar-container .legend-image[src*="Neutral.jpg"] {
+    border: 1px solid #FFD600 !important;
+    box-shadow: 0 0 8px #FFD600 !important;
+}
+
+.card.focus-calendar-container .focus-image[src*="Distracted.jpg"],
+.card.focus-calendar-container .legend-image[src*="Distracted.jpg"] {
+    border: 1px solid #FF9800 !important;
+    box-shadow: 0 0 8px #FF9800 !important;
+}
+
+.card.focus-calendar-container .focus-image[src*="BrainFog.jpg"],
+.card.focus-calendar-container .legend-image[src*="BrainFog.jpg"] {
+    border: 1px solid #9E9E9E !important;
+    box-shadow: 0 0 8px #9E9E9E !important;
+}
+
+/* Loading state for calendar */
+.focus-calendar-container.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.focus-calendar-container.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #FF9168;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Progress Tracker */

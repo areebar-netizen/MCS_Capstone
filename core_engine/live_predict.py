@@ -10,16 +10,37 @@ Usage:
     python code/live_predict.py --eeg --models models_out --model xgboost
     python code/live_predict.py --csv-dir dataset/test --models models_out
 """
-
-from pathlib import Path
-import sys
 import time
-import warnings
-import os
 import csv
 import threading
 from collections import deque
-from typing import List, Tuple, Optional, Union 
+from typing import List, Tuple, Optional, Union
+import json
+import os
+import sys
+from pathlib import Path
+
+# Define project root
+# ROOT = Path(__file__).resolve().parents[1]
+
+ROOT = Path(__file__).resolve().parents[1]
+# Django imports for database operations
+sys.path.append(str(ROOT / 'webapp'))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'secondBrain.settings')
+import django
+django.setup()
+from secondBrain_App.models import SessionSummary 
+from django.utils import timezone 
+
+# Global variables for session analytics
+session_predictions = []
+session_confidence_scores = []
+session_start_time = None
+current_focus_streak = 0
+longest_focus_streak = 0
+state_switch_count = 0
+last_prediction_state = None
+session_result = None  # Global result dictionary 
 
 import numpy as np
 import pandas as pd
@@ -39,9 +60,9 @@ import pyqtgraph as pg
 
 # Setup paths
 ROOT = Path(__file__).resolve().parents[1]
-CODE_DIR = ROOT / 'code'
-if str(CODE_DIR) not in sys.path:
-    sys.path.insert(0, str(CODE_DIR))
+SETUP_DIR = ROOT / 'data_pipeline' / 'setup'
+if str(SETUP_DIR) not in sys.path:
+    sys.path.insert(0, str(SETUP_DIR))
 
 # Import custom modules
 from EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
@@ -202,6 +223,26 @@ class EEGAcquirer:
         return list(self.buffer)
 
 
+def get_session_result():
+    """Returns the session analytics result dictionary"""
+    global session_result
+    return session_result
+
+def reset_session_analytics():
+    """Resets all session analytics variables for a new session"""
+    global session_predictions, session_confidence_scores, session_start_time
+    global current_focus_streak, longest_focus_streak, state_switch_count
+    global last_prediction_state, session_result
+    
+    session_predictions = []
+    session_confidence_scores = []
+    session_start_time = None
+    current_focus_streak = 0
+    longest_focus_streak = 0
+    state_switch_count = 0
+    last_prediction_state = None
+    session_result = None
+
 def load_model(models_dir: Path, model_name: str):
     """Loads model, feature selector, and enhanced preprocessing artifacts."""
     mapping = {
@@ -222,7 +263,7 @@ def load_model(models_dir: Path, model_name: str):
     
     # Load enhanced artifacts
     try:
-        scaler, feature_info = load_preprocessing_artifacts('preprocessing_artifacts')
+        scaler, feature_info = load_preprocessing_artifacts('artifacts/preprocessing_artifacts')
     except Exception:
         scaler, feature_info = None, None
     
@@ -527,6 +568,9 @@ def run_eeg_mode(args):
     """Run live EEG acquisition and prediction."""
     print("Starting EEG Mode...")
     
+    # Path for a "stop signal" file that Django can create
+    stop_signal_path = f"/tmp/stop_session_{args.user_id}.flag"
+    
     app = QtWidgets.QApplication([])
     viz = Visualizer()
     viz.resize(900, 300)
@@ -540,36 +584,203 @@ def run_eeg_mode(args):
     
     # Setup duration timer if specified
     duration_timer = None
+    
+    def stop_recording():
+        global session_predictions, session_confidence_scores, session_start_time
+        global current_focus_streak, longest_focus_streak, state_switch_count
+        
+        print("\nStop signal received. Calculating session analytics...")
+        
+        # Calculate advanced analytics only once when session ends
+        try:
+            if session_start_time and len(session_predictions) > 0:
+                session_end_time = time.time()
+                total_duration = session_end_time - session_start_time
+                
+                # Calculate focus latency (time to reach initial focus state)
+                focus_latency = 0.0
+                for i, pred in enumerate(session_predictions):
+                    if pred == 2:  # Assuming 2 = "concentrating"
+                        focus_latency = (i * args.period)  # Convert windows to seconds
+                        break
+                
+                # Calculate average confidence
+                avg_confidence = np.mean(session_confidence_scores) if session_confidence_scores else 0.0
+                
+                # Calculate time spent in each state
+                relaxed_seconds = session_predictions.count(0) * args.period
+                neutral_seconds = session_predictions.count(1) * args.period
+                concentrating_seconds = session_predictions.count(2) * args.period
+                
+                # Calculate average focus score
+                total_focus_score = (session_predictions.count(2) * 3 + session_predictions.count(1) * 2 + session_predictions.count(0) * 1)
+                average_focus_score = total_focus_score / len(session_predictions) if session_predictions else 0.0
+                peak_focus_score = max(session_predictions) if session_predictions else 0.0
+                
+                # Create result dict like the CSV processing mode
+                result = {
+                    'session_id': args.user_id,
+                    'n_windows': len(session_predictions),
+                    'total_seconds': total_duration,
+                    'relaxed_seconds': relaxed_seconds,
+                    'neutral_seconds': neutral_seconds,
+                    'concentrating_seconds': concentrating_seconds,
+                    'predicted_label': max(set(session_predictions), key=session_predictions.count) if session_predictions else 0,
+                    'confidence': avg_confidence,
+                    'longest_focus_streak': longest_focus_streak * args.period,
+                    'focus_latency': focus_latency,
+                    'state_switch_count': state_switch_count,
+                    'avg_confidence': avg_confidence,
+                    'average_focus_score': average_focus_score,
+                    'peak_focus_score': peak_focus_score,
+                    # Additional fields to match SessionSummary model
+                    'start_time': session_start_time,
+                    'end_time': session_end_time,
+                    'total_duration_seconds': total_duration,
+                    'data_points_count': len(session_predictions)
+                }
+                
+                print(f"Session Analytics Result:")
+                print(f"  Session ID: {result['session_id']}")
+                print(f"  Start Time: {result['start_time']}")
+                print(f"  End Time: {result['end_time']}")
+                print(f"  Total Duration: {result['total_seconds']:.2f} seconds")
+                print(f"  Average Focus Score: {result['average_focus_score']:.2f}")
+                print(f"  Peak Focus Score: {result['peak_focus_score']:.2f}")
+                print(f"  Relaxed Seconds: {result['relaxed_seconds']:.2f}")
+                print(f"  Neutral Seconds: {result['neutral_seconds']:.2f}")
+                print(f"  Concentrating Seconds: {result['concentrating_seconds']:.2f}")
+                print(f"  Data Points Count: {result['data_points_count']}")
+                print(f"  Longest Focus Streak: {result['longest_focus_streak']:.2f} seconds")
+                print(f"  Focus Latency: {result['focus_latency']:.2f} seconds")
+                print(f"  State Switches: {result['state_switch_count']}")
+                print(f"  Average Confidence: {result['avg_confidence']:.3f}")
+                
+                # Store result globally for access by other parts of the system
+                global session_result
+                session_result = result
+                
+                # Write to CSV if summary_out is specified
+                if args.summary_out:
+                    try:
+                        with open(args.summary_out, 'w', newline='') as f:
+                            writer = csv.writer(f)
+                            writer.writerow(['session_id', 'n_windows', 'total_seconds', 
+                                           'relaxed_seconds', 'neutral_seconds', 'concentrating_seconds',
+                                           'predicted_label', 'confidence', 'longest_focus_streak',
+                                           'focus_latency', 'state_switch_count', 'avg_confidence',
+                                           'average_focus_score', 'peak_focus_score', 'start_time',
+                                           'end_time', 'total_duration_seconds', 'data_points_count'])
+                            writer.writerow([
+                                result['session_id'],
+                                result['n_windows'],
+                                result['total_seconds'],
+                                result['relaxed_seconds'],
+                                result['neutral_seconds'],
+                                result['concentrating_seconds'],
+                                result['predicted_label'],
+                                result['confidence'],
+                                result['longest_focus_streak'],
+                                result['focus_latency'],
+                                result['state_switch_count'],
+                                result['avg_confidence'],
+                                result['average_focus_score'],
+                                result['peak_focus_score'],
+                                result['start_time'],
+                                result['end_time'],
+                                result['total_duration_seconds'],
+                                result['data_points_count']
+                            ])
+                        print(f"Summary written to {args.summary_out}")
+                    except Exception as e:
+                        print(f"Error writing summary CSV: {e}")
+                
+                return result
+                    
+        except Exception as e:
+            print(f"Error calculating session analytics: {e}")
+            return None
+        
+        viz.set_preds([], "Session ended")
+        app.quit()
+    
     if args.duration is not None:
         duration_seconds = args.duration * 60  # Convert minutes to seconds
         print(f"Recording will stop after {args.duration} minutes ({duration_seconds} seconds)")
         
-        def stop_recording():
+        def duration_stop_recording():
             print(f"\nRecording duration of {args.duration} minutes reached. Stopping...")
             viz.set_preds([], "Recording completed")
             app.quit()
         
         duration_timer = QtCore.QTimer()
-        duration_timer.timeout.connect(stop_recording)
+        duration_timer.timeout.connect(duration_stop_recording)
         duration_timer.start(int(duration_seconds * 1000))  # Convert to milliseconds
     
     try:
         print("Connecting to EEG stream...")
-        acq.connect()
-        acq.start()
         
-        if args.raw_out:
-            acq.start_saving_raw(args.raw_out)
+        # Add connection timeout with threading
+        import threading
+        connection_result = {'success': False, 'error': None}
+        
+        def connect_with_timeout():
+            try:
+                acq.connect()
+                acq.start()
+                connection_result['success'] = True
+            except Exception as e:
+                connection_result['error'] = str(e)
+        
+        # Start connection in separate thread with timeout
+        connection_thread = threading.Thread(target=connect_with_timeout)
+        connection_thread.daemon = True
+        connection_thread.start()
+        
+        # Wait for connection with timeout (10 seconds)
+        connection_thread.join(timeout=10)
+        
+        if connection_result['success']:
+            # Initialize session timing only after successful connection
+            global session_start_time
+            session_start_time = time.time()
+            print("Connected. Streaming data...")
             
-        print("Connected. Streaming data...")
+            if args.raw_out:
+                acq.start_saving_raw(args.raw_out)
+        else:
+            # Show sad face for connection failure/timeout
+            error_msg = connection_result.get('error', 'Connection timeout (10s)')
+            viz.set_preds([], f"😢 {error_msg}")
+            print(f"😢 Connection Failed: {error_msg}")
+            print("Please check your EEG device and try again.")
+            print("Make sure:")
+            print("  - EEG device is powered on")
+            print("  - Bluetooth is enabled")
+            print("  - Device is paired with this computer")
+            app.exec_()
+            return
         
     except Exception as e:
-        viz.set_preds([], f"Connection Failed: {e}")
+        # Show sad face for connection failure
+        viz.set_preds([], f"😢 Connection Failed: {e}")
+        print(f"😢 Connection Failed: {e}")
+        print("Please check your EEG device and try again.")
         app.exec_()
         return
 
     # Polling function
     def poll_and_predict():
+        global session_predictions, session_confidence_scores, session_start_time
+        global current_focus_streak, longest_focus_streak, state_switch_count, last_prediction_state
+        
+        # 1. Check if Django sent a stop signal
+        if os.path.exists(stop_signal_path):
+            print("Stop signal detected. Ending session...")
+            os.remove(stop_signal_path)  # Clean up
+            stop_recording()  # Trigger the existing stop logic
+            return
+        
         rows = acq.get_buffer_copy()
         
         # Minimum samples needed (approx 1.5s)
@@ -585,6 +796,27 @@ def run_eeg_mode(args):
         
         if preds is not None:
             viz.set_preds(preds)
+            
+            # Track session analytics (only if session has started)
+            if session_start_time is not None:
+                # Get the latest prediction (most recent)
+                if len(preds) > 0:
+                    latest_pred = preds[-1]
+                    latest_conf = confidence[-1] if len(confidence) > 0 else 0.0
+                    
+                    session_predictions.append(latest_pred)
+                    session_confidence_scores.append(latest_conf)
+                    
+                    # Calculate focus streak and state switches
+                    if latest_pred != last_prediction_state:
+                        state_switch_count += 1
+                        if latest_pred == 2:  # Assuming 2 = "concentrating"
+                            current_focus_streak += 1
+                            longest_focus_streak = max(longest_focus_streak, current_focus_streak)
+                        else:
+                            current_focus_streak = 0
+                    
+                    last_prediction_state = latest_pred
 
     timer = QtCore.QTimer()
     timer.timeout.connect(poll_and_predict)
@@ -604,7 +836,7 @@ def main():
     mode_group.add_argument('--csv-dir', type=str, help='Process CSV files in directory')
     
     # Common arguments
-    p.add_argument('--models', default='models_out', help='Directory containing models')
+    p.add_argument('--models', default='artifacts', help='Directory containing models')
     p.add_argument('--model', default='xgboost', choices=['random_forest', 'xgboost', 'stacked_model'])
     p.add_argument('--period', type=float, default=1.0, help='Window size in seconds')
     p.add_argument('--nsamples', type=int, default=150, help='Samples per window')
@@ -613,6 +845,7 @@ def main():
     p.add_argument('--raw-out', type=str, default=None, help='Path to save raw EEG CSV')
     p.add_argument('--summary-out', type=str, default=None, help='Path to save prediction summary CSV')
     p.add_argument('--duration', type=float, default=None, help='Recording duration in minutes (if not specified, runs indefinitely)')
+    p.add_argument('--user-id', type=str, default='default', help='User ID for session tracking')
     
     args = p.parse_args()
     

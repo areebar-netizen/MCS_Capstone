@@ -1,14 +1,36 @@
+# --- CORE ML STACK ---
 numpy
 pandas
-scipy
 scikit-learn
-joblib
 xgboost
 mne
-matplotlib
 pylsl
+joblib
+scipy
+matplotlib
+seaborn
+
+# --- DJANGO & WEB STACK ---
+django==4.2.*
+django-environ
+django-storages
+boto3
+psycopg2-binary
+
+# --- ASYNC & REAL-TIME ---
+channels
+channels-redis
+daphne
+celery
+redis
+
+# --- EEG & SIGNAL PROCESSING ---
 pyqtgraph
 PyQt5
-seaborn
-keyboard
+
+# --- DATA PROCESSING ---
 imblearn
+tqdm
+
+#-----FILE ACCESS----
+Pathlib

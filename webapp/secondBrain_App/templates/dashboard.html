@@ -1,0 +1,544 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load secondBrain_App_templatetags %}
+
+{% block logo %}
+<div class="logo-container">
+    <img src="{% static 'images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+</div>
+{% endblock %}
+
+{% block title %}BrainWave Focus Analyzer - Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">BrainWave Focus Analyzer</h1>
+            <p class="header-greeting">Welcome back, {{ user_profile.name|default:"User" }}!</p>
+        </div>
+    </header>
+
+    <!-- Main Grid Layout -->
+<div class="dashboard-grid">
+        
+        <div class="grid-row">
+            <div class="col-span-8">
+                {% include 'focus_track_setup.html' %}
+            </div>
+            <div class="col-span-4">
+                {% include 'user_profile.html' %}
+            </div>
+        </div>
+
+        <div class="grid-row mt-4">
+            <div class="col-span-12">
+                <div class="card shadow-sm border-0" id="recommendation-card" style="background: #f8f9fa; border-radius: 15px; border-left: 5px solid #4a90e2;">
+                    <div class="card-body">
+                        <h5 class="card-title" style="color: #4a90e2; font-weight: bold;">🧠 Latest AI Focus Recommendation</h5>
+                        <hr>
+                        <div id="recommendation-content" class="gemini-advice">
+                            {% if ai_recommendation %}
+                                {{ ai_recommendation|linebreaks }}
+                            {% else %}
+                                <p class="text-muted italic">Complete an EEG session to receive your personalized focus advice here.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-row mt-4">
+            <div class="col-span-6">
+                {% include 'study_time_histogram.html' %}
+            </div>
+            <div class="col-span-6">
+                {% include 'focus_calendar.html' %}
+            </div>
+        </div>
+
+        <!-- Row 3: Progress Tracker -->
+        <div class="grid-row">
+            <div class="col-span-12">
+                {% include 'progress_tracker.html' %}
+            </div>
+        </div>
+
+        <!-- Row 4: Focus Track History -->
+        <div class="grid-row">
+            <div class="col-span-12">
+                {% include 'focus_track_history.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Demo data loading
+console.log("JS LOADED");
+
+function loadDemoData() {
+    console.log('Loading demo data...');
+    // Add demo data loading logic here
+    alert('Demo data loaded successfully!');
+}
+
+// Profile reset
+function resetProfile() {
+    if (confirm('Are you sure you want to reset your profile? This will clear all your data.')) {
+        console.log('Resetting profile...');
+        // Add profile reset logic here
+        alert('Profile reset successfully!');
+    }
+}
+
+// Duration button selection
+document.addEventListener('DOMContentLoaded', function() {
+    // Duration buttons
+    const durationBtns = document.querySelectorAll('.duration-btn');
+    durationBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            durationBtns.forEach(b => {
+                b.classList.remove('btn-selected');
+                b.classList.add('btn-deselected');
+            });
+            this.classList.remove('btn-deselected');
+            this.classList.add('btn-selected');
+        });
+    });
+
+    // View toggle buttons
+    const viewBtns = document.querySelectorAll('.view-btn');
+    viewBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+            
+            // Update button states
+            viewBtns.forEach(b => {
+                b.classList.remove('btn-selected');
+                b.classList.add('btn-deselected');
+            });
+            this.classList.remove('btn-deselected');
+            this.classList.add('btn-selected');
+            
+            // Show/hide views
+            document.querySelectorAll('.histogram-view').forEach(v => v.style.display = 'none');
+            const targetView = document.getElementById(view + 'View');
+            if (targetView) {
+                targetView.style.display = 'block';
+            }
+        });
+    });
+
+    // Tab navigation
+    const tabContainers = document.querySelectorAll('.focus-track-history')
+    tabContainers.forEach(container => {
+        
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tab = this.dataset.tab;
+                
+                // Update button states
+                tabBtns.forEach(b => {
+                    b.classList.remove('btn-selected');
+                    b.classList.add('btn-deselected');
+                });
+                this.classList.remove('btn-deselected');
+                this.classList.add('btn-selected');
+                
+                // Show/hide tab panels
+                console.log("Tab buttons found:", tabBtns.length);
+                document.querySelectorAll('.tab-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                const targetPanel = document.getElementById(tab + 'Tab');
+                if (targetPanel) {
+                    targetPanel.classList.add('active');
+                } else {
+                    console.error("Missing tab panel");
+                }
+            });
+        });
+    });
+
+    // Start session button
+    const startBtn = document.getElementById('startSessionBtn');
+    const activeSession = document.getElementById('activeSession');
+    const setupSection = document.querySelector('.duration-section');
+    
+    if (startBtn) {
+        startBtn.addEventListener('click', function() {
+            // Get selected duration
+            const selectedDuration = document.querySelector('.duration-btn.btn-selected');
+            if (selectedDuration) {
+                const duration = selectedDuration.dataset.duration;
+                console.log('Starting session for', duration, 'minutes');
+                
+                // Hide setup, show active session
+                if (setupSection) setupSection.style.display = 'none';
+                if (startBtn) startBtn.style.display = 'none';
+                if (activeSession) activeSession.style.display = 'block';
+                
+                // Start timer (mock implementation)
+                startTimer(duration);
+            } else {
+                alert('Please select a duration first!');
+            }
+        });
+    }
+
+    // Calendar AJAX navigation
+    const prevBtn = document.getElementById('prevMonth');
+    const nextBtn = document.getElementById('nextMonth');
+    const calendarContainer = document.querySelector('.focus-calendar-container');
+    
+    if (prevBtn && nextBtn && calendarContainer) {
+        // Add loading state class to calendar container position relative
+        calendarContainer.style.position = 'relative';
+        
+        async function loadCalendarData(month, year) {
+            try {
+                // Add loading state
+                calendarContainer.classList.add('loading');
+                
+                // Fetch calendar data
+                const response = await fetch(`/api/calendar-data/?month=${month}&year=${year}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load calendar data');
+                }
+                
+                const data = await response.json();
+                
+                // Update calendar grid
+                updateCalendarGrid(data);
+                
+                // Update monthly summary
+                updateMonthlySummary(data);
+                
+                // Update navigation buttons
+                updateNavigationButtons(data);
+                
+                // Update month title
+                document.getElementById('currentMonth').textContent = `${data.month_name} ${data.current_year}`;
+                
+            } catch (error) {
+                console.error('Error loading calendar data:', error);
+                // Optionally show error message to user
+            } finally {
+                // Remove loading state
+                calendarContainer.classList.remove('loading');
+            }
+        }
+        
+        function updateCalendarGrid(data) {
+            const calendarDays = document.querySelector('.calendar-days');
+            if (!calendarDays) return;
+            
+            let html = '';
+            data.calendar_weeks.forEach(week => {
+                week.forEach(day => {
+                    const dayClasses = ['calendar-day'];
+                    if (!day.in_month) dayClasses.push('empty');
+                    if (day.has_data) dayClasses.push('active');
+                    
+                    html += `<div class="${dayClasses.join(' ')}">`;
+                    if (day.in_month) {
+                        html += `<span class="day-number">${day.day_num}</span>`;
+                        if (day.has_data) {
+                            html += `<img src="${day.image_path}" 
+                                         alt="Focus: ${Math.round(day.focus_pct)}%" 
+                                         class="focus-image"
+                                         title="${Math.round(day.focus_pct)}% focus">`;
+                        }
+                    }
+                    html += `</div>`;
+                });
+            });
+            
+            calendarDays.innerHTML = html;
+        }
+        
+        function updateMonthlySummary(data) {
+            const monthlySummary = document.querySelector('.monthly-summary');
+            if (!monthlySummary) return;
+            
+            monthlySummary.innerHTML = `
+                <div class="summary-stat">
+                    <span class="stat-value">${data.sessions_this_month}</span>
+                    <span class="stat-label">Sessions This Month</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-value">${data.avg_focus_10_point.toFixed(1)}</span>
+                    <span class="stat-label">Avg Focus</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-value">${data.active_days}</span>
+                    <span class="stat-label">Active Days</span>
+                </div>
+            `;
+        }
+        
+        function updateNavigationButtons(data) {
+            prevBtn.setAttribute('data-month', data.prev_month);
+            prevBtn.setAttribute('data-year', data.prev_year);
+            nextBtn.setAttribute('data-month', data.next_month);
+            nextBtn.setAttribute('data-year', data.next_year);
+        }
+        
+        // Add event listeners
+        prevBtn.addEventListener('click', function() {
+            const month = this.getAttribute('data-month');
+            const year = this.getAttribute('data-year');
+            loadCalendarData(parseInt(month), parseInt(year));
+        });
+        
+        nextBtn.addEventListener('click', function() {
+            const month = this.getAttribute('data-month');
+            const year = this.getAttribute('data-year');
+            loadCalendarData(parseInt(month), parseInt(year));
+        });
+    }
+
+    // Calendar day clicks
+    document.addEventListener('click', function(e) {
+        const calendarDay = e.target.closest('.calendar-day:not(.empty)');
+        if (calendarDay) {
+            const dayNumber = calendarDay.querySelector('.day-number')?.textContent;
+            const focusImage = calendarDay.querySelector('.focus-image');
+            if (dayNumber) {
+                console.log('Day clicked:', dayNumber);
+                if (focusImage) {
+                    console.log('Focus image alt:', focusImage.alt);
+                }
+            }
+        }
+    });
+
+    // Study Time Histogram AJAX functionality
+    async function loadStudyTimeData(scale = 'week') {
+        try {
+            const response = await fetch(`/api/study-time-data/?scale=${scale}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to load study time data');
+            }
+            
+            const data = await response.json();
+            
+            // Update the appropriate view
+            updateStudyTimeView(data, scale);
+            
+            // Update statistics
+            updateStudyTimeStats(data);
+            
+        } catch (error) {
+            console.error('Error loading study time data:', error);
+        }
+    }
+    
+    function updateStudyTimeView(data, scale) {
+        // Hide all views
+        document.querySelectorAll('.histogram-view').forEach(view => {
+            view.style.display = 'none';
+        });
+        
+        // Show the selected view
+        const selectedView = document.getElementById(`${scale}View`);
+        if (selectedView) {
+            selectedView.style.display = 'block';
+            
+            // Update labels
+            const labelsContainer = selectedView.querySelector('.time-labels');
+            const barsContainer = selectedView.querySelector('.histogram-bars');
+            
+            if (labelsContainer && barsContainer) {
+                // Clear existing content and CSS classes
+                labelsContainer.innerHTML = '';
+                barsContainer.innerHTML = '';
+                
+                // Remove all view-specific classes
+                labelsContainer.classList.remove('week-view', 'month-view', 'year-view');
+                barsContainer.classList.remove('week-view', 'month-view', 'year-view');
+                
+                // Add appropriate view-specific classes
+                labelsContainer.classList.add(`${scale}-view`);
+                barsContainer.classList.add(`${scale}-view`);
+                
+                // Calculate max value for proper scaling
+                const maxSeconds = Math.max(...data.data.map(item => item.seconds));
+                
+                // Add labels and bars
+                data.data.forEach(item => {
+                    // Add label
+                    const labelSpan = document.createElement('span');
+                    labelSpan.textContent = item.label;
+                    labelsContainer.appendChild(labelSpan);
+                    
+                    // Calculate height percentage
+                    let heightPercentage;
+                    if (maxSeconds === 0) {
+                        heightPercentage = 2; // Minimum height for empty data
+                    } else {
+                        heightPercentage = Math.max(2, (item.seconds / maxSeconds) * 100);
+                    }
+                    
+                    // Add bar
+                    const barDiv = document.createElement('div');
+                    barDiv.className = 'bar';
+                    barDiv.style.height = `${heightPercentage}%`;
+                    barDiv.title = `${item.label}: ${item.formatted_time}`;
+                    barsContainer.appendChild(barDiv);
+                });
+            }
+        }
+    }
+    
+    function updateStudyTimeStats(data) {
+        const totalElement = document.getElementById('totalStudyTime');
+        const dailyElement = document.getElementById('dailyAverage');
+        const bestElement = document.getElementById('bestDay');
+        const bestLabelElement = document.getElementById('bestPeriodLabel');
+        
+        if (totalElement) totalElement.textContent = data.total_study_time;
+        if (dailyElement) dailyElement.textContent = data.daily_average;
+        if (bestElement) bestElement.textContent = data.best_day;
+        if (bestLabelElement) bestLabelElement.textContent = data.best_period_label;
+    }
+    
+    // Add event listeners to view toggle buttons
+    const viewButtons = document.querySelectorAll('.view-btn');
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update button states
+            viewButtons.forEach(b => {
+                b.classList.remove('btn-selected');
+                b.classList.add('btn-deselected');
+            });
+            this.classList.remove('btn-deselected');
+            this.classList.add('btn-selected');
+            
+            // Load data for selected view
+            const scale = this.dataset.view;
+            loadStudyTimeData(scale);
+        });
+    });
+    
+    // Load initial data (week view)
+    loadStudyTimeData('week');
+});
+
+// ── CSRF token helper ──
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// ── Poll for recommendation if Celery still running ──
+function pollForRecommendation() {
+    console.log('[EEG] Polling for new recommendation...');
+    const recContent = document.getElementById('recommendation-content');
+    
+    const pollInterval = setInterval(async function() {
+        try {
+            // We've updated this to hit a new endpoint or check status
+            const response = await fetch('/stop_realtime_eeg/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            const data = await response.json();
+            
+            if (data.ok && data.status === 'completed') {
+                clearInterval(pollInterval);
+                
+                // INSTEAD OF REDIRECTING: Fetch the recommendation text and update the UI
+                // We'll call a simple helper view or just reload the recommendation part
+                fetchLatestRecommendation(); 
+                
+                // Optional: Stop the loading spinner on your "Start Session" button
+                alert("Session Analysis Complete!");
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+        }
+    }, 3000);
+}
+
+// New helper function to refresh only the recommendation text
+async function fetchLatestRecommendation() {
+    try {
+        const response = await fetch('/get_latest_recommendation_api/'); // We will create this endpoint
+        const data = await response.json();
+        if (data.recommendation) {
+            document.getElementById('recommendation-content').innerHTML = data.recommendation.replace(/\n/g, '<br>');
+        }
+    } catch (e) {
+        console.error("Could not refresh recommendation:", e);
+    }
+}
+</script>
+<style>
+    /* 1. Main Container Styling */
+    #recommendation-content {
+        color: #334155;
+        font-size: 1.05rem;
+        line-height: 1.8;
+        padding: 15px;
+        background: #ffffff;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* 2. Cleaning up the "Heading" look */
+    /* This targets text that Gemini usually bolds as headers */
+    #recommendation-content b, 
+    #recommendation-content strong {
+        display: block;
+        color: #2563eb; /* Corporate Blue */
+        font-size: 1.2rem;
+        margin-top: 20px;
+        margin-bottom: 8px;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 4px;
+    }
+
+    /* 3. Handling the first bold item as a Main Title */
+    #recommendation-content b:first-of-type,
+    #recommendation-content strong:first-of-type {
+        margin-top: 0;
+        font-size: 1.4rem;
+        color: #1e293b;
+        border-bottom-color: #3b82f6;
+    }
+
+    /* 4. Formatting Bullet Points */
+    /* Gemini often starts lines with '*' or '-' */
+    #recommendation-content {
+        white-space: pre-line; /* Preserves the line breaks Gemini sends */
+    }
+
+    /* 5. Adding a "Quote" style for observations */
+    #recommendation-card {
+        border-left: 6px solid #3b82f6 !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
+{% endblock %}

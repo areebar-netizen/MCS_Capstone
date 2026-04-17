@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load secondBrain_App_templatetags %}
+
+{% block logo %}
+<div class="logo-container">
+    <img src="{% static 'images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+</div>
+{% endblock %}
+
+{% block title %}BrainWave Focus Analyzer - Onboarding{% endblock %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+{% block content %}
+<div class="onboarding-container">
+    <!-- Header Section -->
+    <header class="header">
+        <div class="logo-container">
+            <img src="{% static 'images/logo.svg' %}" alt="BrainWave Logo" class="logo">
+        </div>
+        <h1 class="title">BrainWave Focus Analyzer</h1>
+        <p class="subtitle">Let's understand your study patterns</p>
+    </header>
+    
+    <!-- Progress Section -->
+    <div class="progress-section">
+        <span class="progress-text">Step {{ current_step|default:1 }} of 10</span>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" data-progress="{{ progress_percentage|default:10 }}"></div>
+        </div>
+        <span class="progress-percentage">{{ progress_percentage|default:10 }}% Complete</span>
+    </div>
+    
+    <!-- Form Card -->
+    <main class="form-card">
+        <h2 class="section-title">{{ section.title }}</h2>
+        
+        <form id="onboarding-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="current_step" value="{{ current_step|default:1 }}">
+            
+            {% for question in section.questions %}
+            {% if question.id == 'caffeine_types' or question.id == 'caffeine_servings' or question.id == 'caffeine_timing' %}
+            <div class="form-group caffeine-dependent" style="display: none;">
+            {% else %}
+            <div class="form-group">
+            {% endif %}
+                <label for="{{ question.id }}" class="form-label">{{ question.label }}</label>
+                
+                {% if question.type == 'text' %}
+                <input 
+                    type="text" 
+                    id="{{ question.id }}" 
+                    name="{{ question.id }}" 
+                    class="form-input" 
+                    placeholder="{{ question.placeholder|default:'' }}"
+                    value="{{ saved_data|get_saved_value:question.id|default:'' }}"
+                    aria-label="{{ question.label }}"
+                >
+                
+                {% elif question.type == 'number' %}
+                <div class="age-input-wrapper">
+                    <input 
+                        type="number" 
+                        id="{{ question.id }}" 
+                        name="{{ question.id }}" 
+                        class="form-input {% if question.id == 'caffeine_servings' %}caffeine-detail-input{% endif %}"
+                        placeholder="{{ question.placeholder|default:'' }}"
+                        {% if question.min %}min="{{ question.min }}"{% endif %}
+                        {% if question.max %}max="{{ question.max }}"{% endif %}
+                        value="{{ saved_data|get_saved_value:question.id|default:'' }}"
+                        aria-label="{{ question.label }}"
+                    >
+                </div>
+                
+                {% elif question.type == 'range' %}
+                <div class="range-container">
+                    <div class="range-value" id="{{ question.id }}-value">{{ saved_data|get_saved_value:question.id|default:question.default|default:5 }}</div>
+                    <input 
+                        type="range" 
+                        id="{{ question.id }}" 
+                        name="{{ question.id }}" 
+                        class="range-slider"
+                        {% if question.min %}min="{{ question.min }}"{% endif %}
+                        {% if question.max %}max="{{ question.max }}"{% endif %}
+                        value="{{ saved_data|get_saved_value:question.id|default:question.default|default:5 }}"
+                        aria-label="{{ question.label }}"
+                    >
+                    <div class="range-labels">
+                        <span>1</span>
+                        <span>{{ question.max }}</span>
+                    </div>
+                </div>
+                
+                {% elif question.type == 'radio' %}
+                <div class="button-options">
+                    {% for option in question.options %}
+                    <button 
+                        type="button" 
+                        name="btn-group-{{ question.id }}"
+                        value="{{ forloop.counter0 }}"
+                        class="level-btn {% if saved_data|get_saved_value:question.id == forloop.counter0|stringformat:'s' %}btn-selected{% else %}btn-deselected{% endif %} {% if question.id == 'consumes_caffeine' %}caffeine-radio-btn{% endif %}"
+                    >
+                        {{ option }}
+                    </button>
+                    {% endfor %}
+                    
+                    <input type="hidden" 
+                        id="hidden-{{ question.id }}" 
+                        name="{{ question.id }}" 
+                        value="{{ saved_data|get_saved_value:question.id|default:'' }}">
+                </div>
+                
+                {% elif question.type == 'checkbox' %}
+                <div class="checkbox-group-container">
+                    {% for option in question.options %}
+                    <div class="checkbox-row">
+                        <label for="chk-{{ question.id }}-{{ forloop.counter0 }}" class="custom-label">
+                            <input 
+                                type="checkbox" 
+                                id="chk-{{ question.id }}-{{ forloop.counter0 }}" 
+                                name="{{ question.id }}" 
+                                value="{{ forloop.counter0 }}"
+                                class="hidden-input {% if question.id == 'caffeine_types' %}caffeine-detail-checkbox{% endif %}"
+                                {% if forloop.counter0|stringformat:'s' in saved_data|get_saved_value:question.id %}checked{% endif %}
+                            >
+                            <span class="label-text">{{ option }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <!-- Hidden input for radio button tracking -->
+            <input type="hidden" id="radio-selection" name="radio_selection" value="">
+        </form>
+        
+        <!-- Continue Button -->
+        <button type="button" id="continue-btn" class="continue-btn" disabled aria-label="Continue to next step">
+            Continue
+            <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+        </button>
+    </main>
+    
+    <!-- Session History (if available) -->
+    {% if session_history %}
+    <div class="session-history">
+        <h3>Recent Sessions</h3>
+        <ul>
+            {% for session in session_history %}
+            <li>{{ session.date }} - {{ session.duration }}min - {{ session.focus_percentage }}% focus</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <!-- Focus Percentage Header (if available) -->
+    {% if focus_percentage %}
+    <div class="focus-header">
+        <span>Current Focus Level: {{ focus_percentage }}%</span>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Dynamic form handling for multi-step questionnaire
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set progress bar width from data attribute
+        const progressBar = document.querySelector('.progress-bar-fill');
+        if (progressBar) {
+            const progress = progressBar.dataset.progress || 10;
+            progressBar.style.width = progress + '%';
+        }
+        
+        const continueBtn = document.getElementById('continue-btn');
+        const form = document.getElementById('onboarding-form');
+        
+        // Function to check if form is valid and enable/disable continue button
+        function validateForm() {
+            let isValid = true;
+            console.log('Starting validation...');
+            
+            // MASTER TOGGLE: Get caffeine consumption state
+            const caffeineConsumption = document.getElementById('hidden-consumes_caffeine');
+            const consumesCaffeine = caffeineConsumption && caffeineConsumption.value === '0'; // 0 = "Yes"
+            const userSelectedNoForCaffeine = caffeineConsumption && caffeineConsumption.value === '1'; // 1 = "No"
+            
+            console.log('CAFFEINE MASTER TOGGLE:', {
+                caffeineValue: caffeineConsumption ? caffeineConsumption.value : 'not found',
+                consumesCaffeine: consumesCaffeine,
+                userSelectedNoForCaffeine: userSelectedNoForCaffeine
+            });
+            
+            // CRITICAL SHORT-CIRCUIT: If user selected "No" for caffeine, auto-pass all caffeine validation
+            if (userSelectedNoForCaffeine) {
+                console.log('SHORT-CIRCUIT ACTIVATED: User selected No for caffeine - auto-passing caffeine validation');
+            }
+            
+            // Check text fields
+            const textFields = form.querySelectorAll('input[type="text"]');
+            textFields.forEach(field => {
+                console.log('Text field:', field.name, 'value:', field.value, 'valid:', !!field.value.trim());
+                if (!field.value.trim()) {
+                    isValid = false;
+                }
+            });
+            
+            // Check number fields - with caffeine short-circuit
+            const numberFields = form.querySelectorAll('input[type="number"]');
+            numberFields.forEach(field => {
+                // SHORT-CIRCUIT: Auto-pass caffeine_servings if user selected No
+                if (field.name === 'caffeine_servings' && userSelectedNoForCaffeine) {
+                    console.log('SHORT-CIRCUIT: Auto-passing caffeine_servings - user selected No');
+                    return; // Skip validation for this field
+                }
+                
+                console.log('Number field:', field.name, 'value:', field.value, 'valid:', !!field.value.trim());
+                if (!field.value.trim()) {
+                    isValid = false;
+                }
+            });
+            
+            // Check range sliders
+            const rangeFields = form.querySelectorAll('input[type="range"]');
+            rangeFields.forEach(field => {
+                console.log('Range field:', field.name, 'value:', field.value, 'valid:', !!field.value);
+                if (!field.value) {
+                    isValid = false;
+                }
+            });
+            
+            // Check button groups (radio questions)
+            const buttonGroups = {};
+            const allButtons = form.querySelectorAll('button[type="button"]');
+            console.log('All buttons found:', allButtons.length);
+            
+            allButtons.forEach((button, index) => {
+                // Skip buttons without names (like continue button)
+                if (!button.name || button.name.trim() === '') {
+                    return;
+                }
+                
+                // SHORT-CIRCUIT: Auto-pass caffeine_timing radio if user selected No
+                if (button.name === 'btn-group-caffeine_timing' && userSelectedNoForCaffeine) {
+                    console.log('SHORT-CIRCUIT: Auto-passing caffeine_timing - user selected No');
+                    return; // Skip this entire button group
+                }
+                
+                if (!buttonGroups[button.name]) {
+                    buttonGroups[button.name] = false;
+                }
+                if (button.classList.contains('btn-selected')) {
+                    buttonGroups[button.name] = true;
+                }
+            });
+            
+            Object.keys(buttonGroups).forEach(groupName => {
+                console.log('Button group:', groupName, 'selected:', buttonGroups[groupName]);
+                if (!buttonGroups[groupName]) {
+                    isValid = false;
+                }
+            });
+            
+            // Check checkbox groups - with caffeine short-circuit
+            const checkboxGroups = {};
+            form.querySelectorAll('.hidden-input[type="checkbox"]').forEach(checkbox => {
+                const groupName = checkbox.name;
+                if (!checkboxGroups[groupName]) {
+                    checkboxGroups[groupName] = [];
+                }
+                checkboxGroups[groupName].push(checkbox.checked);
+            });
+            
+            Object.keys(checkboxGroups).forEach(groupName => {
+                // SHORT-CIRCUIT: Auto-pass caffeine_types if user selected No
+                if (groupName === 'caffeine_types' && userSelectedNoForCaffeine) {
+                    console.log('SHORT-CIRCUIT: Auto-passing caffeine_types - user selected No');
+                    return; // Skip validation for this group
+                }
+                
+                const hasSelectedCheckbox = checkboxGroups[groupName].some(checked => checked);
+                console.log('Checkbox group:', groupName, 'has selection:', hasSelectedCheckbox);
+                if (!hasSelectedCheckbox) {
+                    isValid = false;
+                }
+            });
+            
+            console.log('Final validation result:', isValid);
+            continueBtn.disabled = !isValid;
+            
+            // Visual verification log
+            console.log('Continue button state:', {
+                disabled: continueBtn.disabled,
+                isValid: isValid,
+                userSelectedNoForCaffeine: userSelectedNoForCaffeine
+            });
+        }
+        
+        // Add event listeners for real-time validation
+        form.addEventListener('input', validateForm);
+        form.addEventListener('change', validateForm);
+        
+        // Handle button selection for radio-style buttons
+        form.querySelectorAll('button[type="button"]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const buttonGroupName = this.name;
+                const questionId = buttonGroupName.replace('btn-group-', '');
+                const sameGroupButtons = form.querySelectorAll(`button[name="${buttonGroupName}"]`);
+                
+                if (!this.classList.contains('btn-selected')) {
+                    sameGroupButtons.forEach(btn => {
+                        btn.classList.remove('btn-selected');
+                        btn.classList.add('btn-deselected');
+                    });
+                    
+                    this.classList.remove('btn-deselected');
+                    this.classList.add('btn-selected');
+                    
+                    const specificHiddenInput = document.getElementById(`hidden-${questionId}`);
+                    if (specificHiddenInput) {
+                        specificHiddenInput.value = this.value;
+                    }
+                    
+                    validateForm();
+                }
+            });
+        });
+
+        // Handle checkbox validation
+        form.querySelectorAll('.hidden-input').forEach(checkbox => {
+            checkbox.addEventListener('change', validateForm);
+        });
+        
+        // Handle range slider value display
+        form.querySelectorAll('input[type="range"]').forEach(slider => {
+            const valueDisplay = document.getElementById(`${slider.id}-value`);
+            slider.addEventListener('input', function() {
+                valueDisplay.textContent = this.value;
+                validateForm();
+            });
+        });
+        
+        // Handle caffeine conditional visibility
+        function updateCaffeineDetailsVisibility() {
+            const caffeineRadioButtons = document.querySelectorAll('.caffeine-radio-btn');
+            const caffeineDependentElements = document.querySelectorAll('.caffeine-dependent');
+            
+            if (caffeineRadioButtons.length > 0) {
+                caffeineRadioButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const wasSelected = this.classList.contains('btn-selected');
+                        const isYes = this.textContent.trim() === 'Yes';
+                        const isNo = this.textContent.trim() === 'No';
+                        
+                        console.log('Caffeine button clicked:', {
+                            text: this.textContent.trim(),
+                            isYes: isYes,
+                            isNo: isNo,
+                            wasSelected: wasSelected
+                        });
+                        
+                        if (isYes) {
+                            // Show caffeine-dependent elements
+                            caffeineDependentElements.forEach(element => {
+                                element.style.display = 'block';
+                            });
+                            console.log('Showing caffeine-dependent elements');
+                        } else if (isNo) {
+                            // Hide caffeine-dependent elements and reset values
+                            caffeineDependentElements.forEach(element => {
+                                element.style.display = 'none';
+                            });
+                            console.log('Hiding caffeine-dependent elements');
+                            resetCaffeineDetails();
+                        }
+                        
+                        // CRITICAL: Ensure validateForm() is called after resetCaffeineDetails completes
+                        setTimeout(() => {
+                            console.log('Triggering validation after caffeine state change');
+                            validateForm();
+                        }, 50); // Small delay to ensure DOM updates complete
+                    });
+                });
+                
+                // Check initial state on page load
+                const selectedCaffeineBtn = document.querySelector('.caffeine-radio-btn.btn-selected');
+                if (selectedCaffeineBtn && selectedCaffeineBtn.textContent.trim() === 'Yes') {
+                    caffeineDependentElements.forEach(element => {
+                        element.style.display = 'block';
+                    });
+                    console.log('Initial state: Showing caffeine-dependent elements');
+                } else if (selectedCaffeineBtn && selectedCaffeineBtn.textContent.trim() === 'No') {
+                    caffeineDependentElements.forEach(element => {
+                        element.style.display = 'none';
+                    });
+                    console.log('Initial state: Hiding caffeine-dependent elements');
+                }
+            }
+        }
+        
+        function resetCaffeineDetails() {
+            console.log('Resetting caffeine details...');
+            
+            // Reset checkboxes and clear hidden input values
+            const caffeineCheckboxes = document.querySelectorAll('.caffeine-detail-checkbox');
+            caffeineCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Clear caffeine_types hidden input
+            const caffeineTypesHidden = document.getElementById('hidden-caffeine_types');
+            if (caffeineTypesHidden) {
+                caffeineTypesHidden.value = '';
+            }
+            
+            // Reset number input and clear hidden input
+            const servingsInput = document.querySelector('.caffeine-detail-input');
+            if (servingsInput) {
+                servingsInput.value = '';
+            }
+            
+            // Reset radio buttons for timing and clear hidden input
+            const timingRadios = document.querySelectorAll('button[name="btn-group-caffeine_timing"]');
+            timingRadios.forEach(radio => {
+                radio.classList.remove('btn-selected');
+                radio.classList.add('btn-deselected');
+            });
+            const timingHidden = document.getElementById('hidden-caffeine_timing');
+            if (timingHidden) {
+                timingHidden.value = '';
+            }
+            
+            console.log('Caffeine details reset completed');
+        }
+        
+        // Initialize caffeine visibility
+        updateCaffeineDetailsVisibility();
+        
+        // Handle continue button
+        continueBtn.addEventListener('click', function() {
+            if (this.disabled) return;
+            form.submit();
+        });
+        
+        // Handle Enter key in form inputs
+        form.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !continueBtn.disabled) {
+                continueBtn.click();
+            }
+        });
+        
+        // Initial form validation
+        validateForm();
+    });
+</script>
+{% endblock %}

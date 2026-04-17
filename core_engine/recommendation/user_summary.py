@@ -1,7 +1,7 @@
 # ============================================================
 # core_engine/recommendation.py
 # Bridge between Django and recommendation engine
-# Called from tasks_realtime.py after EEG session ends
+# Now uses Django ORM instead of SQLAlchemy
 # ============================================================
 
 import warnings
@@ -16,22 +16,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ── Setup Django environment ──────────────────────────────────
-ROOT   = Path(__file__).resolve().parents[1]
-WEBAPP = ROOT / 'webapp'
+ROOT     = Path(__file__).resolve().parents[1]
+WEBAPP   = ROOT / 'webapp'
 if str(WEBAPP) not in sys.path:
     sys.path.insert(0, str(WEBAPP))
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'secondBrain.settings')
+django.setup()
 
-# Only call django.setup() if not already configured
-try:
-    from django.conf import settings
-    if not settings.configured:
-        django.setup()
-except Exception:
-    django.setup()
-
-# ── Django model imports ──────────────────────────────────────
+# ── Django model imports ─────────────────────────────────────
 from secondBrain_App.models import (
     UserProfile, SessionSummary, Recommendation,
     UserFeedback, UserSummary
@@ -39,17 +32,6 @@ from secondBrain_App.models import (
 from google import genai
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-
-
-# ============================================================
-# HELPER
-# ============================================================
-def get_time_of_day():
-    from datetime import datetime
-    hour = datetime.now().hour
-    if hour < 12:   return 'morning'
-    elif hour < 17: return 'afternoon'
-    else:           return 'evening'
 
 
 # ============================================================
@@ -83,7 +65,7 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
         try:
             session = SessionSummary.objects.get(session_id=session_id)
         except SessionSummary.DoesNotExist:
-            print(f"[REC] SessionSummary not found for {session_id} — using fallback")
+            print(f"[REC] SessionSummary not found for {session_id}")
             return _fallback_recommendation(final_summary)
 
         # ── Get user summary ──────────────────────────────────
@@ -113,6 +95,7 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
 
 # ============================================================
 # PHASE 1 — Sessions 1-5
+# Uses: user profile + current session + EEG results
 # ============================================================
 def _phase1_llm(user_profile, session, final_summary):
     """Phase 1 LLM recommendation using profile and session data only."""
@@ -123,43 +106,28 @@ def _phase1_llm(user_profile, session, final_summary):
     neutral_seconds       = final_summary.get('neutral_seconds', 0)
     relaxed_seconds       = final_summary.get('relaxed_seconds', 0)
 
-    # Map UserProfile fields to readable values
-    sound_env     = user_profile.sound_environment or 'unknown'
-    study_goals   = user_profile.main_goals        or 'study improvement'
-    sleep_quality = user_profile.sleep_quality     or 'unknown'
-    learning_style= user_profile.learning_style    or 'unknown'
+    # ── Map UserProfile fields to stimulus preferences ────────
+    # sound_environment from onboarding maps to preferred stimulus
+    preferred = user_profile.sound_environment or 'lo_fi'
+    avoided   = 'loud music' if user_profile.sleep_quality == '0' else 'none'
 
     contents = """You are an AI-powered Study Optimization Advisor analyzing EEG brainwave data.
-
-USER PROFILE:
-- Sound preference   : {sound}
-- Sleep quality      : {sleep}
-- Learning style     : {style}
-- Study goals        : {goals}
-
-EEG SESSION RESULTS:
-- Avg focus score    : {avg_focus:.2f} (0=no focus, 1=full focus)
-- Concentrating time : {conc} seconds
-- Neutral time       : {neut} seconds
-- Relaxed/distracted : {relax} seconds
-- Session duration   : {duration} mins
-- Time of day        : {time_of_day}
+USER: prefers {preferred} study environment, sleep quality: {sleep}.
+SESSION: duration {duration} mins, energy before session unknown.
+EEG RESULTS: avg focus score {avg_focus:.2f}, concentrating {conc}s, neutral {neut}s, relaxed {relax}s.
 
 RESPOND WITH:
 1. 1-2 line fun personalized recommendation based on their EEG session results
 2. Recommended Study Methods (3-4 bullet points)
 3. Optimal study environment for this user
 """.format(
-        sound        = sound_env,
-        sleep        = sleep_quality,
-        style        = learning_style,
-        goals        = study_goals,
-        avg_focus    = float(avg_focus),
-        conc         = concentrating_seconds,
-        neut         = neutral_seconds,
-        relax        = relaxed_seconds,
-        duration     = round(session.total_duration_seconds / 60, 1),
-        time_of_day  = get_time_of_day()
+        preferred = preferred,
+        sleep     = user_profile.sleep_quality,
+        duration  = round(session.total_duration_seconds / 60, 1),
+        avg_focus = float(avg_focus),
+        conc      = concentrating_seconds,
+        neut      = neutral_seconds,
+        relax     = relaxed_seconds
     )
 
     response = client.models.generate_content(
@@ -171,6 +139,7 @@ RESPOND WITH:
 
 # ============================================================
 # PHASE 2 — Sessions 6+
+# Uses: user profile + session + summary history + feedback
 # ============================================================
 def _phase2_llm(user_profile, session, user_summary, user_email, final_summary):
     """Phase 2 LLM recommendation using full history and feedback."""
@@ -181,80 +150,50 @@ def _phase2_llm(user_profile, session, user_summary, user_email, final_summary):
     neutral_seconds       = final_summary.get('neutral_seconds', 0)
     relaxed_seconds       = final_summary.get('relaxed_seconds', 0)
 
-    sound_env     = user_profile.sound_environment or 'unknown'
-    study_goals   = user_profile.main_goals        or 'study improvement'
-    sleep_quality = user_profile.sleep_quality     or 'unknown'
-    learning_style= user_profile.learning_style    or 'unknown'
+    preferred = user_profile.sound_environment or 'lo_fi'
 
     # ── Get last feedback ─────────────────────────────────────
-    try:
-        last_feedback       = UserFeedback.objects.filter(
-            user__email=user_email
-        ).order_by('-created_at').first()
-        last_overall_rating = last_feedback.overall_rating if last_feedback else 'N/A'
-        last_sentiment      = last_feedback.sentiment      if last_feedback else 'N/A'
-    except Exception:
-        last_overall_rating = 'N/A'
-        last_sentiment      = 'N/A'
+    last_feedback = UserFeedback.objects.filter(
+        user__email=user_email
+    ).order_by('-created_at').first()
+
+    last_overall_rating = last_feedback.overall_rating if last_feedback else 'N/A'
+    last_sentiment      = last_feedback.sentiment      if last_feedback else 'N/A'
 
     contents = """You are an AI-powered Study Optimization Advisor. EEG session just ended.
-
-USER PROFILE:
-- Sound preference   : {sound}
-- Sleep quality      : {sleep}
-- Learning style     : {style}
-- Study goals        : {goals}
-
-EEG SESSION RESULTS:
-- Avg focus score    : {avg_focus:.2f}
-- Concentrating time : {conc} seconds
-- Neutral time       : {neut} seconds
-- Relaxed/distracted : {relax} seconds
-- Session duration   : {duration} mins
-- Time of day        : {time_of_day}
-
-HISTORY ({sessions} sessions):
-- Historical avg focus      : {hist_focus}
-- Best focus score ever     : {best_focus}
-- Most effective stimulus   : {best_stim}
-- Least effective stimulus  : {worst_stim}
-- Optimal focus time        : {opt_time}
-- Avg feedback rating       : {avg_rating}/5
-- Overall sentiment score   : {sentiment}
-- Last session rating       : {last_rating}/5 ({last_sent})
+USER: prefers {preferred}, sleep quality: {sleep}, study goals: {goals}.
+EEG RESULTS: avg focus {avg_focus:.2f}, concentrating {conc}s, neutral {neut}s, relaxed {relax}s.
+HISTORY ({sessions} sessions): avg focus {hist_focus}, best stimulus {best}, worst {worst}, optimal time {opt_time}.
+FEEDBACK: avg rating {avg_rating}/5, sentiment {sentiment}, last rating {last_rating}/5 ({last_sent}).
 
 RULES:
-- NEVER recommend {worst_stim}
-- PRIORITIZE {best_stim}
-- If last rating <= 2, try something completely different
-- If sentiment score < 0.3, be more creative and suggest new approaches
+- NEVER recommend {worst}
+- PRIORITIZE {best}
+- If last_overall_rating <= 2, try something different
+- If overall_sentiment_score < 0.3, be more creative
 
 RESPOND WITH:
 1. 1-2 line fun personalized recommendation referencing their EEG results and history
 2. Recommended Study Methods (3-4 bullet points)
 3. Optimal study environment for this user
-4. One line on what to avoid based on their history
+4. One line on what to avoid
 """.format(
-        sound        = sound_env,
-        sleep        = sleep_quality,
-        style        = learning_style,
-        goals        = study_goals,
-        avg_focus    = float(avg_focus),
-        conc         = concentrating_seconds,
-        neut         = neutral_seconds,
-        relax        = relaxed_seconds,
-        duration     = round(session.total_duration_seconds / 60, 1),
-        time_of_day  = get_time_of_day(),
-        sessions     = user_summary.total_sessions,
-        hist_focus   = user_summary.average_focus_score,
-        best_focus   = user_summary.best_focus_score,
-        best_stim    = user_summary.most_effective_stimulus  or 'lo_fi',
-        worst_stim   = user_summary.least_effective_stimulus or 'none',
-        opt_time     = user_summary.optimal_focus_time_of_day,
-        avg_rating   = user_summary.average_feedback_rating,
-        sentiment    = user_summary.overall_sentiment_score,
-        last_rating  = last_overall_rating,
-        last_sent    = last_sentiment
+        preferred  = preferred,
+        sleep      = user_profile.sleep_quality,
+        goals      = user_profile.main_goals,
+        avg_focus  = float(avg_focus),
+        conc       = concentrating_seconds,
+        neut       = neutral_seconds,
+        relax      = relaxed_seconds,
+        sessions   = user_summary.total_sessions,
+        hist_focus = user_summary.average_focus_score,
+        best       = user_summary.most_effective_stimulus  or 'lo_fi',
+        worst      = user_summary.least_effective_stimulus or 'none',
+        opt_time   = user_summary.optimal_focus_time_of_day,
+        avg_rating = user_summary.average_feedback_rating,
+        sentiment  = user_summary.overall_sentiment_score,
+        last_rating= last_overall_rating,
+        last_sent  = last_sentiment
     )
 
     response = client.models.generate_content(

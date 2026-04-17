@@ -20,15 +20,9 @@
             </div>
         </div>
 
-        <!-- Real-time Focus Histogram -->
-        <div id="focusHistogramContainer" style="display:none; margin-top:24px;">
-            <canvas id="focusHistogram" height="120"></canvas>
-            <div id="focusHistogramInfo" style="margin-top:12px; text-align:center;"></div>
-        </div>
-
         <!-- Session Controls -->
         <div class="session-controls">
-            <button class="btn-primary btn-start" id="startSessionBtn" onclick = "startEEGsession()">
+            <button class="btn-primary btn-start" id="startSessionBtn" onclick="startEEGsession()">
                 <span>Start Focus Session</span>
             </button>
         </div>
@@ -53,10 +47,12 @@
                 </div>
             </div>
             <div class="session-controls">
-                <button type = "button" class="btn-danger" id="endBtn" onclick = " stopEEGsession()">End Session</button>
+                <button type="button" class="btn-danger" id="endBtn" onclick="stopEEGsession()">
+                    End Session
+                </button>
             </div>
-            <div class = "session-controls">
-                <pre id = "sessionOutput"></pre>
+            <div class="session-controls">
+                <pre id="sessionOutput"></pre>
             </div>  
         </div>
         
@@ -68,47 +64,6 @@
     let timerInterval = null;
     let remainingSeconds = 0;
     let elapsedSeconds = 0;
-
-    // Histogram state
-    let focusHistogramChart = null;
-    let focusHistogramData = [];
-    let focusHistogramLabels = [];
-    let focusHistogramInfo = null;
-    let histogramPolling = null;
-
-    // Load Chart.js dynamically
-    const chartJsScript = document.createElement('script');
-    chartJsScript.src = '/static/js/load_chartjs.js';
-    document.head.appendChild(chartJsScript);
-
-    // Called after Chart.js loads
-    window.initFocusHistogram = function() {
-        const ctx = document.getElementById('focusHistogram').getContext('2d');
-        focusHistogramChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Focus Score',
-                    data: [],
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 1
-                    }
-                }
-            }
-        });
-        focusHistogramInfo = document.getElementById('focusHistogramInfo');
-    };
 
     document.querySelectorAll('.duration-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -159,16 +114,16 @@
     }
 
     async function startEEGsession() {
-        console.log("starting EEG session");
+        console.log("Starting real-time EEG session");
 
         try {
-            const res = await fetch('/start_eeg/', {
+            const res = await fetch('/start_realtime_eeg/', {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    duration_minutes: Number(selectedDuration)
+                    duration: Number(selectedDuration)
                 })
             });
 
@@ -179,10 +134,7 @@
 
             if (res.ok) {
                 document.getElementById('activeSession').style.display = 'block';
-                document.getElementById('focusHistogramContainer').style.display = 'block';
                 startTimer(Number(selectedDuration));
-                // Start polling for histogram data
-                startHistogramPolling();
             }
         } catch (err) {
             console.error(err);
@@ -190,58 +142,16 @@
         }
     }
 
-    function startHistogramPolling() {
-        // Reset data
-        focusHistogramData = [];
-        focusHistogramLabels = [];
-        if (focusHistogramChart) {
-            focusHistogramChart.data.labels = [];
-            focusHistogramChart.data.datasets[0].data = [];
-            focusHistogramChart.update();
-        }
-        if (histogramPolling) clearInterval(histogramPolling);
-        histogramPolling = setInterval(fetchHistogramData, 1000);
-    }
-
-    async function fetchHistogramData() {
-        // Example: fetch from a new endpoint that returns real-time focus data array
-        try {
-            const res = await fetch('/realtime_eeg_status/', { method: 'GET' });
-            const status = await res.json();
-            if (status.ok && status.result && status.result.data_points) {
-                // data_points: [{timestamp, focus_score, ...}]
-                focusHistogramLabels = status.result.data_points.map(p => p.timestamp);
-                focusHistogramData = status.result.data_points.map(p => p.focus_score);
-                if (focusHistogramChart) {
-                    focusHistogramChart.data.labels = focusHistogramLabels;
-                    focusHistogramChart.data.datasets[0].data = focusHistogramData;
-                    focusHistogramChart.update();
-                }
-                // Show info below
-                if (focusHistogramInfo && status.result.final_summary) {
-                    const s = status.result.final_summary;
-                    focusHistogramInfo.innerHTML = `Avg: ${(s.average_focus_score*100).toFixed(1)}% | Peak: ${(s.peak_focus_score*100).toFixed(1)}% | Duration: ${Math.floor(s.total_duration_seconds/60)}m ${(s.total_duration_seconds%60)}s`;
-                }
-            }
-        } catch (e) {
-            // Ignore errors during polling
-        }
-    }
-
     async function stopEEGsession() {
-        console.log("Ending EEG session");
+        console.log("Ending real-time EEG session");
 
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
-        if (histogramPolling) {
-            clearInterval(histogramPolling);
-            histogramPolling = null;
-        }
 
         try {
-            const res = await fetch('/stop_eeg/', {
+            const res = await fetch('/stop_realtime_eeg/', {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
@@ -252,8 +162,10 @@
             console.log(data);
             document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
 
-            if (data.status !== 'completed' && data.status !== 'no_predictions') {
-                setTimeout(stopEEGsession, 1000);
+            if (data.ok && data.status === 'completed') {
+                window.location.href = '/recommendation/';
+            } else if (data.status === 'processing' || data.status === 'PENDING') {
+                setTimeout(stopEEGsession, 3000);
             }
         } catch (err) {
             console.error(err);

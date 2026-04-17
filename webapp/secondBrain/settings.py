@@ -11,21 +11,29 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initialize environment variables
+env = environ.Env()
+# Look for .env in parent directory (project root)
+env_path = BASE_DIR.parent / '.env'
+environ.Env.read_env(env_path)
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1o**44ap1_2e(v&h)sdy_y=-3-4gm4jihr05p75a4=u2+l#boa'
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-1o**44ap1_2e(v&h)sdy_y=-3-4gm4jihr05p75a4=u2+l#boa')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 
 # Application definition
@@ -37,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'secondBrain_App',
 ]
 
 MIDDLEWARE = [
@@ -72,9 +81,7 @@ WSGI_APPLICATION = 'secondBrain.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
+
 # Use SQLite for development (switch to PostgreSQL when ready)
 # PostgreSQL configuration
 # DATABASES = {
@@ -87,7 +94,7 @@ WSGI_APPLICATION = 'secondBrain.wsgi.application'
 #         'PORT': env('DB_PORT', default='5432'),
 #     }
 # }
-=======
+
 # Defaults to PostgreSQL, but allows easy local startup with SQLite.
 db_engine = env('DB_ENGINE', default='postgresql').strip().lower()
 
@@ -117,16 +124,28 @@ else:
             'OPTIONS': db_options,
         }
     }
->>>>>>> Stashed changes
+
 
 # SQLite configuration (uncommented for development)
->>>>>>> Stashed changes
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME', default='secondbrain'),
+        'USER': env('DB_USER', default='postgres'),
+        'PASSWORD': env('DB_PASSWORD', default=''),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='5432'),
     }
 }
+
+# SQLite configuration (commented out - switch back if needed)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation
@@ -159,18 +178,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-<<<<<<< Updated upstream
-=======
-# Email Configuration for OTP
-# Use console backend for local development so OTP codes appear in terminal instead of being emailed.
-EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = env('EMAIL_PORT', default=587)
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@brainwave.com')
->>>>>>> Stashed changes
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -181,3 +188,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery Configuration
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
