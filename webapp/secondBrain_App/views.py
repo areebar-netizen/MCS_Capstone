@@ -854,7 +854,7 @@ def end_session(request):
 
 
 
->>>>>>> Stashed changes
+
 
 MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts', model_name='xgboost')
 
