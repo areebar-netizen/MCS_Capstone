@@ -166,31 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Start session button
-    const startBtn = document.getElementById('startSessionBtn');
-    const activeSession = document.getElementById('activeSession');
-    const setupSection = document.querySelector('.duration-section');
     
-    if (startBtn) {
-        startBtn.addEventListener('click', function() {
-            // Get selected duration
-            const selectedDuration = document.querySelector('.duration-btn.btn-selected');
-            if (selectedDuration) {
-                const duration = selectedDuration.dataset.duration;
-                console.log('Starting session for', duration, 'minutes');
-                
-                // Hide setup, show active session
-                if (setupSection) setupSection.style.display = 'none';
-                if (startBtn) startBtn.style.display = 'none';
-                if (activeSession) activeSession.style.display = 'block';
-                
-                // Start timer (mock implementation)
-                startTimer(duration);
-            } else {
-                alert('Please select a duration first!');
-            }
-        });
-    }
 
     // Calendar AJAX navigation
     const prevBtn = document.getElementById('prevMonth');

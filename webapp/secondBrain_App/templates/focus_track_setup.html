@@ -1,4 +1,4 @@
-﻿﻿<!-- Focus Track Setup Component -->
+﻿<!-- Focus Track Setup Component -->
 <div class="card focus-track-setup">
     <div class="card-header">
         <h2 class="card-title" id="cardTitle">Focus Track Session</h2>
@@ -60,36 +60,6 @@
 
     </div>
 </div>
-
-<style>
-.psc-section { margin-bottom: 16px; }
-.psc-label { display:block; margin-bottom:7px; font-weight:600; font-size:0.85rem; color:#333; }
-.psc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:7px; }
-.psc-grid-2 { grid-template-columns: 1fr 1fr; }
-.psc-opt {
-    padding: 8px 10px;
-    border: 1.5px solid #ddd;
-    border-radius: 8px;
-    background: #fafafa;
-    font-size: 0.83rem;
-    cursor: pointer;
-    text-align: center;
-    transition: background 0.12s, border-color 0.12s, color 0.12s;
-    color: #333;
-}
-.psc-opt:hover { border-color: #e05a2b; background: #fff5f1; }
-.psc-opt-selected { background: #e05a2b !important; color: #fff !important; border-color: #e05a2b !important; }
-.psc-slider { width:100%; accent-color:#e05a2b; margin:6px 0 2px; }
-.psc-slider-val { text-align:center; font-size:1.3rem; font-weight:600; color:#222; }
-.psc-slider-labels { display:flex; justify-content:space-between; font-size:0.72rem; color:#aaa; margin-top:2px; }
-.psc-select { width:100%; padding:8px 11px; border:1px solid #ddd; border-radius:8px; font-size:0.88rem; background:#fafafa; }
-.psc-textarea { width:100%; padding:9px 11px; border:1px solid #ddd; border-radius:8px; font-size:0.88rem; resize:vertical; min-height:65px; background:#fafafa; box-sizing:border-box; }
-.psc-footer { display:flex; gap:10px; margin-top:22px; }
-.psc-back-btn { flex:1; padding:11px; border:2px solid #e05a2b; background:#fff; color:#e05a2b; border-radius:8px; font-size:0.92rem; cursor:pointer; font-weight:500; }
-.psc-start-btn { flex:2; padding:11px; background:#e05a2b; color:#fff; border:none; border-radius:8px; font-size:0.92rem; cursor:pointer; font-weight:600; }
-.psc-back-btn:hover { background:#fff5f1; }
-.psc-start-btn:hover { background:#c94d22; }
-</style>
 
 <script>
     let selectedDuration = 1;
@@ -171,8 +141,18 @@
         return data;
     }
 
+    //Start session button
+    const startBtn = document.getElementById('startSessionBtn');
+    const activeSession = document.getElementById('activeSession');
+    const setupSection = document.querySelector('.duration-section');
+    
+    
+
     function confirmPreSessionAndStart() {
+        console.log("BOTTOM BUTTON: confirmPreSessionAndStart fired");
         preSessionData = collectPreSessionData();
+        console.log("Collected data:", preSessionData);
+        
         startEEGsession();
     }
 
@@ -211,6 +191,8 @@
     // ---- EEG session ----
     async function startEEGsession() {
         console.log("starting EEG session");
+        showActiveSession();
+        startTimer(Number(selectedDuration));
 
         try {
             var res = await fetch('/start_eeg/', {
@@ -224,8 +206,7 @@
             document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
 
             if (res.ok) {
-                showActiveSession();
-                startTimer(Number(selectedDuration));
+               
                 // Start polling for histogram data
                 startHistogramPolling();
             }
