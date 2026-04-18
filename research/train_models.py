@@ -21,7 +21,7 @@ import warnings
 
 from sklearn.model_selection import cross_val_score, StratifiedKFold, cross_val_predict
 from sklearn.ensemble import RandomForestClassifier, StackingClassifier
-from sklearn.feature_selection import SelectFromModel
+from sklearn.feature_selection import SelectFromModel, SelectKBest, f_classif
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, accuracy_score
 from sklearn.utils.class_weight import compute_class_weight
@@ -129,28 +129,40 @@ def analyze_feature_importance(model, X, y, feature_names, model_name, output_di
     return results
 
 def perform_feature_selection(X: np.ndarray, y: np.ndarray, 
-                            threshold: str = 'median') -> Tuple[np.ndarray, Any, List[str]]:
+                            k: int = 100) -> Tuple[np.ndarray, Any, List[str], List[int]]:
     """
-    Perform feature selection using RandomForest feature importances.
+    Perform feature selection using SelectKBest with f_classif to identify the k best features.
     
     Returns:
         Tuple containing:
         - X_selected: Selected features
-        - selector: Fitted SelectFromModel instance
+        - selector: Fitted SelectKBest instance
         - selected_feature_names: List of selected feature names
+        - selected_indices: List of selected feature indices from original space
     """
-    rf = RandomForestClassifier(n_estimators=100, random_state=42)
-    selector = SelectFromModel(rf, threshold=threshold)
+    print(f"Selecting top {k} features using SelectKBest with f_classif...")
+    
+    # Use SelectKBest with f_classif for statistical feature selection
+    selector = SelectKBest(f_classif, k=k)
     
     # Fit and transform
     X_selected = selector.fit_transform(X, y)
     
     # Get selected feature indices and names
-    selected_feature_indices = selector.get_support(indices=True)
-    selected_feature_names = [f"feature_{i}" for i in selected_feature_indices]
+    selected_indices = selector.get_support(indices=True).tolist()
+    selected_feature_names = [f"feature_{i}" for i in selected_indices]
     
     print(f"Selected {X_selected.shape[1]} out of {X.shape[1]} features")
-    return X_selected, selector, selected_feature_names
+    print(f"Selected indices range: {min(selected_indices)} to {max(selected_indices)}")
+    
+    # Print first 10 selected features for verification
+    print("First 10 selected features (by importance):")
+    scores = selector.scores_[selected_indices]
+    sorted_pairs = sorted(zip(selected_indices, scores), key=lambda x: x[1], reverse=True)
+    for i, (idx, score) in enumerate(sorted_pairs[:10]):
+        print(f"  {i+1:2d}. feature_{idx}: {score:.4f}")
+    
+    return X_selected, selector, selected_feature_names, selected_indices
 
 
 def setup_cross_validation(y: np.ndarray) -> StratifiedKFold:
@@ -532,21 +544,36 @@ def train_models(csv_path: str, output_dir: str = 'models') -> None:
     # Check if this is enhanced features (already processed) or original features
     if X.shape[1] > 200:  # Likely original features, apply feature selection
         print("\nDetected original feature set, applying feature selection...")
-        X_selected, selector, selected_feature_names = perform_feature_selection(X, y)
+        X_selected, selector, selected_feature_names, selected_indices = perform_feature_selection(X, y, k=100)
         
         # Save feature selector
         selector_path = os.path.join(output_dir, 'feature_selector.joblib')
         joblib.dump(selector, selector_path)
         print(f"\nSaved feature selector to {selector_path}")
+        
+        # Save feature selection info with indices for prediction pipeline
+        feature_info = {
+            'selected_features': selected_feature_names,
+            'selected_indices': selected_indices,
+            'original_feature_count': X.shape[1],
+            'final_feature_count': len(selected_indices),
+            'selection_method': 'SelectKBest_f_classif'
+        }
+        
+        feature_info_path = os.path.join(output_dir, 'feature_selection_info.pkl')
+        joblib.dump(feature_info, feature_info_path)
+        print(f"Saved feature selection info to {feature_info_path}")
+        
     else:  # Already enhanced features
         print("\nDetected enhanced feature set, using as-is...")
         X_selected = X
         selected_feature_names = [f"feature_{i}" for i in range(X.shape[1])]
+        selected_indices = list(range(X.shape[1]))  # Sequential indices for enhanced features
     
-    # Save selected feature names
+    # Save selected feature names in order of importance (not sequential index)
     with open(os.path.join(output_dir, 'selected_features.txt'), 'w') as f:
         for i, name in enumerate(selected_feature_names):
-            f.write(f"{i}: {name}\n")
+            f.write(f"{selected_indices[i]}: {name}\n")
     
     # Set up cross-validation
     print("\nSetting up cross-validation...")

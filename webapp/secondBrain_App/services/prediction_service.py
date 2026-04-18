@@ -18,7 +18,10 @@ from scipy.signal import butter, filtfilt, iirnotch
 
 # Import custom modules
 from .EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
-from .enhanced_feature_extraction import (load_preprocessing_artifacts, apply_feature_pipeline)
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../core_engine'))
+from enhanced_feature_extraction import (load_preprocessing_artifacts, apply_feature_pipeline)
 import joblib
 
 # Attempt to import Stream.py if it exists
@@ -102,13 +105,22 @@ def load_model(models_dir: Path, model_name: str):
     selector_path = Path(models_dir) / 'feature_selector.joblib'
     selector = joblib.load(selector_path) if selector_path.exists() else None
     
-    # Load enhanced artifacts
+    # Load enhanced artifacts from correct location
     try:
-        artifacts_dir = Path(models_dir) / 'preprocessing_artifacts'
         # Look for preprocessing artifacts in core_engine/artifacts/preprocessing_artifacts/
-        artifacts_dir = Path(models_dir) / 'preprocessing_artifacts'
-        scaler, feature_info = load_preprocessing_artifacts(artifacts_dir)
-    except Exception:
+        base_dir = Path(models_dir).parent.parent / 'core_engine' / 'artifacts' / 'preprocessing_artifacts'
+        print(f"--- LOOKING FOR ARTIFACTS IN: {base_dir} ---")
+        scaler, feature_info = load_preprocessing_artifacts(base_dir)
+        
+        # Validate that we have the required selected_indices
+        if feature_info is not None and 'selected_indices' not in feature_info:
+            raise ValueError("selected_indices not found in feature_info.pkl - artifacts may be corrupted")
+        
+        print(f"✅ Scaler loaded. Expected input features: {scaler.n_features_in_ if hasattr(scaler, 'n_features_in_') else 'unknown'}")
+        print(f"✅ Feature info indices count: {len(feature_info.get('selected_indices', []))} (Best Features confirmed)")
+        
+    except Exception as e:
+        print(f"❌ Failed to load enhanced artifacts: {e}")
         scaler, feature_info = None, None
     
     return model, selector, (scaler, feature_info)

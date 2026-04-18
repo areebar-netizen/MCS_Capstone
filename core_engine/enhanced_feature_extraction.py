@@ -252,6 +252,12 @@ def generate_enhanced_features_from_directory(directory_path, output_file,
     
     pd.to_pickle(feature_info, os.path.join(artifact_dir, 'feature_selection_info.pkl'))
     
+    # Save selected_features.txt with correct indices (not sequential)
+    selected_features_path = os.path.join(current_dir, 'artifacts', 'selected_features.txt')
+    with open(selected_features_path, 'w') as f:
+        for i, (idx, name) in enumerate(zip(original_indices, selected_names)):
+            f.write(f"{idx}: {name}\n")
+    
     # Clean up temporary file
     if os.path.exists(temp_file):
         os.remove(temp_file)
@@ -318,16 +324,33 @@ def apply_feature_pipeline(X, scaler, feature_info):
     """
     import pandas as pd
     
+    print(f"[PIPELINE DEBUG] Input shape: {X.shape}")
+    
     # 1. Apply scaling
     X_scaled = scaler.transform(X)
+    print(f"[PIPELINE DEBUG] After scaling: {X_scaled.shape}")
     
     # 2. Apply feature selection using saved INDICES
     selected_indices = feature_info.get('selected_indices')
     
     if selected_indices is not None:
+        print(f"[PIPELINE DEBUG] Found {len(selected_indices)} selected_indices (Best Features)")
+        
+        # Debug: Print first 5 selected features
+        selected_features = feature_info.get('selected_features', [])
+        if selected_features:
+            print(f"[PIPELINE DEBUG] First 5 selected features: {selected_features[:5]}")
+        else:
+            print(f"[PIPELINE DEBUG] First 5 selected indices: {selected_indices[:5]}")
+        
         # Ensure we have enough columns (handle edge cases)
         if X_scaled.shape[1] >= len(selected_indices):
             X_selected = X_scaled[:, selected_indices]
+            print(f"[PIPELINE DEBUG] After feature selection: {X_selected.shape}")
+            
+            # Sanity check: ensure we have exactly 100 features
+            if X_selected.shape[1] != 100:
+                raise ValueError(f"Expected exactly 100 features after selection, got {X_selected.shape[1]}")
         else:
             raise ValueError(f"Input features ({X_scaled.shape[1]}) fewer than required indices ({len(selected_indices)})")
     else:
@@ -335,6 +358,7 @@ def apply_feature_pipeline(X, scaler, feature_info):
         print("Warning: 'selected_indices' not found in feature_info. Using fallback slicing.")
         selected_features = feature_info['selected_features']
         X_selected = X_scaled[:, :len(selected_features)]
+        print(f"[PIPELINE DEBUG] After fallback selection: {X_selected.shape}")
         
     return X_selected
 
