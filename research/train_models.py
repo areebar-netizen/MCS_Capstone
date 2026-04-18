@@ -542,7 +542,7 @@ def train_models(csv_path: str, output_dir: str = 'models') -> None:
     print("Class weights:", {cls: f"{w:.2f}" for cls, w in zip(['relaxed', 'neutral', 'concentrating'], class_weights)})
     
     # Check if this is enhanced features (already processed) or original features
-    if X.shape[1] > 200:  # Likely original features, apply feature selection
+    if X.shape[1] > 300:  # Likely original features (800+), apply feature selection
         print("\nDetected original feature set, applying feature selection...")
         X_selected, selector, selected_feature_names, selected_indices = perform_feature_selection(X, y, k=100)
         
@@ -570,10 +570,26 @@ def train_models(csv_path: str, output_dir: str = 'models') -> None:
         selected_feature_names = [f"feature_{i}" for i in range(X.shape[1])]
         selected_indices = list(range(X.shape[1]))  # Sequential indices for enhanced features
     
-    # Save selected feature names in order of importance (not sequential index)
-    with open(os.path.join(output_dir, 'selected_features.txt'), 'w') as f:
-        for i, name in enumerate(selected_feature_names):
-            f.write(f"{selected_indices[i]}: {name}\n")
+    # Only save selected_features.txt if it doesn't exist or is wrong
+    selected_features_path = os.path.join(output_dir, 'selected_features.txt')
+    should_save = True
+    
+    # Check if file already exists with correct non-sequential indices
+    if os.path.exists(selected_features_path):
+        with open(selected_features_path, 'r') as f:
+            first_line = f.readline().strip()
+            # If first line shows sequential index like "0: feature_0", we need to overwrite
+            if first_line and first_line.startswith("0: feature_0"):
+                print("Detected sequential indices in selected_features.txt, overwriting with correct indices...")
+                should_save = True
+            else:
+                print("selected_features.txt already has correct non-sequential indices, preserving...")
+                should_save = False
+    
+    if should_save:
+        with open(selected_features_path, 'w') as f:
+            for i, name in enumerate(selected_feature_names):
+                f.write(f"{selected_indices[i]}: {name}\n")
     
     # Set up cross-validation
     print("\nSetting up cross-validation...")

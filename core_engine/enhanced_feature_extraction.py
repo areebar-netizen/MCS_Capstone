@@ -10,7 +10,7 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import SelectFromModel
+from sklearn.feature_selection import SelectFromModel, SelectKBest, f_classif
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
 from scipy.stats import pearsonr
@@ -73,7 +73,7 @@ def remove_highly_correlated_features(X, feature_names, threshold=0.95):
 
 def select_top_features(X, y, feature_names, n_features=100):
     """
-    Select top N features based on Random Forest importance.
+    Select top N features based on statistical significance using SelectKBest with f_classif.
     
     Args:
         X: Feature matrix
@@ -87,31 +87,31 @@ def select_top_features(X, y, feature_names, n_features=100):
         feature_importance: Feature importance scores
         original_indices: Indices of selected features from ORIGINAL space
     """
-    print(f"Selecting top {n_features} features using Random Forest...")
+    print(f"Selecting top {n_features} features using SelectKBest with f_classif...")
     
-    # Train Random Forest for feature importance
-    rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
-    rf.fit(X, y)
+    # Use SelectKBest with f_classif for statistical feature selection
+    selector = SelectKBest(f_classif, k=n_features)
     
-    # Get feature importance
-    importance = rf.feature_importances_
+    # Fit and transform
+    X_selected = selector.fit_transform(X, y)
     
-    # Get indices of top features
-    indices = np.argsort(importance)[::-1][:n_features]
+    # Get selected feature indices and names
+    selected_indices = selector.get_support(indices=True).tolist()
+    selected_names = [feature_names[i] for i in selected_indices]
     
-    # Select features using these indices
-    selected_names = [feature_names[i] for i in indices]
-    X_selected = X[:, indices]
-    selected_importance = importance[indices]
+    # Get F-scores as importance measure
+    selected_scores = selector.scores_[selected_indices]
     
-    print(f"Selected {len(selected_names)} most important features")
+    print(f"Selected {len(selected_names)} best features using statistical significance")
+    print(f"Selected indices range: {min(selected_indices)} to {max(selected_indices)}")
     
-    # Print top 10 features
-    print("Top 10 most important features:")
-    for i, (name, imp) in enumerate(zip(selected_names[:10], selected_importance[:10])):
-        print(f"  {i+1:2d}. {name}: {imp:.4f}")
+    # Print top 10 features by F-score
+    print("Top 10 features by F-score:")
+    sorted_pairs = sorted(zip(selected_indices, selected_scores), key=lambda x: x[1], reverse=True)
+    for i, (idx, score) in enumerate(sorted_pairs[:10]):
+        print(f"  {i+1:2d}. feature_{idx}: {score:.4f}")
     
-    return X_selected, selected_names, selected_importance, indices
+    return X_selected, selected_names, selected_scores, selected_indices
 
 def apply_feature_scaling(X, method='standard'):
     """
@@ -203,8 +203,8 @@ def generate_enhanced_features_from_directory(directory_path, output_file,
     
     # Step 4: Feature selection
     print("\nStep 4: Feature selection...")
-    # Capture the indices returned by the function
-    X_selected, selected_names, importance, reduced_indices = select_top_features(
+    # Use SelectKBest directly on reduced features
+    X_selected, selected_names, importance, selected_indices = select_top_features(
         X_reduced, y, reduced_names, n_features
     )
     
@@ -218,7 +218,7 @@ def generate_enhanced_features_from_directory(directory_path, output_file,
                 break
     
     # Convert reduced indices to original indices
-    original_indices = [original_to_reduced_mapping[red_idx] for red_idx in reduced_indices]
+    original_indices = [original_to_reduced_mapping[red_idx] for red_idx in selected_indices]
     
     # Step 5: Create final enhanced features dataframe
     print("\nStep 5: Creating final feature matrix...")
