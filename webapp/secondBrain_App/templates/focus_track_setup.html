@@ -1,4 +1,4 @@
-﻿<!-- Focus Track Setup Component -->
+﻿﻿<!-- Focus Track Setup Component -->
 <div class="card focus-track-setup">
     <div class="card-header">
         <h2 class="card-title" id="cardTitle">Focus Track Session</h2>
@@ -28,183 +28,8 @@
             </div>
         </div>
 
-<<<<<<< Updated upstream
-        <!-- Real-time Focus Histogram -->
-        <div id="focusHistogramContainer" style="display:none; margin-top:24px;">
-            <canvas id="focusHistogram" height="120"></canvas>
-            <div id="focusHistogramInfo" style="margin-top:12px; text-align:center;"></div>
-        </div>
-
-        <!-- Session Controls -->
-        <div class="session-controls">
-            <button class="btn-primary btn-start" id="startSessionBtn" onclick = "startEEGsession()">
-                <span>Start Focus Session</span>
-            </button>
-=======
         <!-- VIEW 2: Pre-Session Check-In (inline) -->
-        <div id="checkinView" style="display:none;">
-            <h3 style="margin:0 0 4px;font-size:1rem;color:#222;">Pre-Session Check-In</h3>
-            <p style="margin:0 0 18px;color:#888;font-size:0.82rem;">Help us personalize your session by answering a few quick questions about your current state and goals.</p>
-
-            <div class="psc-section">
-                <label class="psc-label"><span style="color:#e05a2b;">&#9632;</span> What subject/task are you studying?</label>
-                <div class="psc-grid">
-                    <button class="psc-opt" data-group="subject" data-val="Math/Problem-solving">Math/Problem-solving</button>
-                    <button class="psc-opt" data-group="subject" data-val="Reading/Comprehension">Reading/Comprehension</button>
-                    <button class="psc-opt" data-group="subject" data-val="Writing/Essay">Writing/Essay</button>
-                    <button class="psc-opt" data-group="subject" data-val="Note-taking">Note-taking</button>
-                    <button class="psc-opt" data-group="subject" data-val="Memorization">Memorization</button>
-                    <button class="psc-opt" data-group="subject" data-val="Creative work">Creative work</button>
-                    <button class="psc-opt" data-group="subject" data-val="Coding/Technical">Coding/Technical</button>
-                    <button class="psc-opt" data-group="subject" data-val="Other">Other</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">Task difficulty (1-10)</label>
-                <input type="range" min="1" max="10" value="5" id="psc-difficulty" class="psc-slider">
-                <div class="psc-slider-val" id="psc-difficulty-val">5/10</div>
-                <div class="psc-slider-labels"><span>Very Easy</span><span>Very Difficult</span></div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">Estimated task length</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="tasklength" data-val="15-30 minutes">15-30 minutes</button>
-                    <button class="psc-opt" data-group="tasklength" data-val="30-60 minutes">30-60 minutes</button>
-                    <button class="psc-opt" data-group="tasklength" data-val="1-2 hours">1-2 hours</button>
-                    <button class="psc-opt" data-group="tasklength" data-val="2+ hours">2+ hours</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label"><span style="color:#e05a2b;">&#128197;</span> Assignment deadline</label>
-                <select id="psc-deadline" class="psc-select">
-                    <option value="">No specific deadline</option>
-                    <option value="today">Due today</option>
-                    <option value="tomorrow">Due tomorrow</option>
-                    <option value="this_week">Due this week</option>
-                    <option value="next_week">Due next week</option>
-                </select>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label"><span style="color:#e8c22a;">&#9650;</span> Current energy level</label>
-                <input type="range" min="1" max="10" value="5" id="psc-energy" class="psc-slider">
-                <div class="psc-slider-val" id="psc-energy-val">5/10</div>
-                <div class="psc-slider-labels"><span>Exhausted</span><span>Energized</span></div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label"><span style="color:#e05a2b;">&#9787;</span> Current mood</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="mood" data-val="Happy">&#128512; Happy</button>
-                    <button class="psc-opt" data-group="mood" data-val="Calm">&#128528; Calm</button>
-                    <button class="psc-opt" data-group="mood" data-val="Anxious">&#128543; Anxious</button>
-                    <button class="psc-opt" data-group="mood" data-val="Overwhelmed">&#128565; Overwhelmed</button>
-                    <button class="psc-opt" data-group="mood" data-val="Motivated">&#128640; Motivated</button>
-                    <button class="psc-opt" data-group="mood" data-val="Tired">&#128558; Tired</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label"><span style="color:#e8c22a;">&#9650;</span> Current stress/anxiety level</label>
-                <input type="range" min="1" max="10" value="5" id="psc-stress" class="psc-slider">
-                <div class="psc-slider-val" id="psc-stress-val">5/10</div>
-                <div class="psc-slider-labels"><span>Very Calm</span><span>Very Stressed</span></div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#127860; Time since last meal</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="meal" data-val="<1 hour">&lt;1 hour</button>
-                    <button class="psc-opt" data-group="meal" data-val="1-2 hours">1-2 hours</button>
-                    <button class="psc-opt" data-group="meal" data-val="2-4 hours">2-4 hours</button>
-                    <button class="psc-opt" data-group="meal" data-val="4+ hours">4+ hours</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#9749; Caffeinated drinks today</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt psc-opt-selected" data-group="caffeine" data-val="None">None</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="1 cup">1 cup</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="2 cups">2 cups</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="3-5 cups">3-5 cups</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#128336; Time since waking up</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="wake" data-val="<1 hour">&lt;1 hour</button>
-                    <button class="psc-opt" data-group="wake" data-val="1-3 hours">1-3 hours</button>
-                    <button class="psc-opt" data-group="wake" data-val="3-6 hours">3-6 hours</button>
-                    <button class="psc-opt" data-group="wake" data-val="6+ hours">6+ hours</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#127939; Physical activity today</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="activity" data-val="None">None</button>
-                    <button class="psc-opt" data-group="activity" data-val="Light (walk)">Light (walk)</button>
-                    <button class="psc-opt" data-group="activity" data-val="Moderate (jog)">Moderate (jog)</button>
-                    <button class="psc-opt" data-group="activity" data-val="Intense (workout)">Intense (workout)</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#127919; Goal for this session</label>
-                <textarea id="psc-goal" class="psc-textarea" placeholder="e.g., Complete 3 chapters, Understand calculus concepts, Write 500 words..."></textarea>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#128266; Current noise environment</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="noise" data-val="Complete Silence">Complete Silence</button>
-                    <button class="psc-opt" data-group="noise" data-val="Ambient/White Noise">Ambient/White Noise</button>
-                    <button class="psc-opt" data-group="noise" data-val="Lo-fi/Music">Lo-fi/Music</button>
-                    <button class="psc-opt" data-group="noise" data-val="Loud/Busy">Loud/Busy</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#128161; Lighting conditions</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="lighting" data-val="Natural Light">Natural Light</button>
-                    <button class="psc-opt" data-group="lighting" data-val="Bright White">Bright White</button>
-                    <button class="psc-opt" data-group="lighting" data-val="Soft/Warm">Soft/Warm</button>
-                    <button class="psc-opt" data-group="lighting" data-val="Dim">Dim</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#128218; Intended study method</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="method" data-val="Active Recall">Active Recall</button>
-                    <button class="psc-opt" data-group="method" data-val="Note-taking">Note-taking</button>
-                    <button class="psc-opt" data-group="method" data-val="Practice Problems">Practice Problems</button>
-                    <button class="psc-opt" data-group="method" data-val="Reading">Reading</button>
-                </div>
-            </div>
-
-            <div class="psc-section">
-                <label class="psc-label">&#128205; Current location</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt" data-group="location" data-val="Library">Library</button>
-                    <button class="psc-opt" data-group="location" data-val="Home Office">Home Office</button>
-                    <button class="psc-opt" data-group="location" data-val="Cafe">Cafe</button>
-                    <button class="psc-opt" data-group="location" data-val="Outdoors">Outdoors</button>
-                </div>
-            </div>
-
-            <div class="psc-footer">
-                <button class="psc-back-btn" onclick="showSetup()">Back</button>
-                <button class="psc-start-btn" onclick="confirmPreSessionAndStart()">&#9654; Start Session</button>
-            </div>
->>>>>>> Stashed changes
-        </div>
+        {% include 'presession_checkin.html'%}
 
         <!-- VIEW 3: Active Session -->
         <div class="active-session" id="activeSession" style="display: none;">
@@ -273,49 +98,6 @@
     let elapsedSeconds = 0;
     let preSessionData = {};
 
-<<<<<<< Updated upstream
-    // Histogram state
-    let focusHistogramChart = null;
-    let focusHistogramData = [];
-    let focusHistogramLabels = [];
-    let focusHistogramInfo = null;
-    let histogramPolling = null;
-
-    // Load Chart.js dynamically
-    const chartJsScript = document.createElement('script');
-    chartJsScript.src = '/static/js/load_chartjs.js';
-    document.head.appendChild(chartJsScript);
-
-    // Called after Chart.js loads
-    window.initFocusHistogram = function() {
-        const ctx = document.getElementById('focusHistogram').getContext('2d');
-        focusHistogramChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Focus Score',
-                    data: [],
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 1
-                    }
-                }
-            }
-        });
-        focusHistogramInfo = document.getElementById('focusHistogramInfo');
-    };
-
-=======
     // ---- View switching ----
     function showSetup() {
         document.getElementById('setupView').style.display = 'block';
@@ -342,7 +124,6 @@
     }
 
     // ---- Duration selection ----
->>>>>>> Stashed changes
     document.querySelectorAll('.duration-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.duration-btn').forEach(b => {
@@ -443,12 +224,7 @@
             document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
 
             if (res.ok) {
-<<<<<<< Updated upstream
-                document.getElementById('activeSession').style.display = 'block';
-                document.getElementById('focusHistogramContainer').style.display = 'block';
-=======
                 showActiveSession();
->>>>>>> Stashed changes
                 startTimer(Number(selectedDuration));
                 // Start polling for histogram data
                 startHistogramPolling();
