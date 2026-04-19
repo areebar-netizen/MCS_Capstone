@@ -1,204 +1,770 @@
-<!-- Focus Track History Component -->
-<div class="card focus-track-history">
-    <div class="card-header">
-        <h2 class="card-title">Focus Track History</h2>
-        <p class="card-subtitle">Your recent focus sessions</p>
-    </div>
+{% load static %}>
+    <!-- Focus Track History Title Card -->
+    <div class="card">
+        <div class="history-header">
+            <h1 class="history-title">Focus Track History</h1>
+            <div class="filter-dropdown">
+                <select class="filter-select" id="sessionFilter">
+                    <option value="5" {% if current_filter == '5' %}selected{% endif %}>Top 5 Sessions</option>
+                    <option value="7" {% if current_filter == '7' %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30" {% if current_filter == '30' %}selected{% endif %}>Last 30 Days</option>
+                </select>
+            </div>
+        </div>
     
-    <div class="card-content">
-        <!-- Tab Navigation -->
-        <div class="tab-navigation">
-            <button class="tab-btn btn-selected" data-tab="overview">Overview</button>
-            <button class="tab-btn btn-deselected" data-tab="brainwaves">Brainwaves</button>
-            <button class="tab-btn btn-deselected" data-tab="recommendations">Recommendations</button>
-            <button class="tab-btn btn-deselected" data-tab="profile">Profile</button>
+    <!-- Focus Track History Content -->
+    <div class="focus-track-history">
+        
+        <!-- Aggregate Statistics -->
+        <div class="aggregate-stats">
+            <div class="card profile-stat">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ aggregate_stats.total_minutes }} min</div>
+                    <div class="stat-label">Total Time</div>
+                </div>
+            </div>
+            
+            <div class="card profile-stat">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
+                        <line x1="12" y1="20" x2="12" y2="10"/>
+                        <line x1="18" y1="20" x2="18" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="16"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ aggregate_stats.avg_focus }}/10</div>
+                    <div class="stat-label">Avg Focus</div>
+                </div>
+            </div>
+            
+            <div class="card profile-stat">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ aggregate_stats.total_checkins }}</div>
+                    <div class="stat-label">Check-ins</div>
+                </div>
+            </div>
         </div>
-
-        <!-- Tab Content -->
-        <div class="tab-content">
-            <!-- Overview Tab -->
-            <div class="tab-panel active" id="overviewTab">
-                <div class="session-list">
-                    {% for session in recent_sessions %}
-                    <div class="session-item">
-                        <div class="session-info">
-                            <h4 class="session-name">{{ session.name }}</h4>
-                            <div class="session-meta">
-                                <span class="session-time">{{ session.date|date:"M d, Y" }}, {{ session.time }}</span>
-                                <span class="session-duration">{{ session.duration }} min</span>
-                                <span class="session-focus">Focus: {{ session.focus_score }}/10</span>
-                            </div>
-                        </div>
-                        <div class="session-states">
-                            <div class="state-item">
-                                <span class="state-label">Concentrated</span>
-                                <span class="state-value">{{ session.states.concentrated }}%</span>
-                            </div>
-                            <div class="state-item">
-                                <span class="state-label">Neutral</span>
-                                <span class="state-value">{{ session.states.neutral }}%</span>
-                            </div>
-                            <div class="state-item">
-                                <span class="state-label">Relaxed</span>
-                                <span class="state-value">{{ session.states.relaxed }}%</span>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="no-sessions">
-                        <p>No focus sessions yet. Start your first session to track your focus!</p>
-                    </div>
-                    {% endfor %}
+        
+        <!-- Sessions Container -->
+        <div class="sessions-container">
+        {% for session in recent_sessions %}
+        <div class="card session-item" id="session-{{ session.id }}">
+        <!-- Card Header -->
+        <div class="session-header" onclick="toggleSessionDetail('{{ session.id }}')">
+            <div class="session-info">
+                <h3 class="session-name">{{ session.name }}</h3>
+                <div class="session-meta">
+                    <span class="session-date">{{ session.date|date:"M d, Y" }}</span>
+                    <span class="session-time">{{ session.time }}</span>
+                    <span class="session-duration">{{ session.duration }} min</span>
+                    <span class="session-focus">Focus: {{ session.focus_score|floatformat:1 }}/10</span>
                 </div>
             </div>
-
-            <!-- Brainwaves Tab (Hidden by default) -->
-            <div class="tab-panel" id="brainwavesTab">
-                <div class="brainwave-analysis">
-                    <h3 class="analysis-title">Average Brainwaves</h3>
-                    <div class="brainwave-bars">
-                        <div class="brainwave-item">
-                            <div class="brainwave-info">
-                                <span class="brainwave-label">Delta</span>
-                                <span class="brainwave-value">{{ brainwave_data.delta }}</span>
-                            </div>
-                            <div class="brainwave-bar">
-                                <div class="brainwave-progress delta" data-width="{{ brainwave_data.delta }}"></div>
-                            </div>
-                        </div>
-                        <div class="brainwave-item">
-                            <div class="brainwave-info">
-                                <span class="brainwave-label">Theta</span>
-                                <span class="brainwave-value">{{ brainwave_data.theta }}</span>
-                            </div>
-                            <div class="brainwave-bar">
-                                <div class="brainwave-progress theta" data-width="{{ brainwave_data.theta }}"></div>
-                            </div>
-                        </div>
-                        <div class="brainwave-item">
-                            <div class="brainwave-info">
-                                <span class="brainwave-label">Alpha</span>
-                                <span class="brainwave-value">{{ brainwave_data.alpha }}</span>
-                            </div>
-                            <div class="brainwave-bar">
-                                <div class="brainwave-progress alpha" data-width="{{ brainwave_data.alpha }}"></div>
-                            </div>
-                        </div>
-                        <div class="brainwave-item">
-                            <div class="brainwave-info">
-                                <span class="brainwave-label">Beta</span>
-                                <span class="brainwave-value">{{ brainwave_data.beta }}</span>
-                            </div>
-                            <div class="brainwave-bar">
-                                <div class="brainwave-progress beta" data-width="{{ brainwave_data.beta }}"></div>
-                            </div>
-                        </div>
-                        <div class="brainwave-item">
-                            <div class="brainwave-info">
-                                <span class="brainwave-label">Gamma</span>
-                                <span class="brainwave-value">{{ brainwave_data.gamma }}</span>
-                            </div>
-                            <div class="brainwave-bar">
-                                <div class="brainwave-progress gamma" data-width="{{ brainwave_data.gamma }}"></div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="session-states">
+                <div class="state-item">
+                    <span class="state-value concentrated">{{ session.states.concentrated }}%</span>
+                    <span class="state-label">Concentrated</span>
+                </div>
+                <div class="state-item">
+                    <span class="state-value neutral">{{ session.states.neutral }}%</span>
+                    <span class="state-label">Neutral</span>
+                </div>
+                <div class="state-item">
+                    <span class="state-value relaxed">{{ session.states.relaxed }}%</span>
+                    <span class="state-label">Relaxed</span>
                 </div>
             </div>
-
-            <!-- Recommendations Tab (Hidden by default) -->
-            <div class="tab-panel" id="recommendationsTab">
-                <div class="recommendations-list">
-                    {% for rec in recommendations %}
-                    <div class="recommendation-item {{ rec.category }}">
-                        <div class="rec-icon">
-                            {% if rec.category == 'success' %}
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                    <polyline points="22 4 12 14.01 9 11.01"/>
-                                </svg>
-                            {% elif rec.category == 'warning' %}
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                    <line x1="12" y1="9" x2="12" y2="13"/>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                                </svg>
-                            {% elif rec.category == 'info' %}
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="16" x2="12" y2="12"/>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
-                                </svg>
-                            {% endif %}
-                        </div>
-                        <div class="rec-content">
-                            <h4 class="rec-title">{{ rec.message|truncatewords:10 }}</h4>
-                            <p class="rec-description">{{ rec.stimulus }} • {{ rec.trigger }}</p>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="no-recommendations">
-                        <p>No recommendations yet. Complete more focus sessions to get personalized tips!</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Profile Tab (Hidden by default) -->
-            <div class="tab-panel" id="profileTab">
-                <div class="profile-snapshot">
-                    <h3 class="snapshot-title">Session Profile Snapshot</h3>
-                    <div class="profile-data">
-                        <div class="data-row">
-                            <span class="data-label">Name:</span>
-                            <span class="data-value">{{ user_profile.name|default:"User" }}</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Age:</span>
-                            <span class="data-value">{{ user_profile.age|default:"--" }}</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Academic Level:</span>
-                            <span class="data-value">{{ user_profile.academic_level|default:"--" }}</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Sleep:</span>
-                            <span class="data-value">{{ user_profile.sleep_hours|default:"--" }} hours • {{ user_profile.sleep_quality|default:"--" }}</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Learning Style:</span>
-                            <span class="data-value">{{ user_profile.learning_style|default:"--" }}</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Caffeine:</span>
-                            <span class="data-value">
-                                {% if user_profile.caffeine_servings %}{{ user_profile.caffeine_servings }} servings/day{% else %}None{% endif %}
-                            </span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Procrastination:</span>
-                            <span class="data-value">{{ user_profile.procrastination_level|default:"--" }}/10</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Primary Goal:</span>
-                            <span class="data-value">{{ user_profile.main_goals|default:"Not Set" }}</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="expand-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
             </div>
         </div>
     </div>
-</div>
+        
+    <!-- Expandable Detail - Full Width Below -->
+    <div class="card session-detail" id="detail-{{ session.id }}" style="display: none;">
+            <!-- Tab Navigation -->
+            <div class="detail-tabs">
+                <button class="detail-tab-btn active" onclick="switchDetailTab('{{ session.id }}', 'overview')">Overview</button>
+                <button class="detail-tab-btn" onclick="switchDetailTab('{{ session.id }}', 'recommendations')">Recommendations</button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div class="detail-content">
+                <!-- Overview Tab -->
+                <div class="detail-tab-panel active" id="overview-{{ session.id }}">
+                    <div class="overview-grid">
+                        <div class="focus-states-distribution">
+                            <h4>Focus States Distribution</h4>
+                            <div class="progress-bars">
+                                <div class="progress-item">
+                                    <span class="progress-label">Concentrated</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar concentrated-bar" data-width="{{ session.states.concentrated }}"></div>
+                                    </div>
+                                    <span class="progress-value">{{ session.states.concentrated }}%</span>
+                                </div>
+                                <div class="progress-item">
+                                    <span class="progress-label">Neutral</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar neutral-bar" data-width="{{ session.states.neutral }}"></div>
+                                    </div>
+                                    <span class="progress-value">{{ session.states.neutral }}%</span>
+                                </div>
+                                <div class="progress-item">
+                                    <span class="progress-label">Relaxed</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar relaxed-bar" data-width="{{ session.states.relaxed }}"></div>
+                                    </div>
+                                    <span class="progress-value">{{ session.states.relaxed }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="session-timeline">
+                            <h4>Session Timeline</h4>
+                            <div class="timeline-items">
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Started</span>
+                                    <span class="timeline-value">{{ session.start_time|date:"H:i" }}</span>
+                                </div>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Target Duration</span>
+                                    <span class="timeline-value">{{ session.duration }} min</span>
+                                </div>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Active Time</span>
+                                    <span class="timeline-value">{{ session.duration }} min</span>
+                                </div>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Peak Focus</span>
+                                    <span class="timeline-value">{{ session.peak_focus|floatformat:1 }}/10</span>
+                                </div>
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Focus Streak</span>
+                                    <span class="timeline-value">{{ session.focus_streak|floatformat:0 }}s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recommendations Tab -->
+                <div class="detail-tab-panel" id="recommendations-{{ session.id }}">
+                    <div class="session-recommendations">
+                        <h4>AI Recommendations</h4>
+                        <div class="recommendation-list">
+                            {% for rec in session.recommendations %}
+                            <div class="recommendation-item">
+                                <div class="rec-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                        <polyline points="22 4 12 14.01 9 11.01"/>
+                                    </svg>
+                                </div>
+                                <div class="rec-content">
+                                    <p class="rec-message">{{ rec.message }}</p>
+                                    <span class="rec-meta">Session {{ session.session_id }}</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="no-recommendations">
+                                <p>No recommendations available for this session.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+        {% empty %}
+        <div class="no-sessions">
+            <div class="no-sessions-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <h3>No Focus Sessions Yet</h3>
+            <p>Start your first focus session to track your progress and get personalized recommendations!</p>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+
+        </div>
+
+<!-- Inline styles for essential functionality -->
+<style>
+/* Focus Track History Essential Styles */
+.focus-history-master {
+    background: #F5E6DE;
+    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 32px 20px;
+    box-sizing: border-box;
+}
+
+.focus-track-history {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.history-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #000000;
+    margin: 0;
+}
+
+.filter-dropdown {
+    position: relative;
+}
+
+.filter-select {
+    padding: 12px 40px 12px 16px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-select:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.aggregate-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.profile-stat {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.stat-icon {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 145, 104, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.sessions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.session-item {
+    width: 100%;
+}
+
+.session-header {
+    padding: 24px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.session-info {
+    flex: 1;
+}
+
+.session-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000000;
+    margin: 0 0 8px 0;
+}
+
+.session-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    color: #666;
+}
+
+.session-focus {
+    font-weight: 600;
+    color: #000000;
+}
+
+.session-states {
+    display: flex;
+    gap: 24px;
+    margin-right: 16px;
+}
+
+.state-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.state-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.state-value {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.state-value.concentrated {
+    color: #10B981;
+}
+
+.state-value.neutral {
+    color: #3B82F6;
+}
+
+.state-value.relaxed {
+    color: #8B5CF6;
+}
+
+.expand-icon {
+    color: #999;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.session-item.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
+.session-detail {
+    border-top: 1px solid rgba(255, 145, 104, 0.7);
+    background: rgba(241, 231, 221, 0.2);
+    backdrop-filter: blur(10px);
+    width: 100%;
+    margin-top: 16px;
+    margin-bottom: 20px;
+}
+
+.detail-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 145, 104, 0.7);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+}
+
+.detail-tab-btn {
+    padding: 16px 24px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.detail-tab-btn.active {
+    color: #FF9168;
+    border-bottom-color: #FF9168;
+}
+
+.detail-tab-btn:hover {
+    color: #000000;
+}
+
+.detail-content {
+    padding: 32px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+}
+
+.detail-tab-panel {
+    display: none;
+}
+
+.detail-tab-panel.active {
+    display: block;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 32px;
+}
+
+.progress-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.progress-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.progress-label {
+    min-width: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.concentrated-bar {
+    background: #10B981;
+}
+
+.neutral-bar {
+    background: #3B82F6;
+}
+
+.relaxed-bar {
+    background: #8B5CF6;
+}
+
+.progress-value {
+    min-width: 45px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #000000;
+    text-align: right;
+}
+
+.session-timeline {
+    margin-top: 32px;
+}
+
+.session-timeline h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000000;
+    margin: 0 0 20px 0;
+}
+
+.timeline-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.timeline-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 145, 104, 0.3);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.timeline-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    border-color: rgba(255, 145, 104, 0.5);
+}
+
+.timeline-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.timeline-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000000;
+}
+
+.session-recommendations h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000000;
+    margin: 0 0 20px 0;
+}
+
+.recommendation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.recommendation-item {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #FFF5F0 0%, #FFE8DB 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 145, 104, 0.3);
+    transition: all 0.3s ease;
+}
+
+.recommendation-item:hover {
+    border-color: rgba(255, 145, 104, 0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.rec-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.rec-content {
+    flex: 1;
+}
+
+.rec-message {
+    font-size: 14px;
+    color: #000000;
+    margin: 0 0 8px 0;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.rec-meta {
+    font-size: 12px;
+    color: #666;
+}
+
+.no-sessions {
+    text-align: center;
+    padding: 64px 32px;
+    color: #666;
+}
+
+.no-sessions-icon {
+    margin-bottom: 20px;
+    opacity: 0.6;
+}
+
+.no-sessions h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 12px 0;
+}
+
+.no-sessions p {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .focus-history-master {
+        padding: 16px;
+    }
+    
+    .focus-track-history {
+        padding: 16px;
+    }
+    
+    .aggregate-stats {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .history-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    
+    .session-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    
+    .session-states {
+        width: 100%;
+        justify-content: space-between;
+        margin-right: 0;
+    }
+    
+    .timeline-items {
+        grid-template-columns: 1fr;
+    }
+    
+    .detail-content {
+        padding: 20px;
+    }
+    
+    .overview-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .focus-track-history {
+        padding: 12px;
+    }
+    
+    .card {
+        padding: 16px;
+    }
+    
+    .session-header {
+        padding: 16px;
+    }
+    
+    .session-meta {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .session-states {
+        gap: 16px;
+    }
+}
+</style>
 
 <script>
-// Set brainwave progress bar widths from data attributes
+// Session card expansion and tab functionality
+function toggleSessionDetail(sessionId) {
+    const detail = document.getElementById(`detail-${sessionId}`);
+    const card = document.getElementById(`session-${sessionId}`);
+    
+    if (detail.style.display === 'none') {
+        detail.style.display = 'block';
+        card.classList.add('expanded');
+    } else {
+        detail.style.display = 'none';
+        card.classList.remove('expanded');
+    }
+}
+
+function switchDetailTab(sessionId, tabName) {
+    // Remove active class from all tabs in this session
+    const sessionDetail = document.getElementById(`detail-${sessionId}`);
+    const tabButtons = sessionDetail.querySelectorAll('.detail-tab-btn');
+    const tabPanels = sessionDetail.querySelectorAll('.detail-tab-panel');
+    
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabPanels.forEach(panel => panel.classList.remove('active'));
+    
+    // Add active class to selected tab
+    const selectedTab = sessionDetail.querySelector(`[onclick="switchDetailTab('${sessionId}', '${tabName}')"]`);
+    const selectedPanel = document.getElementById(`${tabName}-${sessionId}`);
+    
+    if (selectedTab) selectedTab.classList.add('active');
+    if (selectedPanel) selectedPanel.classList.add('active');
+}
+
+// Initialize page functionality
 document.addEventListener('DOMContentLoaded', function() {
-    const progressBars = document.querySelectorAll('.brainwave-progress');
+    // Set progress bar widths from data attributes
+    const progressBars = document.querySelectorAll('.progress-bar');
     progressBars.forEach(bar => {
         const width = bar.getAttribute('data-width');
         if (width) {
             bar.style.width = width + '%';
         }
     });
+    
+    // Set current filter value on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentFilter = urlParams.get('filter') || '5';
+    const filterSelect = document.getElementById('sessionFilter');
+    if (filterSelect) {
+        filterSelect.value = currentFilter;
+    }
+});
+
+// Filter functionality - reload page with filter parameter
+document.getElementById('sessionFilter')?.addEventListener('change', function(e) {
+    const filterValue = e.target.value;
+    
+    // Get current URL and update/add filter parameter
+    const url = new URL(window.location);
+    url.searchParams.set('filter', filterValue);
+    
+    // Reload page with new filter
+    window.location.href = url.toString();
 });
 </script>
