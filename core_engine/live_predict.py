@@ -30,7 +30,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'secondBrain.settings')
 import django
 django.setup()
 from secondBrain_App.models import SessionSummary 
-from django.utils import timezone 
+# from django.utils import timezone  # Replaced with regular datetime 
 
 # Global variables for session analytics
 session_predictions = []

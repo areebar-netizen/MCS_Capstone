@@ -20,6 +20,9 @@ urlpatterns = [
     path('start_realtime_eeg/', views.start_realtime_eeg_view, name='start_realtime_eeg'),
     path('stop_realtime_eeg/', views.stop_realtime_eeg_view, name='stop_realtime_eeg'),
     path('realtime_eeg_status/', views.get_realtime_eeg_status_view, name='realtime_eeg_status'),
+    path('get-latest-eeg-state/', views.get_latest_eeg_state_view, name='get_latest_eeg_state'),
+    path('test-cache/', views.test_cache_view, name='test_cache'),
     path('end_session/', views.end_session, name='end_session'),
     path('recommendation/', views.recommendation_view, name='recommendation'),
+    path('focus-history/', views.focus_track_history, name='focus_track_history'),
 ]

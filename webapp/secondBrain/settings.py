@@ -152,10 +152,29 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Cache Configuration - Use absolute path in project root
+import os
+
+# Create a 'django_cache_temp' folder in your project root if it doesn't exist
+CACHE_DIR = os.path.join(BASE_DIR, 'django_cache_temp')
+if not os.path.exists(CACHE_DIR):
+    os.makedirs(CACHE_DIR)
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': CACHE_DIR,  # Absolute path is critical!
+        'TIMEOUT': 300,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
+
 # Celery Configuration
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
+# CELERY_TIMEZONE = 'UTC'  # Using system datetime instead
