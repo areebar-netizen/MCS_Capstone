@@ -37,7 +37,7 @@
         <!-- Live Brain State Card -->
         <div class="grid-row mt-4">
             <div class="col-span-12">
-                <div id="liveBrainStateCard" class="card shadow-sm border-0" style="background: #ffffff; border-radius: 15px; border-left: 5px solid #28a745;">
+                <div id="liveBrainStateCard" class="card shadow-sm border-0" style="background: #ffffff; border-radius: 15px; border-left: 5px solid #28a745; display: none;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="card-title mb-0" style="color: #28a745; font-weight: bold;">
@@ -649,7 +649,7 @@ function initializeBrainwaveCharts() {
             brainwaveCharts[wave] = {
                 canvas: canvas,
                 ctx: ctx,
-                data: new Array(50).fill(0),  // 50 data points
+                data: new Array(150).fill(0),  // 150 data points for denser waves
                 color: waveColors[wave]
             };
             
@@ -738,11 +738,20 @@ function updateLiveStateDisplay(data) {
         
     // Update brainwave charts
     if (data.waves && data.status === 'active') {
-        updateBrainwaveChart('delta', data.waves.delta || 0);
-        updateBrainwaveChart('theta', data.waves.theta || 0);
-        updateBrainwaveChart('alpha', data.waves.alpha || 0);
-        updateBrainwaveChart('beta', data.waves.beta || 0);
-        updateBrainwaveChart('gamma', data.waves.gamma || 0);
+        // Handle both old format (direct value) and new format (nested object)
+        const getWaveValue = (wave) => {
+            if (typeof wave === 'object' && wave.value !== undefined) {
+                return wave.value; // New format: {value: 36.5, raw: 5634.22, unit: 'μV²'}
+            } else {
+                return wave || 0; // Old format: direct number
+            }
+        };
+        
+        updateBrainwaveChart('delta', getWaveValue(data.waves.delta));
+        updateBrainwaveChart('theta', getWaveValue(data.waves.theta));
+        updateBrainwaveChart('alpha', getWaveValue(data.waves.alpha));
+        updateBrainwaveChart('beta', getWaveValue(data.waves.beta));
+        updateBrainwaveChart('gamma', getWaveValue(data.waves.gamma));
     }
     
     // Update status dot

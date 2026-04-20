@@ -57,8 +57,9 @@ def get_raw_band_powers(eeg_data):
         
         print(f"[DEBUG] Processing EEG data: shape={eeg_data.shape}, dtype={eeg_data.dtype}")
         
-        # Calculate sampling frequency
-        fs = int(round(eeg_data.shape[0] / 1.0)) if eeg_data.shape[0] > 0 else 256  # Default to 256 Hz
+        # Calculate sampling frequency - use fixed 256 Hz for real-time data
+        fs = 256  # Fixed sampling rate for Muse device
+        print(f"[DEBUG] Using sampling frequency: {fs} Hz")
         
         # Define frequency bands
         bands = {
@@ -76,9 +77,19 @@ def get_raw_band_powers(eeg_data):
                 # Apply bandpass filter
                 filtered_data = bandpass_filter(eeg_data, low_freq, high_freq, fs)
                 
+                # Debug: Check filtered data
+                if band_name == 'theta':
+                    print(f"[DEBUG] Theta filter - Input shape: {eeg_data.shape}, Output shape: {filtered_data.shape}")
+                    print(f"[DEBUG] Theta filter - Input range: [{np.min(eeg_data):.3f}, {np.max(eeg_data):.3f}]")
+                    print(f"[DEBUG] Theta filter - Output range: [{np.min(filtered_data):.6f}, {np.max(filtered_data):.6f}]")
+                
                 # Calculate power (mean of squared values)
                 powers = np.mean(filtered_data ** 2, axis=0)
                 avg_power = np.mean(powers)
+                
+                # Debug: Show power calculation
+                if band_name == 'theta':
+                    print(f"[DEBUG] Theta power calculation - powers: {powers}, avg_power: {avg_power}")
                 
                 # Ensure we get a finite value
                 if np.isfinite(avg_power):
@@ -273,14 +284,46 @@ def rms(x):
 
 
 def bandpass_filter(data, low, high, fs, order=4):
-    nyq = 0.5 * fs
-    lowcut = low / nyq
-    highcut = high / nyq
-    if lowcut <= 0:
-        b, a = butter(order, highcut, btype='low')
-    else:
-        b, a = butter(order, [lowcut, highcut], btype='band')
-    return filtfilt(b, a, data, axis=0)
+    try:
+        # Validate inputs
+        if data is None or len(data) == 0:
+            return np.zeros_like(data) if data is not None else np.array([])
+        
+        if fs <= 0:
+            print(f"[DEBUG] Invalid sampling frequency: {fs}, using default 256")
+            fs = 256
+        
+        nyq = 0.5 * fs
+        lowcut = low / nyq
+        highcut = high / nyq
+        
+        # Validate frequency cutoffs
+        if highcut >= 1.0:
+            print(f"[DEBUG] High frequency cutoff too high: {highcut}, adjusting to 0.9")
+            highcut = 0.9
+        
+        if lowcut <= 0:
+            b, a = butter(order, highcut, btype='low')
+        else:
+            if lowcut >= highcut:
+                print(f"[DEBUG] Invalid frequency range: {lowcut}-{highcut}, using lowpass only")
+                b, a = butter(order, highcut, btype='low')
+            else:
+                b, a = butter(order, [lowcut, highcut], btype='band')
+        
+        # Apply filter with error handling
+        filtered_data = filtfilt(b, a, data, axis=0)
+        
+        # Check for NaN/inf in result
+        if np.any(np.isnan(filtered_data)) or np.any(np.isinf(filtered_data)):
+            print(f"[DEBUG] Filter produced NaN/inf values, returning zeros")
+            return np.zeros_like(data)
+        
+        return filtered_data
+        
+    except Exception as e:
+        print(f"[DEBUG] Error in bandpass_filter: {e}")
+        return np.zeros_like(data) if data is not None else np.array([])
 
 
 def forward_fill_timeseries(matrix):
