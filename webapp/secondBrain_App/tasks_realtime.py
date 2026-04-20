@@ -237,6 +237,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         end_time = start_time + pd.Timedelta(minutes=duration_minutes)
         data_points = []
         focus_scores = []
+        confidence_scores = []
         
         print(f"Starting real-time inference...")
         print(f"   Start: {start_time.strftime('%H:%M:%S')}")
@@ -256,6 +257,14 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             try:
                 # Get buffer data
                 rows = acq.get_buffer_copy()
+                
+                # Debug: Track if EEG data is actually changing
+                print(f"[DEBUG] EEG buffer size: {len(rows)} rows")
+                if len(rows) > 0:
+                    # Convert to numpy array if needed
+                    rows_array = np.array(rows)
+                    print(f"[DEBUG] EEG data range: [{np.min(rows_array[:,1:]):.6f}, {np.max(rows_array[:,1:]):.6f}]")
+                    print(f"[DEBUG] EEG timestamp range: [{rows_array[0,0]:.3f}, {rows_array[-1,0]:.3f}]")
                 
                 # Need minimum samples for prediction (approximately 1 second)
                 min_samples = int(256 * 1.0)
@@ -298,6 +307,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                             'wave_data': raw_band_powers
                         })
                         focus_scores.append(focus_score)
+                        confidence_scores.append(confidence)
                         
                         # Write to CSV
                         streamer.write_data_point(current_time, predicted_label, confidence, probabilities)
@@ -308,25 +318,82 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                             
                             # CACHE THROTTLING: Only update cache every 2 seconds
                             if current_time_sec - last_cache_update >= cache_update_interval:
-                                # Normalize those massive septillion values to 0-100 for the UI
-                                def normalize(v):
-                                    try: return min(max(float(math.log10(v + 1) * 3), 0), 100)
-                                    except: return 0
+                                # Normalize brainwave values using fixed scale to prevent over-smoothing
+                                def normalize_with_fixed_scale(v, band_name):
+                                    # Updated ranges based on actual Muse output observed in logs
+                                    fixed_scales = {
+                                        'delta': (0, 5000),      # Delta: 0-5000 uV²
+                                        'theta': (0, 500),       # Theta: 0-500 uV²
+                                        'alpha': (0, 2000),      # Alpha: 0-2000 uV²
+                                        'beta': (0, 10000),      # Beta: 0-10000 uV² (was hitting 9000+)
+                                        'gamma': (0, 3000)       # Gamma: 0-3000 uV²
+                                    }
+                                    try:
+                                        min_val, max_val = fixed_scales.get(band_name, (0, 50000))
+                                        if max_val == min_val:
+                                            return 0
+                                        
+                                        # CLIP: Ensure raw value is within valid range before scaling
+                                        clipped_val = max(min_val, min(v, max_val))
+                                        
+                                        # Linear normalization: (clipped / max) * 100
+                                        scaled = (clipped_val / max_val) * 100
+                                        
+                                        return round(max(0, min(100, scaled)), 1)
+                                    except Exception as e:
+                                        print(f"[SCALE ERROR] {band_name}: {e}")
+                                        return 0
 
-                                # OPTIMIZED: Reduce cache data size and increase timeout
+                                # Get current brainwave values
+                                current_waves = {
+                                    'delta': raw_band_powers.get('delta', 0),
+                                    'theta': raw_band_powers.get('theta', 0),
+                                    'alpha': raw_band_powers.get('alpha', 0),
+                                    'beta': raw_band_powers.get('beta', 0),
+                                    'gamma': raw_band_powers.get('gamma', 0)
+                                }
+                                
+                                # Debug: Track if values are actually changing
+                                print(f"[DEBUG] Raw brainwave values at {current_time}: {current_waves}")
+                                
+                                # Check if values are the same as previous (detect reuse)
+                                if not hasattr(run_live_inference_streaming, '_last_waves'):
+                                    run_live_inference_streaming._last_waves = {}
+                                
+                                waves_changed = False
+                                for band, value in current_waves.items():
+                                    if band not in run_live_inference_streaming._last_waves or abs(value - run_live_inference_streaming._last_waves[band]) > 0.01:
+                                        waves_changed = True
+                                        break
+                                
+                                if not waves_changed:
+                                    print(f"[WARNING] Brainwave values haven't changed since last update!")
+                                else:
+                                    print(f"[INFO] Brainwave values changed - new data detected")
+                                
+                                run_live_inference_streaming._last_waves = current_waves.copy()
+                                
+                                # OPTIMIZED: Minimal payload for reduced cache pressure and faster UI updates
                                 live_package = {
                                     'status': 'active',
                                     'state': result.get('predicted_label', 'NEUTRAL').upper(),
                                     'confidence': round(result.get('confidence', 0) * 100, 1),
                                     'waves': {
-                                        'delta': normalize(raw_band_powers.get('delta', 0)),
-                                        'theta': normalize(raw_band_powers.get('theta', 0)),
-                                        'alpha': normalize(raw_band_powers.get('alpha', 0)),
-                                        'beta': normalize(raw_band_powers.get('beta', 0)),
-                                        'gamma': normalize(raw_band_powers.get('gamma', 0))
+                                        'delta': normalize_with_fixed_scale(current_waves['delta'], 'delta'),
+                                        'theta': normalize_with_fixed_scale(current_waves['theta'], 'theta'),
+                                        'alpha': normalize_with_fixed_scale(current_waves['alpha'], 'alpha'),
+                                        'beta': normalize_with_fixed_scale(current_waves['beta'], 'beta'),
+                                        'gamma': normalize_with_fixed_scale(current_waves['gamma'], 'gamma')
                                     },
                                     'last_updated': timezone.now().strftime("%H:%M:%S")
                                 }
+                                
+                                # Debug: Show scaling results
+                                print(f"[SCALING] Raw→Scaled: delta:{current_waves['delta']:.1f}→{live_package['waves']['delta']:.1f}% | "
+                                      f"theta:{current_waves['theta']:.1f}→{live_package['waves']['theta']:.1f}% | "
+                                      f"alpha:{current_waves['alpha']:.1f}→{live_package['waves']['alpha']:.1f}% | "
+                                      f"beta:{current_waves['beta']:.1f}→{live_package['waves']['beta']:.1f}% | "
+                                      f"gamma:{current_waves['gamma']:.1f}→{live_package['waves']['gamma']:.1f}%")
                                 
                                 # BROADCAST: Use consistent key with longer timeout
                                 cache_key = f"live_eeg_stream_{user_email}"
@@ -367,8 +434,27 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             avg_focus = 0.0
             peak_focus = 0.0
         else:
-            avg_focus = np.mean(focus_scores) if focus_scores else 0.0
+            # Calculate weighted Average Focus Score based on state values
+            # State values: Concentrating=10, Neutral=5, Relaxed=2
+            relaxed_seconds = state_counts.get('relaxed', 0)
+            neutral_seconds = state_counts.get('neutral', 0) 
+            concentrating_seconds = state_counts.get('concentrating', 0)
+            
+            total_time = relaxed_seconds + neutral_seconds + concentrating_seconds
+            if total_time > 0:
+                # Weighted calculation: (state_seconds × state_value) summed, then divided by total_time
+                total_focus_points = (relaxed_seconds * 2) + (neutral_seconds * 5) + (concentrating_seconds * 10)
+                avg_focus = (total_focus_points / total_time)
+            else:
+                avg_focus = 0.0
+                
             peak_focus = np.max(focus_scores) if focus_scores else 0.0
+            
+            print(f"[DEBUG] Weighted Focus calculation:")
+            print(f"  Relaxed: {relaxed_seconds}s × 2 = {relaxed_seconds * 2} points")
+            print(f"  Neutral: {neutral_seconds}s × 5 = {neutral_seconds * 5} points") 
+            print(f"  Concentrating: {concentrating_seconds}s × 10 = {concentrating_seconds * 10} points")
+            print(f"  Total: {total_focus_points} points ÷ {total_time}s = {avg_focus:.2f}/10 score")
         
         # Collect all window labels for proper statistics
         print(f"[DEBUG] Final all_session_labels count: {len(all_session_labels)}")
@@ -395,14 +481,48 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         print(f"[DEBUG] State counts: {state_counts}")
         
         # Calculate statistics based on accumulated session labels - NO DUMMY FALLBACKS
-        lfocus_streak = longest_focus_streak(all_session_labels) * 0.5 if all_session_labels else 0.0
+        
+        # Peak Focus Score: Longest continuous concentration streak (20-min Flow State threshold)
+        longest_streak_seconds = longest_focus_streak(all_session_labels) * 0.5 if all_session_labels else 0.0
+        longest_streak_minutes = longest_streak_seconds / 60.0
+        
+        # Scientific 1-10 scale: 20-minute continuous focus = 10/10 (Peak Flow State)
+        FLOW_THRESHOLD_MINUTES = 20.0
+        peak_focus_score = (longest_streak_minutes / FLOW_THRESHOLD_MINUTES) * 10
+        peak_focus_score = min(peak_focus_score, 10)  # Cap at 10
+        
+        print(f"[DEBUG] Peak Focus: {longest_streak_minutes:.1f}min streak → {peak_focus_score:.1f}/10 score")
+        
+        lfocus_streak = longest_streak_seconds
+        
+        # Debug state switch calculation
         switch_count = state_switch_count(all_session_labels) if all_session_labels else 0
-        latency = focus_latency(all_session_labels) * 0.5 if all_session_labels else 0.0
+        if all_session_labels and len(all_session_labels) > 0:
+            switches = []
+            for i in range(1, len(all_session_labels)):
+                if all_session_labels[i-1] != all_session_labels[i]:
+                    switches.append(f"{all_session_labels[i-1]}→{all_session_labels[i]}")
+            print(f"[DEBUG] State switches ({len(switches)}): {switches}")
+        else:
+            print(f"[DEBUG] No session labels for switch counting")
+        
+        # Debug focus latency calculation
+        latency_windows = focus_latency(all_session_labels) if all_session_labels else 0
+        latency = latency_windows * 0.5
+        print(f"[DEBUG] Focus latency: {latency_windows} windows × 0.5s = {latency:.1f}s")
+        if all_session_labels and len(all_session_labels) > 0:
+            first_concentrating_idx = next((i for i, label in enumerate(all_session_labels) if label.strip().lower() == 'concentrating'), None)
+            if first_concentrating_idx is not None:
+                print(f"[DEBUG] First concentrating at window {first_concentrating_idx} (time: {first_concentrating_idx * 0.5:.1f}s)")
+            else:
+                print(f"[DEBUG] No concentrating states found in session")
+        else:
+            print(f"[DEBUG] No session labels for latency calculation")
 
         # Convert to seconds - NO DUMMY FALLBACKS
-        relaxed_seconds = state_counts['relaxed']
-        neutral_seconds = state_counts['neutral']
-        concentrating_seconds = state_counts['concentrating']
+        relaxed_seconds = state_counts.get('relaxed', 0)
+        neutral_seconds = state_counts.get('neutral', 0)
+        concentrating_seconds = state_counts.get('concentrating', 0)
         
         # Sanity check: ensure calculated state seconds don't exceed total duration
         calculated_total = relaxed_seconds + neutral_seconds + concentrating_seconds
@@ -434,7 +554,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             'longest_focus_streak': lfocus_streak,
             'state_switch_count': switch_count,
             'focus_latency': latency,
-            'avg_confidence': np.mean(focus_scores) if focus_scores else 0.0,
+            'avg_confidence': np.mean(confidence_scores) if confidence_scores else 0.0,
             'data_points_count': len(data_points)
         })
         
@@ -548,6 +668,11 @@ def save_session_summary(summary_data):
             from django.core.cache import cache
             cache.set(f"live_status_{summary_data['user_email']}", "completed", timeout=300)
             print(f"[STATUS] Live status set to 'completed' for {summary_data['user_email']}")
+            
+            # Clean up live brainwave cache to hide live brainwave box
+            cache.delete(f"live_eeg_stream_{summary_data['user_email']}")
+            print(f"[CACHE] Cleaned up live brainwave cache for {summary_data['user_email']}")
+            
         except Exception as e:
             print(f"[STATUS ERROR] Failed to set live status: {e}")
 
