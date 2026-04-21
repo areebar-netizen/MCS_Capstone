@@ -7,6 +7,8 @@ class RealtimeEEGManager {
         this.statusCheckInterval = null;
         this.focusData = [];
         this.startTime = null;
+        this.firstPredictionTime = null;
+        this.timerStarted = false;
     }
 
     // Start real-time EEG session
@@ -29,7 +31,10 @@ class RealtimeEEGManager {
                 this.currentTaskId = result.task_id;
                 this.sessionId = result.session_id;
                 this.isRealtimeActive = true;
-                this.startTime = new Date();
+                // Don't set startTime yet - wait for first prediction
+                this.startTime = null;
+                this.firstPredictionTime = null;
+                this.timerStarted = false;
                 
                 // Start real-time status monitoring
                 this.startRealtimeMonitoring();
@@ -85,7 +90,11 @@ class RealtimeEEGManager {
             switch (status.status) {
                 case 'PENDING':
                 case 'initializing':
-                    statusElement.textContent = 'Initializing EEG connection...';
+                    if (!this.timerStarted) {
+                        statusElement.textContent = 'Initializing EEG connection... Waiting for first prediction...';
+                    } else {
+                        statusElement.textContent = 'Session Active - Recording Focus';
+                    }
                     statusElement.className = 'status-initializing';
                     break;
                 case 'running':
@@ -107,12 +116,25 @@ class RealtimeEEGManager {
             }
         }
 
-        // Update timer
-        if (timerElement && this.startTime) {
-            const elapsed = Math.floor((new Date() - this.startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60);
-            const seconds = elapsed % 60;
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // Update timer - start only after first prediction
+        if (timerElement) {
+            if (status.result && status.result.final_summary && !this.timerStarted) {
+                // First prediction received - start the timer
+                this.firstPredictionTime = new Date();
+                this.startTime = this.firstPredictionTime;
+                this.timerStarted = true;
+                console.log('Timer started at first prediction:', this.startTime);
+            }
+            
+            if (this.startTime) {
+                const elapsed = Math.floor((new Date() - this.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                // Show waiting message before first prediction
+                timerElement.textContent = '00:00';
+            }
         }
 
         // Update real-time focus data (would come from WebSocket or server-sent events)
