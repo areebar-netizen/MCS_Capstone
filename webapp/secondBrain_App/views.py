@@ -70,8 +70,8 @@ def calendar_view(request):
     for session in sessions:
         day = session.start_time.day
         
-        # Calculate focus percentage using the formula: ((Score - 1.0) / 2.0) * 100
-        focus_percentage = ((session.average_focus_score - 1.0) / 2.0) * 100
+        # Calculate focus percentage using 0-1 scale: score * 100
+        focus_percentage = session.average_focus_score * 100
         
         # If multiple sessions on same day, keep the one with highest focus score
         if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
@@ -140,7 +140,7 @@ def calendar_view(request):
     avg_focus = 0
     if sessions_count > 0:
         avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
-        avg_focus = ((avg_focus - 1.0) / 2.0) * 100  # Convert to percentage
+        avg_focus = avg_focus * 100  # Convert to percentage
     
     active_days = len(session_data_by_day)
     
@@ -233,8 +233,8 @@ def calendar_api_data(request):
     for session in sessions:
         day = session.start_time.day
         
-        # Calculate focus percentage using the formula: ((Score - 1.0) / 2.0) * 100
-        focus_percentage = ((session.average_focus_score - 1.0) / 2.0) * 100
+        # Calculate focus percentage using 0-1 scale: score * 100
+        focus_percentage = session.average_focus_score * 100
         
         # If multiple sessions on same day, keep the one with highest focus score
         if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
@@ -303,7 +303,7 @@ def calendar_api_data(request):
     avg_focus = 0
     if sessions_count > 0:
         avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
-        avg_focus_10_point = avg_focus * 3.33  # Scale to 10-point display
+        avg_focus_10_point = avg_focus * 10  # Scale to 10-point display (0-1 to 0-10)
     else:
         avg_focus_10_point = 0
     
@@ -894,10 +894,63 @@ def dashboard_view(request):
         'alert_time': get_alert_time_text(user_profile.alert_time)
     }
     
-    # Get focus tracking data
-    recent_sessions = data_service.get_recent_sessions()
+    # Get focus tracking data with filter support
+    filter_value = request.GET.get('filter', '5')  # Default to last 5 sessions
+    if filter_value == '7':
+        recent_sessions = data_service.get_recent_sessions(days=7)
+    elif filter_value == '30':
+        recent_sessions = data_service.get_recent_sessions(days=30)
+    else:
+        recent_sessions = data_service.get_recent_sessions(limit=5)
+    
+    # Calculate aggregate statistics for the filtered sessions
+    from django.db.models import Sum, Avg
+    from secondBrain_App.models import SessionSummary
+    
+    # Get the base queryset for filtered sessions
+    if filter_value == '7':
+        from datetime import timedelta
+        cutoff_date = timezone.now() - timedelta(days=7)
+        sessions_queryset = SessionSummary.objects.filter(
+            user=user_profile, 
+            start_time__gte=cutoff_date
+        )
+    elif filter_value == '30':
+        from datetime import timedelta
+        cutoff_date = timezone.now() - timedelta(days=30)
+        sessions_queryset = SessionSummary.objects.filter(
+            user=user_profile, 
+            start_time__gte=cutoff_date
+        )
+    else:
+        # Get the session IDs from recent_sessions to ensure consistency
+        session_ids = [s['id'] for s in recent_sessions]
+        sessions_queryset = SessionSummary.objects.filter(
+            user=user_profile,
+            session_id__in=session_ids
+        )
+    
+    # Calculate aggregate stats
+    total_minutes = sessions_queryset.aggregate(
+        total=Sum('total_duration_seconds')
+    )['total'] or 0
+    total_minutes = int(total_minutes / 60)  # Convert seconds to minutes
+    
+    avg_focus = sessions_queryset.aggregate(
+        avg=Avg('average_focus_score')
+    )['avg'] or 0
+    
+    # For check-ins, we'll use a placeholder since the field doesn't exist yet
+    # TODO: Update when check_ins_count field is added to SessionSummary
+    total_checkins = sessions_queryset.count()  # Using session count as placeholder
+    
+    aggregate_stats = {
+        'total_minutes': total_minutes,
+        'avg_focus': round(avg_focus, 1),
+        'total_checkins': total_checkins
+    }
+    
     session_stats = data_service.get_session_average_stats()
-    brainwave_data = data_service.get_brainwave_averages()
     recommendations = data_service.get_recommendations()
     
     # Generate calendar data for the requested month
@@ -935,8 +988,8 @@ def dashboard_view(request):
     for session in sessions:
         day = session.start_time.day
         
-        # Calculate focus percentage using the formula: ((Score - 1.0) / 2.0) * 100
-        focus_percentage = ((session.average_focus_score - 1.0) / 2.0) * 100
+        # Calculate focus percentage using 0-1 scale: score * 100
+        focus_percentage = session.average_focus_score * 100
         
         # If multiple sessions on same day, keep the one with highest focus score
         if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
@@ -1005,7 +1058,7 @@ def dashboard_view(request):
     avg_focus = 0
     if sessions_count > 0:
         avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
-        avg_focus_10_point = avg_focus * 3.33  # Scale to 10-point display
+        avg_focus_10_point = avg_focus * 10  # Scale to 10-point display (0-1 to 0-10)
     else:
         avg_focus_10_point = 0
     
@@ -1046,9 +1099,9 @@ def dashboard_view(request):
         'user_profile': profile_snapshot,
         'recent_sessions': recent_sessions,
         'session_stats': session_stats,
-        'brainwave_data': brainwave_data,
         'recommendations': recommendations,
         'ai_recommendation': ai_recommendation_text,
+        'aggregate_stats': aggregate_stats,
         'calendar_weeks': calendar_weeks,
         'current_month': current_month,
         'current_year': current_year,
@@ -1488,16 +1541,164 @@ def get_realtime_eeg_status_view(request):
         # Get task status
         task_result = get_task_status(task_id)
         
+        print(f"[VIEW] Session active: {is_active}")
+        print(f"[VIEW] Task status: {task_result['status']}")
+        print(f"[VIEW] Task ID: {task_id}")
+        
+        # Get live prediction data from cache if session is active
+        current_state = None
+        confidence = None
+        focus_score = None
+        cached_data = None
+        
+        # Check if task is PENDING (running) - this is more reliable than session flag
+        if task_result['status'] == 'PENDING':
+            try:
+                from django.core.cache import cache
+                LIVE_CACHE_KEY = f"live_eeg_state_{user_email}"
+                cached_data = cache.get(LIVE_CACHE_KEY)
+                
+                print(f"[VIEW] Cache key: {LIVE_CACHE_KEY}")
+                print(f"[VIEW] Cache data found: {cached_data is not None}")
+                if cached_data:
+                    print(f"[VIEW] Cache data: {cached_data}")
+                    current_state = cached_data.get('state')
+                    confidence = cached_data.get('confidence')
+                    focus_score = cached_data.get('focus_score')
+            except Exception as e:
+                print(f"Cache error: {e}")
+        
+        # Determine session status for frontend
+        if task_result['status'] == 'PENDING':
+            # Check if we have cache data (session is actually running)
+            if cached_data:
+                session_status = cached_data.get('status', 'active')
+            else:
+                session_status = 'initializing'  # Loading brainwaves...
+        elif task_result['status'] == 'SUCCESS':
+            session_status = 'completed'
+        else:
+            session_status = 'idle'
+        
         return JsonResponse({
             'ok': True,
             'task_id': task_id,
-            'status': task_result['status'],
+            'status': session_status,
             'is_realtime_active': is_active,
+            'current_state': current_state,
+            'confidence': round(confidence * 100, 1) if confidence else None,
+            'focus_score': focus_score,
+            'wave_data': cached_data.get('waves') if cached_data else None,
             'result': task_result.get('result') if task_result['status'] == 'SUCCESS' else None
         })
         
     except Exception as e:
         print(f'Error getting real-time EEG status: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def get_latest_eeg_state_view(request):
+    """Lightning-fast cache-only view for live brain data"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        from django.core.cache import cache
+        # This must match the key in the worker exactly!
+        cache_key = f"live_eeg_stream_{user_email}"
+        data = cache.get(cache_key)
+        
+        # DEBUG: Show what we're looking for
+        print(f"[VIEW] Looking for cache key: {cache_key}")
+        print(f"[VIEW] Cache hit: {data is not None}")
+        if data:
+            print(f"[VIEW] Cache data: {data}")
+        
+        # ---- PANIC LOG: Debug what keys actually exist ----
+        try:
+            # Try to list all cache keys (works for FileSystem backend)
+            import os
+            from django.conf import settings
+            cache_dir = settings.CACHES['default']['LOCATION']
+            if os.path.exists(cache_dir):
+                all_files = os.listdir(cache_dir)
+                user_related_keys = [f for f in all_files if user_email.replace('@', '_').replace('.', '_') in f]
+                print(f"[PANIC LOG] Cache directory: {cache_dir}")
+                print(f"[PANIC LOG] All cache files: {all_files}")
+                print(f"[PANIC LOG] User-related cache files: {user_related_keys}")
+                print(f"[PANIC LOG] Looking for key: {cache_key}")
+            else:
+                print(f"[PANIC LOG] Cache directory does not exist: {cache_dir}")
+        except Exception as debug_e:
+            print(f"[PANIC LOG] Debug error: {debug_e}")
+        
+        if not data:
+            return JsonResponse({'ok': False, 'status': 'idle', 'message': 'Waiting for worker...', 'cache_key': cache_key})
+        
+        # Add ok: true to successful responses for JavaScript compatibility
+        data['ok'] = True
+        return JsonResponse(data)
+            
+    except Exception as e:
+        print(f'Error getting live brain data: {e}')
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def test_cache_view(request):
+    """Test cache functionality manually"""
+    try:
+        from django.core.cache import cache
+        from django.utils import timezone
+        
+        user_email = request.session.get('user_email', 'test@example.com')
+        cache_key = f"live_eeg_state_{user_email}"
+        
+        # Create test data
+        test_data = {
+            'ok': True,
+            'status': 'active',
+            'state': 'TEST_CONCENTRATING',
+            'confidence': 95.5,
+            'focus_score': 88.0,
+            'waves': {
+                'delta': 45.2,
+                'theta': 30.1,
+                'alpha': 25.8,
+                'beta': 55.3,
+                'gamma': 15.7
+            },
+            'last_updated': timezone.now().strftime("%I:%M:%S %p")
+        }
+        
+        # Write to cache
+        cache.set(cache_key, test_data, timeout=10)
+        print(f"[TEST] SET cache key: {cache_key}")
+        print(f"[TEST] SET cache data: {test_data}")
+        
+        # Read from cache
+        retrieved_data = cache.get(cache_key)
+        print(f"[TEST] GET cache data found: {retrieved_data is not None}")
+        if retrieved_data:
+            print(f"[TEST] GET cache data: {retrieved_data}")
+        
+        # Return the retrieved data
+        if retrieved_data:
+            return JsonResponse({
+                'success': True,
+                'message': 'Cache test successful',
+                'cache_key': cache_key,
+                'data': retrieved_data
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Cache test failed - no data retrieved',
+                'cache_key': cache_key
+            })
+            
+    except Exception as e:
+        print(f'[TEST] Error: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 EEGSERVICE = EEGService()  
@@ -1733,3 +1934,118 @@ def get_latest_recommendation_api(request):
         return JsonResponse({'recommendation': latest_rec.message})
         
     return JsonResponse({'recommendation': None})
+
+
+def focus_track_history(request):
+    """Focus Track History page with SessionSummary data integration"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return redirect('/')
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return redirect('/onboarding/')
+    
+    # Get filter parameter (default to "5" for Top 5 Sessions)
+    filter_value = request.GET.get('filter', '5')
+    
+    # Get sessions based on filter
+    if filter_value == '5':
+        # Top 5 Sessions
+        recent_sessions = SessionSummary.objects.filter(
+            user=user_profile
+        ).order_by('-start_time')[:5]
+    elif filter_value == '7':
+        # Last 7 Days
+        from datetime import datetime, timedelta
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        recent_sessions = SessionSummary.objects.filter(
+            user=user_profile,
+            start_time__gte=seven_days_ago
+        ).order_by('-start_time')
+    elif filter_value == '30':
+        # Last 30 Days
+        from datetime import datetime, timedelta
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        recent_sessions = SessionSummary.objects.filter(
+            user=user_profile,
+            start_time__gte=thirty_days_ago
+        ).order_by('-start_time')
+    else:
+        # Default to Top 5
+        recent_sessions = SessionSummary.objects.filter(
+            user=user_profile
+        ).order_by('-start_time')[:5]
+    
+    # Calculate aggregate statistics
+    aggregate_stats = calculate_aggregate_stats(recent_sessions)
+    
+    # Prepare session data for template
+    sessions_data = []
+    for session in recent_sessions:
+        # Calculate state percentages
+        total_time = session.concentrating_seconds + session.neutral_seconds + session.relaxed_seconds
+        if total_time > 0:
+            concentrated_pct = round((session.concentrating_seconds / total_time) * 100, 1)
+            neutral_pct = round((session.neutral_seconds / total_time) * 100, 1)
+            relaxed_pct = round((session.relaxed_seconds / total_time) * 100, 1)
+        else:
+            concentrated_pct = neutral_pct = relaxed_pct = 0
+        
+        # Get recommendations for this session
+        recommendations = Recommendation.objects.filter(
+            user=user_profile,
+            session_id=session.session_id
+        ).order_by('-created_at')
+        
+        session_data = {
+            'id': session.id,
+            'session_id': session.session_id,
+            'name': session.session_id.replace('_', ' ').title(),
+            'date': session.start_time.date(),
+            'time': session.start_time.strftime('%H:%M'),
+            'duration': round(session.total_duration_seconds / 60, 1),  # Convert to minutes
+            'focus_score': round(session.average_focus_score * 10, 1),  # Convert to 0-10 scale
+            'peak_focus': round(session.peak_focus_score * 10, 1),
+            'focus_streak': session.longest_focus_streak,
+            'states': {
+                'concentrated': concentrated_pct,
+                'neutral': neutral_pct,
+                'relaxed': relaxed_pct
+            },
+            'start_time': session.start_time,
+            'recommendations': recommendations
+        }
+        sessions_data.append(session_data)
+    
+    context = {
+        'user_email': user_email,
+        'aggregate_stats': aggregate_stats,
+        'recent_sessions': sessions_data,
+        'current_filter': filter_value
+    }
+    
+    return render(request, 'focus_track_history.html', context)
+
+
+def calculate_aggregate_stats(sessions):
+    """Calculate aggregate statistics for the filtered sessions"""
+    total_minutes = 0
+    total_focus_score = 0
+    session_count = 0
+    
+    for session in sessions:
+        total_minutes += session.total_duration_seconds / 60
+        total_focus_score += session.average_focus_score
+        session_count += 1
+    
+    avg_focus = 0
+    if session_count > 0:
+        avg_focus = round((total_focus_score / session_count) * 10, 1)  # Convert to 0-10 scale
+    
+    return {
+        'total_minutes': round(total_minutes, 1),
+        'avg_focus': avg_focus,
+        'total_checkins': session_count
+    }

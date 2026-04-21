@@ -34,6 +34,67 @@
             </div>
         </div>
 
+        <!-- Live Brain State Card -->
+        <div class="grid-row mt-4">
+            <div class="col-span-12">
+                <div id="liveBrainStateCard" class="card shadow-sm border-0" style="background: #ffffff; border-radius: 15px; border-left: 5px solid #28a745; display: none;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0" style="color: #28a745; font-weight: bold;">
+                                <span class="live-indicator" id="liveIndicator">
+                                    <span class="pulse-dot" id="statusDot" style="width: 10px; height: 10px; background-color: #6c757d; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>
+                                    Live Brain State
+                                </span>
+                            </h5>
+                            <small class="text-muted" id="lastUpdate">Last updated: --</small>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="live-state-display" id="currentStateText" style="font-size: 2.5rem; font-weight: bold; color: #6c757d; margin: 20px 0;">
+                                Idle
+                            </div>
+                            <div class="confidence-display" id="liveConfidence" style="font-size: 1.2rem; color: #6c757d; margin-bottom: 15px;">
+                                Confidence: --%
+                            </div>
+                                                    </div>
+                        
+                        <!-- Brainwave Monitors -->
+                        <div class="brainwave-monitors" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px;">
+                            <!-- Delta Monitor -->
+                            <div class="wave-monitor" id="delta-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                                <div style="color: #FF00FF; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">DELTA</div>
+                                <canvas id="delta-canvas" style="width: 100%; height: 50px;"></canvas>
+                            </div>
+                            
+                            <!-- Theta Monitor -->
+                            <div class="wave-monitor" id="theta-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                                <div style="color: #00FFFF; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">THETA</div>
+                                <canvas id="theta-canvas" style="width: 100%; height: 50px;"></canvas>
+                            </div>
+                            
+                            <!-- Alpha Monitor -->
+                            <div class="wave-monitor" id="alpha-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                                <div style="color: #39FF14; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">ALPHA</div>
+                                <canvas id="alpha-canvas" style="width: 100%; height: 50px;"></canvas>
+                            </div>
+                            
+                            <!-- Beta Monitor -->
+                            <div class="wave-monitor" id="beta-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                                <div style="color: #FFFF00; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">BETA</div>
+                                <canvas id="beta-canvas" style="width: 100%; height: 50px;"></canvas>
+                            </div>
+                            
+                            <!-- Gamma Monitor -->
+                            <div class="wave-monitor" id="gamma-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                                <div style="color: #FF3131; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">GAMMA</div>
+                                <canvas id="gamma-canvas" style="width: 100%; height: 50px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="grid-row mt-4">
             <div class="col-span-12">
                 <div class="card shadow-sm border-0" id="recommendation-card" style="background: #f8f9fa; border-radius: 15px; border-left: 5px solid #4a90e2;">
@@ -494,8 +555,260 @@ async function fetchLatestRecommendation() {
         console.error("Could not refresh recommendation:", e);
     }
 }
+
+// Live Brain State Polling
+let liveStatePollingInterval = null;
+
+function startLiveStatePolling() {
+    if (liveStatePollingInterval) {
+        clearInterval(liveStatePollingInterval);
+    }
+    
+    // Poll every 500ms for smooth heart monitor effect
+    liveStatePollingInterval = setInterval(updateLiveBrainState, 500);
+    console.log('Started live brain state polling');
+}
+
+function stopLiveStatePolling() {
+    if (liveStatePollingInterval) {
+        clearInterval(liveStatePollingInterval);
+        liveStatePollingInterval = null;
+        console.log('Stopped live brain state polling');
+    }
+}
+
+function updateLiveBrainBox() {
+    fetch('/get-latest-eeg-state/')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Live brain state data:', data); // Debug logging
+            
+            // Always update the display, even for idle state
+            updateLiveStateDisplay(data);
+            
+            if (data.ok) {
+                const liveStateCard = document.getElementById('liveBrainStateCard');
+                
+                // Show/hide the live brain state box based on session status
+                if (data.status === 'active') {
+                    if (liveStateCard) {
+                        liveStateCard.style.display = 'block';
+                    }
+                    console.log('Session active, data:', data);
+                } else {
+                    // Hide the box when session is idle or no data
+                    if (liveStateCard) {
+                        liveStateCard.style.display = 'none';
+                    }
+                    console.log('Session idle, hiding live brain state box');
+                }
+            } else {
+                // Hide the box when no data available
+                const liveStateCard = document.getElementById('liveBrainStateCard');
+                if (liveStateCard) {
+                    liveStateCard.style.display = 'none';
+                }
+                console.log('No data available, hiding live brain state box');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching live brain state:', error);
+        });
+}
+
+async function updateLiveBrainState() {
+    updateLiveBrainBox();
+}
+
+// Brainwave Chart Management
+const brainwaveCharts = {
+    delta: null,
+    theta: null,
+    alpha: null,
+    beta: null,
+    gamma: null
+};
+
+const waveColors = {
+    delta: '#FF00FF',  // Neon Purple - Slow, deep pulses
+    theta: '#00FFFF',  // Cyan - Rolling waves
+    alpha: '#39FF14',  // Green - Sharp rhythmic spikes
+    beta: '#FFFF00',   // Yellow - Fast jittery lines
+    gamma: '#FF3131'   // Red - Rapid micro-oscillations
+};
+
+function initializeBrainwaveCharts() {
+    const waves = ['delta', 'theta', 'alpha', 'beta', 'gamma'];
+    
+    waves.forEach(wave => {
+        const canvas = document.getElementById(`${wave}-canvas`);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            
+            // Initialize with empty data
+            brainwaveCharts[wave] = {
+                canvas: canvas,
+                ctx: ctx,
+                data: new Array(150).fill(0),  // 150 data points for denser waves
+                color: waveColors[wave]
+            };
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 50;
+        }
+    });
+}
+
+function updateBrainwaveChart(wave, value) {
+    const chart = brainwaveCharts[wave];
+    if (!chart) return;
+    
+    // Add new value and remove old one
+    chart.data.push(value);
+    chart.data.shift();
+    
+    // Clear canvas
+    chart.ctx.clearRect(0, 0, chart.canvas.width, chart.canvas.height);
+    
+    // Draw the line
+    chart.ctx.strokeStyle = chart.color;
+    chart.ctx.lineWidth = 2;
+    chart.ctx.shadowBlur = 10;
+    chart.ctx.shadowColor = chart.color;
+    
+    chart.ctx.beginPath();
+    chart.data.forEach((point, index) => {
+        const x = (index / (chart.data.length - 1)) * chart.canvas.width;
+        const y = chart.canvas.height - (point / 100) * chart.canvas.height;
+        
+        if (index === 0) {
+            chart.ctx.moveTo(x, y);
+        } else {
+            chart.ctx.lineTo(x, y);
+        }
+    });
+    chart.ctx.stroke();
+    
+    // Add glow effect
+    chart.ctx.shadowBlur = 5;
+    chart.ctx.stroke();
+}
+
+function updateLiveStateDisplay(data) {
+    console.log('Updating display with data:', data); // Debug logging
+    const stateText = document.getElementById('currentStateText');
+    const confidenceText = document.getElementById('liveConfidence');
+    const statusDot = document.getElementById('statusDot');
+    const lastUpdateText = document.getElementById('lastUpdate');
+    
+    // Update state text and color
+    if (data.state && data.status === 'active') {
+        console.log('Setting state to:', data.state); // Debug logging
+        stateText.textContent = data.state;
+        stateText.classList.add('glow-text');
+        
+        // Set color based on state
+        const stateColors = {
+            'CONCENTRATING': '#2563eb',  // Deep Blue
+            'NEUTRAL': '#6b7280',        // Gray
+            'RELAXED': '#10b981'         // Green
+        };
+        stateText.style.color = stateColors[data.state] || '#6b7280';
+    } else if (data.status === 'initializing') {
+        stateText.textContent = 'LOADING BRAINWAVES...';
+        stateText.classList.remove('glow-text');
+        stateText.style.color = '#6b7280';
+    } else {
+        stateText.textContent = 'IDLE';
+        stateText.classList.remove('glow-text');
+        stateText.style.color = '#6b7280';
+    }
+    
+    // Update confidence
+    if (data.confidence !== null && data.confidence !== undefined && data.status === 'active') {
+        confidenceText.textContent = `Confidence: ${data.confidence}%`;
+        console.log('Updated confidence to:', data.confidence);
+    } else if (data.status === 'idle') {
+        confidenceText.textContent = 'Confidence: --%';
+    } else {
+        confidenceText.textContent = 'Confidence: --%';
+    }
+    
+        
+    // Update brainwave charts
+    if (data.waves && data.status === 'active') {
+        // Handle both old format (direct value) and new format (nested object)
+        const getWaveValue = (wave) => {
+            if (typeof wave === 'object' && wave.value !== undefined) {
+                return wave.value; // New format: {value: 36.5, raw: 5634.22, unit: 'μV²'}
+            } else {
+                return wave || 0; // Old format: direct number
+            }
+        };
+        
+        updateBrainwaveChart('delta', getWaveValue(data.waves.delta));
+        updateBrainwaveChart('theta', getWaveValue(data.waves.theta));
+        updateBrainwaveChart('alpha', getWaveValue(data.waves.alpha));
+        updateBrainwaveChart('beta', getWaveValue(data.waves.beta));
+        updateBrainwaveChart('gamma', getWaveValue(data.waves.gamma));
+    }
+    
+    // Update status dot
+    if (data.status === 'active') {
+        statusDot.style.backgroundColor = '#28a745';  // Green
+        statusDot.style.animation = 'pulse 1.5s infinite';
+    } else {
+        statusDot.style.backgroundColor = '#6c757d';  // Gray
+        statusDot.style.animation = 'none';
+    }
+    
+    // Update last update time
+    if (data.last_updated && data.last_updated !== '--' && data.status === 'active') {
+        lastUpdateText.textContent = `Last updated: ${data.last_updated}`;
+        console.log('Updated last_updated to:', data.last_updated);
+    } else if (data.status === 'idle') {
+        lastUpdateText.textContent = 'Last updated: --';
+    } else {
+        const now = new Date();
+        lastUpdateText.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+    }
+}
+
+// Start polling when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize brainwave charts
+    initializeBrainwaveCharts();
+    
+    // Start live state polling
+    startLiveStatePolling();
+});
+
+// Stop polling when page is unloaded
+window.addEventListener('beforeunload', function() {
+    stopLiveStatePolling();
+});
 </script>
+
 <style>
+    /* Live Brain State Pulse Animation */
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    /* Glow text effect for active state */
+    .glow-text {
+        text-shadow: 0 0 10px white, 0 0 20px white, 0 0 30px white;
+        animation: text-glow 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes text-glow {
+        from { text-shadow: 0 0 10px white, 0 0 20px white; }
+        to { text-shadow: 0 0 20px white, 0 0 30px white, 0 0 40px white; }
+    }
+
     /* 1. Main Container Styling */
     #recommendation-content {
         color: #334155;

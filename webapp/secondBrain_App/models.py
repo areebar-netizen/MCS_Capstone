@@ -88,6 +88,7 @@ class SessionSummary(models.Model):
     csv_file_path = models.CharField(max_length=500)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
+    session_date = models.DateField(null=True, blank=True)  # This field exists in database but was missing from model
     total_duration_seconds = models.FloatField()
     average_focus_score = models.FloatField()
     peak_focus_score = models.FloatField()

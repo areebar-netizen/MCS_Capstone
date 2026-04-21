@@ -18,7 +18,10 @@ from scipy.signal import butter, filtfilt, iirnotch
 
 # Import custom modules
 from .EEG_feature_extraction_adv import generate_feature_vectors_from_matrix
-from .enhanced_feature_extraction import (load_preprocessing_artifacts, apply_feature_pipeline)
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../core_engine'))
+from enhanced_feature_extraction import (load_preprocessing_artifacts, apply_feature_pipeline)
 import joblib
 
 # Attempt to import Stream.py if it exists
@@ -95,20 +98,97 @@ def load_model(models_dir: Path, model_name: str):
     if not model_file.exists():
         raise FileNotFoundError(f"Model not found: {model_file}")
     
-    model = joblib.load(model_file)
+    print(f"Starting joblib.load()...")
+    
+    # Aggressive fix for XGBoost threading issues in forked processes
+    # Set environment variables before loading to disable all internal threading
+    import os
+    old_omp_num_threads = os.environ.get('OMP_NUM_THREADS')
+    old_openblas_num_threads = os.environ.get('OPENBLAS_NUM_THREADS')
+    old_mkl_num_threads = os.environ.get('MKL_NUM_THREADS')
+    
+    os.environ['OMP_NUM_THREADS'] = '1'
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
+    os.environ['MKL_NUM_THREADS'] = '1'
+    
+    print(f"Set threading environment variables to 1")
+    
+    # Try loading with mmap_mode to reduce memory pressure in forked processes
+    try:
+        model = joblib.load(model_file, mmap_mode='r')
+        print(f"Model loaded with mmap_mode='r'")
+    except Exception as e1:
+        print(f"Failed to load with mmap_mode: {e1}")
+        print("Trying regular joblib.load()...")
+        model = joblib.load(model_file)
+        print(f"Model loaded with regular method")
+    
+    # Fix for threading deadlock in multi-process environments
+    # Models with n_jobs=-1 conflict with Celery ForkPoolWorker
+    def fix_n_jobs(model_component):
+        """Recursively fix n_jobs=-1 in model components"""
+        fixed_any = False
+        
+        if hasattr(model_component, 'n_jobs') and model_component.n_jobs == -1:
+            model_component.n_jobs = 1
+            print(f"Fixed {type(model_component).__name__} n_jobs from -1 to 1")
+            fixed_any = True
+        
+        # Handle stacked models and other ensembles
+        if hasattr(model_component, 'estimators_'):
+            for estimator in model_component.estimators_:
+                if fix_n_jobs(estimator):
+                    fixed_any = True
+        
+        # Handle other estimator containers
+        if hasattr(model_component, 'estimators'):
+            for name, estimator in model_component.estimators:
+                if fix_n_jobs(estimator):
+                    fixed_any = True
+        
+        return fixed_any
+    
+    fix_n_jobs(model)
+    
+    # Restore original environment variables
+    if old_omp_num_threads is not None:
+        os.environ['OMP_NUM_THREADS'] = old_omp_num_threads
+    else:
+        os.environ.pop('OMP_NUM_THREADS', None)
+        
+    if old_openblas_num_threads is not None:
+        os.environ['OPENBLAS_NUM_THREADS'] = old_openblas_num_threads
+    else:
+        os.environ.pop('OPENBLAS_NUM_THREADS', None)
+        
+    if old_mkl_num_threads is not None:
+        os.environ['MKL_NUM_THREADS'] = old_mkl_num_threads
+    else:
+        os.environ.pop('MKL_NUM_THREADS', None)
+    
+    print(f"Restored original threading environment variables")
     print(f"{model_file} loaded---")
     
     # Load standard feature selector (used if enhanced artifacts missing)
     selector_path = Path(models_dir) / 'feature_selector.joblib'
     selector = joblib.load(selector_path) if selector_path.exists() else None
     
-    # Load enhanced artifacts
+    # Load enhanced artifacts from correct location
     try:
-        artifacts_dir = Path(models_dir) / 'preprocessing_artifacts'
         # Look for preprocessing artifacts in core_engine/artifacts/preprocessing_artifacts/
-        artifacts_dir = Path(models_dir) / 'preprocessing_artifacts'
-        scaler, feature_info = load_preprocessing_artifacts(artifacts_dir)
-    except Exception:
+        base_dir = Path(models_dir).parent.parent / 'core_engine' / 'artifacts' / 'preprocessing_artifacts'
+        print(f"--- LOOKING FOR ARTIFACTS IN: {base_dir} ---")
+        scaler, feature_info = load_preprocessing_artifacts(base_dir)
+        
+        # Validate that we have the required selected_indices
+        if feature_info is not None and 'selected_indices' not in feature_info:
+            raise ValueError("selected_indices not found in feature_info.pkl - artifacts may be corrupted")
+        
+        print(f"✅ Scaler loaded. Expected input features: {scaler.n_features_in_ if hasattr(scaler, 'n_features_in_') else 'unknown'}")
+        print(f"✅ Feature info indices count: {len(feature_info.get('selected_indices', []))} (Best Features confirmed)")
+        
+    except Exception as e:
+        print(f"❌ Failed to load enhanced artifacts: {e}")
         scaler, feature_info = None, None
     
     return model, selector, (scaler, feature_info)
@@ -234,6 +314,7 @@ class PredictionService:
         
         # Create result dict like predict_test.py
         result = {
+            'ok': True,  # CRITICAL: This key was missing!
             'n_windows': int(n_windows),
             'total_seconds': float(total_seconds),
             'relaxed_seconds': float(durations.get('relaxed', 0)),
@@ -245,6 +326,43 @@ class PredictionService:
         }
         result_for_log = {k: v for k, v in result.items() if k != 'window_labels'}
         print(f"  Full result: {result_for_log}")
+
+        # Add probabilities to result if available
+        if result.get('ok') and hasattr(self.predictor.model, 'predict_proba'):
+            try:
+                # Get probabilities by running prediction again with probability extraction
+                import numpy as np
+                if len(rows) >= 150:
+                    sample_rows = rows[:150]
+                    vectors, _ = generate_feature_vectors_from_matrix(
+                        np.array(sample_rows, dtype=float), 
+                        nsamples=150, 
+                        period=1.0,
+                        state=None,
+                        remove_redundant=True,
+                        cols_to_ignore=-1
+                    )
+                    
+                    if vectors is not None and len(vectors) > 0:
+                        X = np.asarray(vectors, dtype=float)
+                        if X.ndim == 1:
+                            X = X.reshape(1, -1)
+                        
+                        # Apply preprocessing
+                        scaler, feature_info = self.preprocessing_artifacts
+                        if scaler is not None and feature_info is not None:
+                            from core_engine.enhanced_feature_extraction import apply_feature_pipeline
+                            X = apply_feature_pipeline(X, scaler, feature_info)
+                        
+                        probas = self.predictor.model.predict_proba(X)
+                        if probas is not None and len(probas) > 0:
+                            result['probabilities'] = probas[0].tolist()
+                            print(f"Added probabilities to result: {result['probabilities']}")
+            except Exception as e:
+                print(f"Could not extract probabilities: {e}")
+                result['probabilities'] = [0.33, 0.33, 0.34]  # Fallback
+        else:
+            result['probabilities'] = [0.33, 0.33, 0.34]  # Fallback for models without predict_proba
 
         return result
             
