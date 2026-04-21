@@ -220,11 +220,9 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         print(f"   End: {end_time.strftime('%H:%M:%S')}")
         
         # Main processing loop - run every second
-        stop_key = f"stop eeg task{self.request.id}"
+        
         while datetime.now() < end_time:
-            # if cache.get(stop_key, False):
-            #     print(f"stop requested{self.request.id}")
-            #     break
+            
             try:
                 # Get buffer data
                 rows = acq.get_buffer_copy()
@@ -238,10 +236,12 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 # Process prediction
                 result = prediction_service.run(rows, nsamples=150, period=1.0, cols_to_ignore=-1)
                 
-                if result.get('ok'):
+                if not result.get('ok', True):
+                    print(result.get('message', 'Prediction failed'))
+                else:
                     predicted_label = result.get('predicted_label')
                     confidence = result.get('confidence', 0)
-                    
+                                    
                     # Get probabilities if available
                     probabilities = [0.33, 0.33, 0.34]  # Default fallback
                     if hasattr(prediction_service.predictor.model, 'predict_proba'):
@@ -280,7 +280,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                     
                     
                     print(f"   {current_time} | {predicted_label:12} | {confidence:.2f} | {focus_score:.2f}")
-                
+                #elapsed = (datetime.now() - start_time).total_seconds()
                 time.sleep(1.0)  # Process every second
                 
             except Exception as e:
@@ -318,9 +318,13 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         
         # Count time spent in each state based on window labels (each window = 0.5 seconds)
         state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
-        for label in all_window_labels:
-            if label in state_counts:
-                state_counts[label] += 0.5  # Each window represents 0.5 seconds
+        # for label in all_window_labels:
+        #     if label in state_counts:
+        #         state_counts[label] += 0.5  # Each window represents 0.5 seconds
+        for point in data_points:
+            state = point.get('focus_state')
+            if state in state_counts:
+                state_counts[state] += 1.0
         
         # Calculate statistics based on window labels
         lfocus_streak = longest_focus_streak(all_window_labels) * 0.5
@@ -331,11 +335,11 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         # lfocus_streak = longest_focus_streak(window_labels) * 0.5
         # switch_count = state_switch_count(window_labels)
         # latency = focus_latency(window_labels) * 0.5
-        state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
+        # state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
 
-        for label in all_window_labels:
-            if label in state_counts:
-                state_counts[label] += 0.5  # Each window represents 0.5 seconds
+        # for label in all_window_labels:
+        #     if label in state_counts:
+        #         state_counts[label] += 0.5  # Each window represents 0.5 seconds
         
         # Calculate statistics based on window labels
         lfocus_streak = longest_focus_streak(all_window_labels) * 0.5

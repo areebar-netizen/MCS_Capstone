@@ -1,4 +1,4 @@
-<!-- Focus Track Setup Component -->
+﻿<!-- Focus Track Setup Component -->
 <div class="card focus-track-setup">
     <div class="card-header">
         <h2 class="card-title">Focus Track Session</h2>
@@ -162,11 +162,16 @@
             console.log(data);
             document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
 
-            if (data.ok && data.status === 'completed') {
+            
+            if (data.status === 'completed' || data.status === "SUCCESS") {
+                console.log("will recommend")
                 window.location.href = '/recommendation/';
-            } else if (data.status === 'processing' || data.status === 'PENDING') {
+            } else if (data.status === 'processing' ||
+                data.status === 'PENDING' ||
+                data.status === 'running' ||
+                data.status === 'STARTED') {
                 setTimeout(stopEEGsession, 3000);
-            }
+            } 
         } catch (err) {
             console.error(err);
             document.getElementById('sessionOutput').textContent = "Stop error: " + err;
