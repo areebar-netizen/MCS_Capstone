@@ -645,6 +645,11 @@ function initializeBrainwaveCharts() {
         if (canvas) {
             const ctx = canvas.getContext('2d');
             
+            if (!ctx) {
+                console.log(`[CHART INIT] Failed to get context for ${wave} canvas`);
+                return;
+            }
+            
             // Initialize with empty data
             brainwaveCharts[wave] = {
                 canvas: canvas,
@@ -653,23 +658,55 @@ function initializeBrainwaveCharts() {
                 color: waveColors[wave]
             };
             
-            // Set canvas size
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 50;
+            // Set canvas size with proper dimensions - account for device pixel ratio
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Set display size (CSS)
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = '50px';
+            
+            // Set actual size in memory
+            canvas.width = (rect.width || 200) * dpr;
+            canvas.height = 50 * dpr;
+            
+            // Scale context to account for device pixel ratio
+            ctx.scale(dpr, dpr);
+            
+            console.log(`[CHART INIT] Initialized ${wave} chart: display ${rect.width}x50, actual ${canvas.width}x${canvas.height}, DPR: ${dpr}`);
+        } else {
+            console.log(`[CHART INIT] Canvas not found for wave: ${wave}`);
         }
     });
 }
 
 function updateBrainwaveChart(wave, value) {
     const chart = brainwaveCharts[wave];
-    if (!chart) return;
+    if (!chart) {
+        console.log(`[CHART] No chart found for wave: ${wave}`);
+        return;
+    }
+    
+    // Ensure value is a valid number
+    const numValue = typeof value === 'number' ? value : 0;
     
     // Add new value and remove old one
-    chart.data.push(value);
+    chart.data.push(numValue);
     chart.data.shift();
     
+    // Ensure canvas context is valid
+    if (!chart.ctx || !chart.canvas) {
+        console.log(`[CHART] Invalid canvas or context for wave: ${wave}`);
+        return;
+    }
+    
+    // Get display dimensions (account for device pixel ratio)
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = chart.canvas.width / dpr;
+    const displayHeight = chart.canvas.height / dpr;
+    
     // Clear canvas
-    chart.ctx.clearRect(0, 0, chart.canvas.width, chart.canvas.height);
+    chart.ctx.clearRect(0, 0, displayWidth, displayHeight);
     
     // Draw the line
     chart.ctx.strokeStyle = chart.color;
@@ -679,8 +716,8 @@ function updateBrainwaveChart(wave, value) {
     
     chart.ctx.beginPath();
     chart.data.forEach((point, index) => {
-        const x = (index / (chart.data.length - 1)) * chart.canvas.width;
-        const y = chart.canvas.height - (point / 100) * chart.canvas.height;
+        const x = (index / (chart.data.length - 1)) * displayWidth;
+        const y = displayHeight - (point / 100) * displayHeight;
         
         if (index === 0) {
             chart.ctx.moveTo(x, y);
@@ -693,6 +730,8 @@ function updateBrainwaveChart(wave, value) {
     // Add glow effect
     chart.ctx.shadowBlur = 5;
     chart.ctx.stroke();
+    
+    console.log(`[CHART] Updated ${wave} chart with value ${numValue}`);
 }
 
 function updateLiveStateDisplay(data) {
@@ -741,17 +780,27 @@ function updateLiveStateDisplay(data) {
         // Handle both old format (direct value) and new format (nested object)
         const getWaveValue = (wave) => {
             if (typeof wave === 'object' && wave.value !== undefined) {
-                return wave.value; // New format: {value: 36.5, raw: 5634.22, unit: 'μV²'}
+                return wave.value; // New format: {value: 36.5, raw: 5634.22, unit: 'uV²'}
+            } else if (typeof wave === 'number') {
+                return wave; // Current format: direct number (0-100 scale)
             } else {
-                return wave || 0; // Old format: direct number
+                return 0; // Fallback
             }
         };
         
-        updateBrainwaveChart('delta', getWaveValue(data.waves.delta));
-        updateBrainwaveChart('theta', getWaveValue(data.waves.theta));
-        updateBrainwaveChart('alpha', getWaveValue(data.waves.alpha));
-        updateBrainwaveChart('beta', getWaveValue(data.waves.beta));
-        updateBrainwaveChart('gamma', getWaveValue(data.waves.gamma));
+        const deltaValue = getWaveValue(data.waves.delta);
+        const thetaValue = getWaveValue(data.waves.theta);
+        const alphaValue = getWaveValue(data.waves.alpha);
+        const betaValue = getWaveValue(data.waves.beta);
+        const gammaValue = getWaveValue(data.waves.gamma);
+        
+        console.log(`[WAVES] Updating charts - Delta: ${deltaValue}, Theta: ${thetaValue}, Alpha: ${alphaValue}, Beta: ${betaValue}, Gamma: ${gammaValue}`);
+        
+        updateBrainwaveChart('delta', deltaValue);
+        updateBrainwaveChart('theta', thetaValue);
+        updateBrainwaveChart('alpha', alphaValue);
+        updateBrainwaveChart('beta', betaValue);
+        updateBrainwaveChart('gamma', gammaValue);
     }
     
     // Update status dot
