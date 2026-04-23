@@ -251,9 +251,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         cache_update_interval = 2  # Update cache every 2 seconds instead of every second
         
         while datetime.now() < end_time:
-            # if cache.get(stop_key, False):
-            #     print(f"stop requested{self.request.id}")
-            #     break
+            
             try:
                 # Get buffer data
                 rows = acq.get_buffer_copy()

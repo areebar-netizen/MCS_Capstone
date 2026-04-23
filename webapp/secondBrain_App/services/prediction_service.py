@@ -324,7 +324,8 @@ class PredictionService:
             'confidence': float(confidence),
             'window_labels': window_labels,  # Add individual window labels
         }
-        print(f"  Full result: {result}")
+        result_for_log = {k: v for k, v in result.items() if k != 'window_labels'}
+        print(f"  Full result: {result_for_log}")
 
         # Add probabilities to result if available
         if result.get('ok') and hasattr(self.predictor.model, 'predict_proba'):
