@@ -124,8 +124,8 @@ class FocusDataService:
         avg_focus_raw = sum(s.average_focus_score for s in sessions if s.average_focus_score > 0) / len(sessions)
         total_duration = sum(s.total_duration_seconds for s in sessions) / len(sessions)
         
-        # Convert to 1-100 scale (multiply by 100)
-        avg_focus = min(100, max(1, avg_focus_raw * 100))
+        # Convert to 1-10 scale (multiply by 10)
+        avg_focus = min(10, max(1, avg_focus_raw * 10))
         
         # Count unique active days
         active_days = sessions.values('session_date').distinct().count()

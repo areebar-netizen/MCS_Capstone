@@ -1555,13 +1555,11 @@ def get_realtime_eeg_status_view(request):
         if task_result['status'] == 'PENDING':
             try:
                 from django.core.cache import cache
-                LIVE_CACHE_KEY = f"live_eeg_state_{user_email}"
+                LIVE_CACHE_KEY = f"live_eeg_stream_{user_email}"
                 cached_data = cache.get(LIVE_CACHE_KEY)
                 
-                print(f"[VIEW] Cache key: {LIVE_CACHE_KEY}")
-                print(f"[VIEW] Cache data found: {cached_data is not None}")
+                # Cache logging reduced for cleaner output
                 if cached_data:
-                    print(f"[VIEW] Cache data: {cached_data}")
                     current_state = cached_data.get('state')
                     confidence = cached_data.get('confidence')
                     focus_score = cached_data.get('focus_score')
@@ -1615,23 +1613,7 @@ def get_latest_eeg_state_view(request):
         if data:
             print(f"[VIEW] Cache data: {data}")
         
-        # ---- PANIC LOG: Debug what keys actually exist ----
-        try:
-            # Try to list all cache keys (works for FileSystem backend)
-            import os
-            from django.conf import settings
-            cache_dir = settings.CACHES['default']['LOCATION']
-            if os.path.exists(cache_dir):
-                all_files = os.listdir(cache_dir)
-                user_related_keys = [f for f in all_files if user_email.replace('@', '_').replace('.', '_') in f]
-                print(f"[PANIC LOG] Cache directory: {cache_dir}")
-                print(f"[PANIC LOG] All cache files: {all_files}")
-                print(f"[PANIC LOG] User-related cache files: {user_related_keys}")
-                print(f"[PANIC LOG] Looking for key: {cache_key}")
-            else:
-                print(f"[PANIC LOG] Cache directory does not exist: {cache_dir}")
-        except Exception as debug_e:
-            print(f"[PANIC LOG] Debug error: {debug_e}")
+        # Cache key debugging removed for cleaner logs
         
         if not data:
             return JsonResponse({'ok': False, 'status': 'idle', 'message': 'Waiting for worker...', 'cache_key': cache_key})
