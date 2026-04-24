@@ -167,7 +167,14 @@ brew install redis
 brew services start redis
 ```
 
-6. **Environment Configuration**
+6. **Cache Configuration**
+The system uses a dual caching approach:
+- **Django File-based Cache**: For live EEG data, session results, and recommendations
+- **Redis Cache**: For ML models and preprocessing artifacts
+
+Cache files are stored in `webapp/django_cache_temp/` (auto-created on first run).
+
+7. **Environment Configuration**
 ```bash
 # Copy the example environment file
 cp .env.example .env
@@ -305,10 +312,13 @@ python3 -m muselsl stream
 - **Output Classes**: Relaxed (0), Neutral (1), Concentrating (2)
 
 ### Real-time Architecture
-- **Message Queue**: Redis for task distribution
+- **Message Queue**: Redis for task distribution and model caching
 - **Background Processing**: Celery workers for async ML inference
 - **Data Storage**: PostgreSQL for metadata, CSV for raw data
 - **State Management**: Django sessions for user context
+- **Caching System**: 
+  - Django file-based cache for live EEG data and session state
+  - Redis cache for ML models and preprocessing artifacts
 
 ## Troubleshooting
 
