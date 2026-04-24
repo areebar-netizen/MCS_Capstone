@@ -426,6 +426,14 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         actual_end_time = datetime.now()
         total_duration = (actual_end_time - start_time).total_seconds()
         
+        # Count time spent in each state based on accumulated session labels (each window = 0.5 seconds)
+        state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
+        for label in all_session_labels:
+            if label in state_counts:
+                state_counts[label] += 0.5  # Each window represents 0.5 seconds
+        
+        print(f"[DEBUG] State counts: {state_counts}")
+        
         # Calculate statistics - NO DUMMY FALLBACKS
         if not all_session_labels:
             print(f"[ERROR] No data captured during session - all_session_labels is empty!")
@@ -480,16 +488,20 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         
         # Calculate statistics based on accumulated session labels - NO DUMMY FALLBACKS
         
-        # Peak Focus Score: Longest continuous concentration streak (20-min Flow State threshold)
+        # Peak Focus Score: Longest continuous concentration streak relative to total session duration
         longest_streak_seconds = longest_focus_streak(all_session_labels) * 0.5 if all_session_labels else 0.0
         longest_streak_minutes = longest_streak_seconds / 60.0
+        total_session_minutes = total_duration / 60.0
         
-        # Scientific 1-10 scale: 20-minute continuous focus = 10/10 (Peak Flow State)
-        FLOW_THRESHOLD_MINUTES = 20.0
-        peak_focus_score = (longest_streak_minutes / FLOW_THRESHOLD_MINUTES) * 10
-        peak_focus_score = min(peak_focus_score, 10)  # Cap at 10
+        # Scientific 1-10 scale: Relative to total session time
+        # "Of time you spent studying, how long was your best uninterrupted 'deep work' streak?"
+        if total_session_minutes > 0:
+            peak_focus_score = (longest_streak_minutes / total_session_minutes) * 10
+            peak_focus_score = float(min(peak_focus_score, 10))  # Cap at 10 and convert to Python float
+        else:
+            peak_focus_score = 0.0
         
-        print(f"[DEBUG] Peak Focus: {longest_streak_minutes:.1f}min streak → {peak_focus_score:.1f}/10 score")
+        print(f"[DEBUG] Peak Focus: {longest_streak_minutes:.1f}min streak / {total_session_minutes:.1f}min session → {peak_focus_score:.1f}/10 score")
         
         lfocus_streak = longest_streak_seconds
         
@@ -576,16 +588,16 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         
         # Prepare final summary for caching and return
         final_summary = {
-            'average_focus_score': avg_focus,
-            'peak_focus_score': peak_focus,
-            'total_duration_seconds': total_duration,
-            'relaxed_seconds': relaxed_seconds,
-            'neutral_seconds': neutral_seconds,
-            'concentrating_seconds': concentrating_seconds,
-            'longest_focus_streak': lfocus_streak,
-            'state_switch_count': switch_count,
-            'focus_latency': latency,
-            'data_points_count': len(data_points)
+            'average_focus_score': float(avg_focus),
+            'peak_focus_score': float(peak_focus),
+            'total_duration_seconds': float(total_duration),
+            'relaxed_seconds': float(relaxed_seconds),
+            'neutral_seconds': float(neutral_seconds),
+            'concentrating_seconds': float(concentrating_seconds),
+            'longest_focus_streak': float(lfocus_streak),
+            'state_switch_count': int(switch_count),
+            'focus_latency': float(latency),
+            'data_points_count': int(len(data_points))
         }
         
         # Save final result to Django cache for frontend access

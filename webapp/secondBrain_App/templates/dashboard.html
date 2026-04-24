@@ -659,21 +659,21 @@ function initializeBrainwaveCharts() {
             };
             
             // Set canvas size with proper dimensions - account for device pixel ratio
-            const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
+            const displayWidth = 200;  // Fixed display width
             
             // Set display size (CSS)
-            canvas.style.width = rect.width + 'px';
+            canvas.style.width = displayWidth + 'px';
             canvas.style.height = '50px';
             
             // Set actual size in memory
-            canvas.width = (rect.width || 200) * dpr;
+            canvas.width = displayWidth * dpr;
             canvas.height = 50 * dpr;
             
             // Scale context to account for device pixel ratio
             ctx.scale(dpr, dpr);
             
-            console.log(`[CHART INIT] Initialized ${wave} chart: display ${rect.width}x50, actual ${canvas.width}x${canvas.height}, DPR: ${dpr}`);
+            console.log(`[CHART INIT] Initialized ${wave} chart: display ${displayWidth}x50, actual ${canvas.width}x${canvas.height}, DPR: ${dpr}`);
         } else {
             console.log(`[CHART INIT] Canvas not found for wave: ${wave}`);
         }
@@ -681,14 +681,16 @@ function initializeBrainwaveCharts() {
 }
 
 function updateBrainwaveChart(wave, value) {
+    console.log(`[CHART UPDATE] ${wave} called with value: ${value}`);
     const chart = brainwaveCharts[wave];
     if (!chart) {
         console.log(`[CHART] No chart found for wave: ${wave}`);
         return;
     }
     
-    // Ensure value is a valid number
+    // Convert value to number if it's not already
     const numValue = typeof value === 'number' ? value : 0;
+    console.log(`[CHART UPDATE] ${wave} numValue: ${numValue}, chart exists: ${!!chart}`);
     
     // Add new value and remove old one
     chart.data.push(numValue);
@@ -696,7 +698,6 @@ function updateBrainwaveChart(wave, value) {
     
     // Ensure canvas context is valid
     if (!chart.ctx || !chart.canvas) {
-        console.log(`[CHART] Invalid canvas or context for wave: ${wave}`);
         return;
     }
     
@@ -708,16 +709,14 @@ function updateBrainwaveChart(wave, value) {
     // Clear canvas
     chart.ctx.clearRect(0, 0, displayWidth, displayHeight);
     
-    // Draw the line
-    chart.ctx.strokeStyle = chart.color;
-    chart.ctx.lineWidth = 2;
-    chart.ctx.shadowBlur = 10;
-    chart.ctx.shadowColor = chart.color;
+    // Find max value for dynamic scaling (with minimum scale of 20)
+    const maxValue = Math.max(...chart.data, 20);
     
+    // Draw simple colored line
     chart.ctx.beginPath();
     chart.data.forEach((point, index) => {
         const x = (index / (chart.data.length - 1)) * displayWidth;
-        const y = displayHeight - (point / 100) * displayHeight;
+        const y = displayHeight - (point / maxValue) * displayHeight;
         
         if (index === 0) {
             chart.ctx.moveTo(x, y);
@@ -725,17 +724,16 @@ function updateBrainwaveChart(wave, value) {
             chart.ctx.lineTo(x, y);
         }
     });
-    chart.ctx.stroke();
     
-    // Add glow effect
-    chart.ctx.shadowBlur = 5;
+    // Simple colored line with subtle glow
+    chart.ctx.strokeStyle = chart.color;
+    chart.ctx.lineWidth = 2;
+    chart.ctx.shadowBlur = 8;
+    chart.ctx.shadowColor = chart.color;
     chart.ctx.stroke();
-    
-    console.log(`[CHART] Updated ${wave} chart with value ${numValue}`);
 }
 
 function updateLiveStateDisplay(data) {
-    console.log('Updating display with data:', data); // Debug logging
     const stateText = document.getElementById('currentStateText');
     const confidenceText = document.getElementById('liveConfidence');
     const statusDot = document.getElementById('statusDot');
@@ -743,8 +741,7 @@ function updateLiveStateDisplay(data) {
     
     // Update state text and color
     if (data.state && data.status === 'active') {
-        console.log('Setting state to:', data.state); // Debug logging
-        stateText.textContent = data.state;
+                stateText.textContent = data.state;
         stateText.classList.add('glow-text');
         
         // Set color based on state
@@ -794,8 +791,8 @@ function updateLiveStateDisplay(data) {
         const betaValue = getWaveValue(data.waves.beta);
         const gammaValue = getWaveValue(data.waves.gamma);
         
-        console.log(`[WAVES] Updating charts - Delta: ${deltaValue}, Theta: ${thetaValue}, Alpha: ${alphaValue}, Beta: ${betaValue}, Gamma: ${gammaValue}`);
-        
+        console.log(`[DATA FLOW] Wave values - delta: ${deltaValue}, theta: ${thetaValue}, alpha: ${alphaValue}, beta: ${betaValue}, gamma: ${gammaValue}`);
+                
         updateBrainwaveChart('delta', deltaValue);
         updateBrainwaveChart('theta', thetaValue);
         updateBrainwaveChart('alpha', alphaValue);

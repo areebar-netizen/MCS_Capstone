@@ -198,30 +198,6 @@ class RealtimeEEGManager {
             const summary = result.final_summary;
             
             resultsContainer.innerHTML = `
-                <div class="session-summary">
-                    <h3>Session Summary</h3>
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <label>Session ID:</label>
-                            <span>${result.session_id}</span>
-                        </div>
-                        <div class="summary-item">
-                            <label>Duration:</label>
-                            <span>${Math.floor(summary.total_duration_seconds / 60)}m ${summary.total_duration_seconds % 60}s</span>
-                        </div>
-                        <div class="summary-item">
-                            <label>Average Focus:</label>
-                            <span>${(summary.average_focus_score * 100).toFixed(1)}%</span>
-                        </div>
-                        <div class="summary-item">
-                            <label>Peak Focus:</label>
-                            <span>${(summary.peak_focus_score * 100).toFixed(1)}%</span>
-                        </div>
-                        <div class="summary-item">
-                            <label>Time Distribution:</label>
-                            <div class="time-distribution">
-                                <div class="time-item relaxed">
-                                    <span>Relaxed:</span>
                                     <span>${Math.floor(summary.relaxed_seconds)}s</span>
                                 </div>
                                 <div class="time-item neutral">

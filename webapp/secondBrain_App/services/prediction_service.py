@@ -184,11 +184,11 @@ def load_model(models_dir: Path, model_name: str):
         if feature_info is not None and 'selected_indices' not in feature_info:
             raise ValueError("selected_indices not found in feature_info.pkl - artifacts may be corrupted")
         
-        print(f"✅ Scaler loaded. Expected input features: {scaler.n_features_in_ if hasattr(scaler, 'n_features_in_') else 'unknown'}")
-        print(f"✅ Feature info indices count: {len(feature_info.get('selected_indices', []))} (Best Features confirmed)")
+        print(f"Scaler loaded. Expected input features: {scaler.n_features_in_ if hasattr(scaler, 'n_features_in_') else 'unknown'}")
+        print(f"eature info indices count: {len(feature_info.get('selected_indices', []))} (Best Features confirmed)")
         
     except Exception as e:
-        print(f"❌ Failed to load enhanced artifacts: {e}")
+        print(f"Failed to load enhanced artifacts: {e}")
         scaler, feature_info = None, None
     
     return model, selector, (scaler, feature_info)

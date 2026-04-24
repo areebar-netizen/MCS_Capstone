@@ -266,7 +266,7 @@ def evaluate_feature_quality(features, labels):
         for issue in quality_issues:
             print(f"  ⚠️  {issue}")
     else:
-        print("\n✅ No major quality issues detected")
+        print("\n No major quality issues detected")
     
     if recommendations:
         print("\nRecommendations:")
