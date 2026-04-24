@@ -100,10 +100,14 @@
                     </svg>
                 </div>
                 <div class="method-content">
-                    <h4 class="method-name">Pomodoro with Structured Breaks</h4>
-                    <p class="method-description">Based on your beta wave patterns (>50), structured focus sessions with regular breaks will optimize your concentration.</p>
+                    <h4 class="method-name">Personalized AI Focus Strategy</h4>
+                    <div class="method-description ai-recommendation-output">
+                        {% if ai_recommendation %}
+                            {{ ai_recommendation|linebreaks }}
+                        {% else %}
+                            <p>Complete a session to generate your custom study method based on your EEG patterns.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>

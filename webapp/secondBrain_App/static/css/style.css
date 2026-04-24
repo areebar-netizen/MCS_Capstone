@@ -108,6 +108,7 @@ body {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 1.5rem;
+    min-width: 0;
 }
 
 .col-span-12 { grid-column: span 12; }
@@ -1724,7 +1725,9 @@ body {
 
 .tab-navigation {
     display: flex;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 6px;
     margin-bottom: 1.5rem;
     border-bottom: 1px solid rgba(255, 145, 104, 0.2);
 }
@@ -1761,12 +1764,17 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .session-item {
     display: flex;
+    flex-wrap: wrap;          /* ← add this */
     justify-content: space-between;
     align-items: flex-start;
+    gap: 10px;
     padding: 1.5rem;
     background: rgba(241, 231, 221, 0.3);
     border-radius: 0.75rem;
@@ -1778,7 +1786,8 @@ body {
 }
 
 .session-info {
-    flex: 1;
+    flex: 1 1 200px;
+    min-width: 0;
 }
 
 .session-name {
@@ -1796,8 +1805,12 @@ body {
 }
 
 .session-states {
+    flex: 0 1 auto;
     display: flex;
     gap: 1rem;
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 8px;
 }
 
 .state-item {
@@ -2473,4 +2486,15 @@ body {
 .form-input:focus {
     outline: 2px solid #FF4757;
     outline-offset: 2px;
+}
+
+.focus-track-history {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.focus-track-history.card {
+    display: block;
+    width: 100%;
+    align-self: stretch;
 }
