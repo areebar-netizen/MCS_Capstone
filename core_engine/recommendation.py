@@ -80,11 +80,21 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
             return _fallback_recommendation(final_summary)
 
         # ── Get session ───────────────────────────────────────
-        try:
-            session = SessionSummary.objects.get(session_id=session_id)
-        except SessionSummary.DoesNotExist:
-            print(f"[REC] SessionSummary not found for {session_id} — using fallback")
-            return _fallback_recommendation(final_summary)
+        import time
+        max_retries = 3
+        session = None
+        
+        for attempt in range(max_retries):
+            try:
+                session = SessionSummary.objects.get(session_id=session_id)
+                break
+            except SessionSummary.DoesNotExist:
+                if attempt < max_retries - 1:
+                    print(f"[REC] SessionSummary not found for {session_id} — retry {attempt + 1}/{max_retries}")
+                    time.sleep(1)  # Wait 1 second and retry
+                else:
+                    print(f"[REC] SessionSummary not found for {session_id} after {max_retries} attempts — using fallback")
+                    return _fallback_recommendation(final_summary)
 
         # ── Get user summary ──────────────────────────────────
         try:
