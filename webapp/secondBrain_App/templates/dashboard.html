@@ -95,41 +95,21 @@
             </div>
         </div>
 
-        <div class="grid-row mt-4">
-            <div class="col-span-12">
-                <div class="card shadow-sm border-0" id="recommendation-card" style="background: #f8f9fa; border-radius: 15px; border-left: 5px solid #4a90e2;">
-                    <div class="card-body">
-                        <h5 class="card-title" style="color: #4a90e2; font-weight: bold;">🧠 Latest AI Focus Recommendation</h5>
-                        <hr>
-                        <div id="recommendation-content" class="gemini-advice">
-                            {% if ai_recommendation %}
-                                {{ ai_recommendation|linebreaks }}
-                            {% else %}
-                                <p class="text-muted italic">Complete an EEG session to receive your personalized focus advice here.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid-row mt-4">
+        
+        <!-- Row 2: Study Time Analysis and Progress Tracker (left), Focus Calendar (right) -->
+        <div class="grid-row">
             <div class="col-span-6">
-                {% include 'study_time_histogram.html' %}
+                <div class="left-column">
+                    {% include 'study_time_histogram.html' %}
+                    {% include 'progress_tracker.html' %}
+                </div>
             </div>
             <div class="col-span-6">
                 {% include 'focus_calendar.html' %}
             </div>
         </div>
 
-        <!-- Row 3: Progress Tracker -->
-        <div class="grid-row">
-            <div class="col-span-12">
-                {% include 'progress_tracker.html' %}
-            </div>
-        </div>
-
-        <!-- Row 4: Focus Track History -->
+        <!-- Row 3: Focus Track History -->
         <div class="grid-row">
             <div class="col-span-12">
                 {% include 'focus_track_history.html' %}
@@ -244,6 +224,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (setupSection) setupSection.style.display = 'none';
                 if (startBtn) startBtn.style.display = 'none';
                 if (activeSession) activeSession.style.display = 'block';
+                
+                // Restart polling when starting a new session
+                startLiveStatePolling();
                 
                 // Start timer (mock implementation)
                 //startTimer(duration);
@@ -530,9 +513,13 @@ function pollForRecommendation() {
             if (data.ok && data.status === 'completed') {
                 clearInterval(pollInterval);
                 
-                // INSTEAD OF REDIRECTING: Fetch the recommendation text and update the UI
-                // We'll call a simple helper view or just reload the recommendation part
-                fetchLatestRecommendation(); 
+                // Update recommendation content directly from the response
+                if (data.recommendation && recContent) {
+                    recContent.innerHTML = data.recommendation;
+                }
+                
+                // Refresh the focus track history to show the new recommendation
+                refreshFocusHistory();
                 
                 // Optional: Stop the loading spinner on your "Start Session" button
                 alert("Session Analysis Complete!");
@@ -543,16 +530,29 @@ function pollForRecommendation() {
     }, 3000);
 }
 
-// New helper function to refresh only the recommendation text
-async function fetchLatestRecommendation() {
+// Helper function to refresh the focus track history to show new recommendations
+async function refreshFocusHistory() {
     try {
-        const response = await fetch('/get_latest_recommendation_api/'); // We will create this endpoint
-        const data = await response.json();
-        if (data.recommendation) {
-            document.getElementById('recommendation-content').innerHTML = data.recommendation.replace(/\n/g, '<br>');
+        // Find the focus track history section and reload it via AJAX
+        const historyContainer = document.querySelector('.focus-track-history');
+        if (historyContainer) {
+            const response = await fetch('/focus-history/?filter=5');
+            const html = await response.text();
+            
+            // Extract just the focus track history content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const newHistoryContent = tempDiv.querySelector('.focus-track-history');
+            
+            if (newHistoryContent) {
+                historyContainer.innerHTML = newHistoryContent.innerHTML;
+                console.log('Focus track history refreshed with new recommendations');
+            }
         }
     } catch (e) {
-        console.error("Could not refresh recommendation:", e);
+        console.error("Could not refresh focus history:", e);
+        // Fallback: reload the page
+        window.location.reload();
     }
 }
 
@@ -601,6 +601,8 @@ function updateLiveBrainBox() {
                         liveStateCard.style.display = 'none';
                     }
                     console.log('Session idle, hiding live brain state box');
+                    // Stop polling when session is not active
+                    stopLiveStatePolling();
                 }
             } else {
                 // Hide the box when no data available
@@ -609,10 +611,14 @@ function updateLiveBrainBox() {
                     liveStateCard.style.display = 'none';
                 }
                 console.log('No data available, hiding live brain state box');
+                // Stop polling when no data is available
+                stopLiveStatePolling();
             }
         })
         .catch(error => {
             console.error('Error fetching live brain state:', error);
+            // Stop polling on error to prevent unnecessary requests
+            stopLiveStatePolling();
         });
 }
 

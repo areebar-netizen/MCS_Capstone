@@ -189,7 +189,7 @@ class Recommendation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     recommendation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    session_id = models.CharField(max_length=100)
+    session = models.ForeignKey(SessionSummary, on_delete=models.CASCADE, null=True, blank=True)
     inference_id = models.CharField(max_length=100)
     recommendation_category = models.CharField(max_length=50)
     stimulus_name = models.CharField(max_length=100)

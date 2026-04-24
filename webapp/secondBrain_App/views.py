@@ -927,7 +927,7 @@ def dashboard_view(request):
         session_ids = [s['id'] for s in recent_sessions]
         sessions_queryset = SessionSummary.objects.filter(
             user=user_profile,
-            session_id__in=session_ids
+            id__in=session_ids
         )
     
     # Calculate aggregate stats
@@ -949,6 +949,37 @@ def dashboard_view(request):
         'avg_focus': round(avg_focus, 1),
         'total_checkins': total_checkins
     }
+    
+    # Calculate overall stats for progress tracker (all sessions, not filtered)
+    all_sessions = SessionSummary.objects.filter(user=user_profile)
+    total_sessions_count = all_sessions.count()
+    overall_avg_focus = 0
+    if total_sessions_count > 0:
+        overall_avg_focus = all_sessions.aggregate(avg=Avg('average_focus_score'))['avg'] or 0
+    total_study_minutes = all_sessions.aggregate(total=Sum('total_duration_seconds'))['total'] or 0
+    total_study_minutes = int(total_study_minutes / 60)  # Convert to minutes
+    
+    # Determine current level based on average focus score (already 0-10 scale in DB)
+    avg_focus_10 = min(round(overall_avg_focus, 1), 10.0)
+    if avg_focus_10 < 5.0:
+        current_level = {'emoji': '🎯', 'name': 'Beginner'}
+    elif avg_focus_10 < 6.0:
+        current_level = {'emoji': '🌱', 'name': 'Developing'}
+    elif avg_focus_10 < 7.0:
+        current_level = {'emoji': '📈', 'name': 'Intermediate'}
+    elif avg_focus_10 < 8.0:
+        current_level = {'emoji': '🌟', 'name': 'Advanced'}
+    else:
+        current_level = {'emoji': '🏆', 'name': 'Expert'}
+    
+    # Calculate progress for each level
+    levels = [
+        {'emoji': '🎯', 'name': 'Beginner', 'range': '< 5.0', 'status': 'completed' if avg_focus_10 >= 5.0 else 'current' if avg_focus_10 < 5.0 else 'locked', 'progress': 100 if avg_focus_10 >= 5.0 else min((avg_focus_10 / 5.0) * 100, 100)},
+        {'emoji': '🌱', 'name': 'Developing', 'range': '5.0-5.9', 'status': 'completed' if avg_focus_10 >= 6.0 else 'current' if 5.0 <= avg_focus_10 < 6.0 else 'locked', 'progress': 100 if avg_focus_10 >= 6.0 else min(((avg_focus_10 - 5.0) / 1.0) * 100, 100) if avg_focus_10 >= 5.0 else 0},
+        {'emoji': '📈', 'name': 'Intermediate', 'range': '6.0-6.9', 'status': 'completed' if avg_focus_10 >= 7.0 else 'current' if 6.0 <= avg_focus_10 < 7.0 else 'locked', 'progress': 100 if avg_focus_10 >= 7.0 else min(((avg_focus_10 - 6.0) / 1.0) * 100, 100) if avg_focus_10 >= 6.0 else 0},
+        {'emoji': '🌟', 'name': 'Advanced', 'range': '7.0-7.9', 'status': 'completed' if avg_focus_10 >= 8.0 else 'current' if 7.0 <= avg_focus_10 < 8.0 else 'locked', 'progress': 100 if avg_focus_10 >= 8.0 else min(((avg_focus_10 - 7.0) / 1.0) * 100, 100) if avg_focus_10 >= 7.0 else 0},
+        {'emoji': '🏆', 'name': 'Expert', 'range': '≥ 8.0', 'status': 'current' if avg_focus_10 >= 8.0 else 'locked', 'progress': min(((avg_focus_10 - 8.0) / 2.0) * 100, 100) if avg_focus_10 >= 8.0 else 0}
+    ]
     
     session_stats = data_service.get_session_average_stats()
     recommendations = data_service.get_recommendations()
@@ -983,25 +1014,32 @@ def dashboard_view(request):
         start_time__month=current_month
     ).order_by('start_time')
     
-    # Create session data mapping by day
+    # Create session data mapping by day - collect all sessions for averaging
     session_data_by_day = {}
     for session in sessions:
         day = session.start_time.day
         
-        # Calculate focus percentage using 0-1 scale: score * 100
-        focus_percentage = session.average_focus_score * 100
-        
-        # If multiple sessions on same day, keep the one with highest focus score
-        if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
+        # Collect all sessions for this day to calculate average
+        if day not in session_data_by_day:
             session_data_by_day[day] = {
-                'session_id': session.session_id,
-                'start_time': session.start_time,
-                'average_focus_score': session.average_focus_score,
-                'focus_percentage': focus_percentage,
-                'total_duration_seconds': session.total_duration_seconds,
-                'concentrating_seconds': session.concentrating_seconds,
-                'peak_focus_score': session.peak_focus_score
+                'total_focus_score': 0,
+                'session_count': 0
             }
+        
+        session_data_by_day[day]['total_focus_score'] += session.average_focus_score
+        session_data_by_day[day]['session_count'] += 1
+    
+    # Calculate average focus for each day
+    for day, data in session_data_by_day.items():
+        avg_focus_score = data['total_focus_score'] / data['session_count']
+        # Convert 0-10 scale to 0-100% for display, cap at 100
+        focus_percentage = min(avg_focus_score * 10, 100)
+        
+        session_data_by_day[day] = {
+            'average_focus_score': avg_focus_score,
+            'focus_percentage': focus_percentage,
+            'session_count': data['session_count']
+        }
     
     # Generate calendar weeks using calendar.monthcalendar(year, month)
     cal = calendar.monthcalendar(current_year, current_month)
@@ -1058,7 +1096,7 @@ def dashboard_view(request):
     avg_focus = 0
     if sessions_count > 0:
         avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
-        avg_focus_10_point = avg_focus * 10  # Scale to 10-point display (0-1 to 0-10)
+        avg_focus_10_point = min(round(avg_focus, 1), 10.0)  # Already 0-10 scale, cap at 10
     else:
         avg_focus_10_point = 0
     
@@ -1120,7 +1158,16 @@ def dashboard_view(request):
             {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
             {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
             {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
-        ]
+        ],
+        'progress_stats': {
+            'total_sessions': total_sessions_count,
+            'avg_focus': avg_focus_10,  # Already 0-10 scale
+            'total_study_minutes': total_study_minutes,
+            'study_hours': total_study_minutes // 60,
+            'study_remaining_minutes': total_study_minutes % 60
+        },
+        'current_level': current_level,
+        'levels': levels
     }
     
     return render(request, 'dashboard.html', context)
@@ -1863,7 +1910,7 @@ def recommendation_view(request):
         latest_rec = Recommendation.objects.filter(user__email=user_email).order_by('-created_at').first()
         if latest_rec:
             recommendation_text = latest_rec.message
-            session_id = latest_rec.session_id
+            session_id = latest_rec.session.session_id if latest_rec.session else None
 
     # 3. Get past recommendations for the history section
     past_recommendations = Recommendation.objects.filter(user__email=user_email).order_by('-created_at')[1:6]
@@ -1978,8 +2025,11 @@ def focus_track_history(request):
         # Get recommendations for this session
         recommendations = Recommendation.objects.filter(
             user=user_profile,
-            session_id=session.session_id
+            session=session
         ).order_by('-created_at')
+        print(f"[DEBUG] Session {session.id} ({session.session_id}) has {recommendations.count()} recommendations")
+        for rec in recommendations:
+            print(f"[DEBUG]   - Rec: {rec.recommendation_id}, session_id={rec.session_id}")
         
         session_data = {
             'id': session.id,
