@@ -79,9 +79,6 @@ class EEGDataStreamer:
                 ]
                 self.csv_writer.writerow(header)
                 self.is_writing = True
-                
-                print(f"Started CSV recording: {self.csv_file_path}")
-    
     def write_data_point(self, timestamp, focus_state, confidence, probabilities):
         """Write a single data point to CSV"""
         with self.lock:
@@ -106,7 +103,6 @@ class EEGDataStreamer:
             if self.csv_file:
                 self.csv_file.close()
                 self.is_writing = False
-                print(f"Stopped CSV recording: {self.csv_file_path}")
 
 
 def validate_eeg_connection():
@@ -129,7 +125,6 @@ def validate_eeg_connection():
         acq.stop()
         
         if len(buffer) > 10:  # Got some data
-            print("EEG device connection validated")
             return True, None
         else:
             return False, "EEG Device not connected. Please check your hardware."
@@ -173,7 +168,7 @@ def focus_latency(labels):
 
 
 @shared_task(bind=True)
-def run_live_inference_streaming(self, user_email, duration_minutes=1):
+def run_live_inference_streaming(self, user_email, duration_minutes=1, session_id=None):
     """
     Real-time EEG inference with per-second focus streaming
     """
@@ -188,9 +183,8 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             cache.delete(f"session_final_result_{user_email}")
             cache.delete(f"live_status_{user_email}")
             cache.delete(f"recommendation_{user_email}")
-            print(f"[CACHE] Cleaned old entries for {user_email}")
         except Exception as e:
-            print(f"[CACHE WARNING] Failed to clean old entries: {e}")
+            pass
         
         # Set initial cache immediately to show brainwave box right away
         from django.utils import timezone
@@ -199,24 +193,18 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             'state': 'INITIALIZING',
             'confidence': 0.0,
             'waves': {'delta': 0, 'theta': 0, 'alpha': 0, 'beta': 0, 'gamma': 0},
-            'last_updated': timezone.now().strftime("%H:%M:%S")
+            'last_updated': timezone.localtime(timezone.now()).strftime("%H:%M:%S")
         }
         cache_key = f"live_eeg_stream_{user_email}"
         cache.set(cache_key, initial_package, timeout=30)
         print(f"[INIT] Set initial cache package immediately to show brainwave box")
         
-        # Generate unique session info
-        print(f"Starting Real-time EEG Inference")
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Generate unique session info if not provided
         user_prefix = user_email.split('@')[0]
-        session_id = f"{user_prefix}_{timestamp}"
+        if not session_id:
+            timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+            session_id = f"{user_prefix}_{timestamp}"
         csv_output_path = ROOT / 'dataset' / 'our_data' / f'{user_prefix}_new' / f'{session_id}.csv'
-        
-        print(f"Starting Real-time EEG Inference")
-        print(f"   User: {user_email}")
-        print(f"   Duration: {duration_minutes} minutes")
-        print(f"   Session ID: {session_id}")
-        print(f"   CSV Path: {csv_output_path}")
         
         # Validate EEG connection first
         is_connected, error_msg = validate_eeg_connection()
@@ -232,7 +220,6 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         # Initialize data streamer
         streamer = EEGDataStreamer(csv_output_path, session_id)
         streamer.start_recording()
-        print(f"[DEBUG 1] Streamer started")
         
         # Initialize prediction service
         print(f"[DEBUG 2] Loading prediction service...")
@@ -250,15 +237,11 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         acq.start()
         
         # Session tracking
-        start_time = datetime.now()
+        start_time = timezone.now()
         end_time = start_time + pd.Timedelta(minutes=duration_minutes)
         data_points = []
         focus_scores = []
         confidence_scores = []
-        
-        print(f"Starting real-time inference...")
-        print(f"   Start: {start_time.strftime('%H:%M:%S')}")
-        print(f"   End: {end_time.strftime('%H:%M:%S')}")
         
         # Main processing loop - run every second
         stop_key = f"stop eeg task{self.request.id}"
@@ -270,13 +253,13 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         # Initialize cache immediately when session starts
         initial_cache_set = False
         
-        while datetime.now() < end_time:
+        while timezone.now() < end_time:
             
             try:
                 # Get buffer data
                 rows = acq.get_buffer_copy()
                 
-                # Track EEG buffer size (reduced logging)
+                # Track EEG buffer size
                 if len(rows) == 0:
                     print(f"[DEBUG] Empty EEG buffer, waiting for data...")
                 
@@ -314,7 +297,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                         focus_score = FOCUS_SCORES.get(predicted_label, 0.5)
                         
                         # Store data point
-                        current_time = datetime.now().strftime('%H:%M:%S')
+                        current_time = timezone.now().strftime('%H:%M:%S')
                         data_points.append({
                             'timestamp': current_time,
                             'focus_state': predicted_label,
@@ -404,7 +387,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                                         'beta': normalize_with_fixed_scale(current_waves['beta'], 'beta'),
                                         'gamma': normalize_with_fixed_scale(current_waves['gamma'], 'gamma')
                                     },
-                                    'last_updated': timezone.now().strftime("%H:%M:%S")
+                                    'last_updated': timezone.localtime(timezone.now()).strftime("%H:%M:%S")
                                 }
                                 
                                 # Debug: Show scaling results
@@ -435,7 +418,6 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 time.sleep(1.0)  # Process every second
                 
             except Exception as e:
-                print(f"Error in processing loop: {e}")
                 time.sleep(1.0)
                 continue
         
@@ -444,7 +426,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         streamer.stop_recording()
         
         # Calculate session summary
-        actual_end_time = datetime.now()
+        actual_end_time = timezone.now()
         total_duration = (actual_end_time - start_time).total_seconds()
         
         # Initialize state_counts to ensure it's available in all code paths
@@ -453,11 +435,9 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             if label in state_counts:
                 state_counts[label] += 0.5  # Each window represents 0.5 seconds
         
-        print(f"[DEBUG] State counts: {state_counts}")
         
         # Calculate statistics - NO DUMMY FALLBACKS
         if not all_session_labels:
-            print(f"[ERROR] No data captured during session - all_session_labels is empty!")
             avg_focus = 0.0
             peak_focus = 0.0
         else:
@@ -472,21 +452,12 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 # Weighted calculation: (state_seconds × state_value) summed, then divided by total_time
                 total_focus_points = (relaxed_seconds * 2) + (neutral_seconds * 5) + (concentrating_seconds * 10)
                 avg_focus = (total_focus_points / total_time)
-            # Let's debug what went wrong
-            if len(data_points) == 0:
-                print(f"[ERROR] No data points were created - predictions likely failed")
-            else:
-                print(f"[DEBUG] Data points exist but labels empty - checking window_labels...")
-                for i, point in enumerate(data_points[:3]):  # Check first 3 points
-                    print(f"[DEBUG] Point {i}: {point}")
         
         # Count time spent in each state based on accumulated session labels (each window = 0.5 seconds)
         state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
         for label in all_session_labels:
             if label in state_counts:
                 state_counts[label] += 0.5  # Each window represents 0.5 seconds
-        
-        print(f"[DEBUG] State counts: {state_counts}")
         
         # Calculate statistics based on accumulated session labels - NO DUMMY FALLBACKS
         
@@ -511,34 +482,18 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         else:
             peak_focus_score = 2.0
         
-        print(f"[DEBUG] Peak Focus: {longest_streak_seconds:.1f}s streak → {peak_focus_score:.1f}/10 score")
-        
         # Update peak_focus to use the new calculation
         peak_focus = peak_focus_score
         lfocus_streak = longest_streak_seconds
         
         # Collect all window labels for proper statistics
-        print(f"[DEBUG] Total session labels: {len(all_session_labels)}")
-        print(f"[DEBUG] Session labels breakdown: {dict(pd.Series(all_session_labels).value_counts())}")
-        print(f"[DEBUG] Data points collected: {len(data_points)}")
         
         # Debug state switch calculation
         switch_count = state_switch_count(all_session_labels) if all_session_labels else 0
-        if not all_session_labels:
-            print(f"[DEBUG] No session labels for switch counting")
         
         # Debug focus latency calculation
         latency_windows = focus_latency(all_session_labels) if all_session_labels else 0
         latency = latency_windows * 0.5
-        print(f"[DEBUG] Focus latency: {latency_windows} windows × 0.5s = {latency:.1f}s")
-        if all_session_labels and len(all_session_labels) > 0:
-            first_concentrating_idx = next((i for i, label in enumerate(all_session_labels) if label.strip().lower() == 'concentrating'), None)
-            if first_concentrating_idx is not None:
-                print(f"[DEBUG] First concentrating at window {first_concentrating_idx} (time: {first_concentrating_idx * 0.5:.1f}s)")
-            else:
-                print(f"[DEBUG] No concentrating states found in session")
-        else:
-            print(f"[DEBUG] No session labels for latency calculation")
 
         # Convert to seconds - NO DUMMY FALLBACKS
         relaxed_seconds = state_counts.get('relaxed', 0)
@@ -548,13 +503,11 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         # Sanity check: ensure calculated state seconds don't exceed total duration
         calculated_total = relaxed_seconds + neutral_seconds + concentrating_seconds
         if calculated_total > total_duration * 1.1:  # Allow 10% tolerance
-            print(f"[WARNING] Calculated state time ({calculated_total}s) exceeds session duration ({total_duration}s)")
             # Scale proportionally to fit total duration
             scale_factor = total_duration / calculated_total
             relaxed_seconds *= scale_factor
             neutral_seconds *= scale_factor
             concentrating_seconds *= scale_factor
-            print(f"[DEBUG] Scaled to fit duration - Relaxed: {relaxed_seconds:.1f}, Neutral: {neutral_seconds:.1f}, Concentrating: {concentrating_seconds:.1f}")
         
         # Final seconds calculated
         
@@ -629,7 +582,6 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         }
         
     except Exception as e:
-        print(f"Error in real-time inference: {e}")
         return {
             'status': 'error',
             'session_id': session_id if 'session_id' in locals() else 'unknown',
@@ -644,13 +596,7 @@ def save_session_summary(summary_data):
     """Save session summary to database"""
     from secondBrain_App.models import UserProfile, SessionSummary
     try:
-        print(f"[DB] Attempting to save session summary for: {summary_data['session_id']}")
-        print(f"[DB] User email: {summary_data['user_email']}")
-        print(f"[DB] Data points count: {summary_data['data_points_count']}")
-        print(f"[DB] Neutral seconds: {summary_data['neutral_seconds']}")
-        
         user_profile = UserProfile.objects.get(email=summary_data['user_email'])
-        print(f"[DB] Found user profile: {user_profile.email}")
 
         session_summary = SessionSummary.objects.create(
             session_id              = summary_data['session_id'],
@@ -666,41 +612,28 @@ def save_session_summary(summary_data):
             relaxed_seconds         = summary_data['relaxed_seconds'],
             neutral_seconds         = summary_data['neutral_seconds'],
             concentrating_seconds   = summary_data['concentrating_seconds'],
-            longest_focus_streak    = summary_data.get('longest_focus_streak', 0.0),
-            focus_latency           = summary_data.get('focus_latency', 0.0),
-            state_switch_count      = summary_data.get('state_switch_count', 0),
-            avg_confidence         = summary_data.get('avg_confidence', 0.0),
-            data_points_count       = summary_data['data_points_count']
+            data_points_count       = summary_data['data_points_count'],
+            longest_focus_streak    = summary_data['longest_focus_streak'],
+            focus_latency           = summary_data['focus_latency'],
+            state_switch_count      = summary_data['state_switch_count']
         )
-
-        print(f"[SESSION] Summary saved successfully: {session_summary.session_id}")
-        print(f"[SESSION] SessionSummary ID: {session_summary.id}")
-
-        # ---- STEP 1: Update MySQL user_summary table ----──
-        try:
-            from core_engine.recommendation.user_summary import main as update_summary
-            update_summary(user_id=summary_data['user_email'])
-            print(f"[SUMMARY] user_summary table updated")
-        except Exception as e:
-            print(f"[SUMMARY ERROR] {e}")
         
-        # ---- CRITICAL: Ensure UI gets completion signal even if summary fails ----
+        # Update user summary (if table exists)
         try:
-            from django.core.cache import cache
-            import time
-            
+            from core_engine.recommendation.user_summary import update_summary
+            update_summary(user_id=summary_data['user_email'])
+        except Exception as e:
+            pass
+        
+        # Update live status cache
+        try:
             cache.set(f"live_status_{summary_data['user_email']}", "completed", timeout=300)
-            print(f"[STATUS] Live status set to 'completed' for {summary_data['user_email']}")
             
-            # Wait 13 seconds before cleaning up live brainwave cache
-            time.sleep(13)
-            
-            # Clean up live brainwave cache to hide live brainwave box
+            # Clean up live brainwave cache
             cache.delete(f"live_eeg_stream_{summary_data['user_email']}")
-            print(f"[CACHE] Cleaned up live brainwave cache for {summary_data['user_email']}")
             
         except Exception as e:
-            print(f"[STATUS ERROR] Failed to set live status: {e}")
+            pass
 
         # ── STEP 2: Generate recommendation using updated summary ──
         try:
@@ -741,7 +674,38 @@ def save_session_summary(summary_data):
             }, timeout=3600)  # store for 1 hour
 
         except Exception as e:
-            print(f"[RECOMMENDATION ERROR] {e}")
+            pass
+
+        # ── STEP 3: Save recommendation to database (if recommendation engine is available) ──
+        try:
+            from core_engine.recommendation.recommendation import save_recommendation
+            from sqlalchemy import create_engine, text
+            import uuid
+            
+            # Database connection
+            DB_USER = os.getenv('DB_USER', 'root')
+            DB_PASSWORD = os.getenv('DB_PASSWORD', 'password')
+            DB_HOST = os.getenv('DB_HOST', 'localhost')
+            DB_PORT = os.getenv('DB_PORT', '3306')
+            DB_NAME = os.getenv('DB_NAME', 'secondbrain')
+            
+            DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+            engine = create_engine(DATABASE_URL, echo=False)
+            
+            with engine.connect() as conn:
+                save_recommendation(
+                    db=conn,
+                    user_id=summary_data['user_email'],
+                    session_id=summary_data['session_id'],
+                    inference_id=summary_data.get('task_id', 'unknown'),
+                    category='general',
+                    stimulus='study_tip',
+                    trigger='session_end',
+                    message=recommendation_text
+                )
+        
+        except Exception as e:
+            pass
 
         return session_summary
 

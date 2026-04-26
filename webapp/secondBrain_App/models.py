@@ -65,22 +65,6 @@ class UserProfile(models.Model):
     class Meta:
         db_table = 'user_profile'
 
-class Prediction(models.Model):
-    prediction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    session_id = models.CharField(max_length=100)
-    predicted_label = models.CharField(max_length=50)
-    confidence = models.FloatField()
-    n_windows = models.IntegerField()
-    total_seconds = models.FloatField()
-    relaxed_seconds = models.FloatField()
-    neutral_seconds = models.FloatField()
-    concentrating_seconds = models.FloatField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'prediction'
-
 class SessionSummary(models.Model):
     session_id = models.CharField(max_length=100, unique=True)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
@@ -111,6 +95,7 @@ class PreSessionCheckIn(models.Model):
     check_in_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     session_id = models.CharField(max_length=100)
+    session_name = models.CharField(max_length=100, blank=True, null=True, help_text="User-provided session name")
     
     # Task and Study Context
     subject_task = models.CharField(max_length=50, choices=[
@@ -175,10 +160,10 @@ class PreSessionCheckIn(models.Model):
     ])
     
     # New Context Fields
-    current_noise = models.CharField(max_length=100, help_text="Current noise level/description")
-    lighting_conditions = models.CharField(max_length=100, help_text="Lighting conditions")
-    study_method = models.CharField(max_length=100, help_text="Study method/approach")
-    current_location = models.CharField(max_length=100, help_text="Current study location")
+    current_noise = models.CharField(max_length=100, help_text="Current noise level/description", blank=True, null=True)
+    lighting_conditions = models.CharField(max_length=100, help_text="Lighting conditions", blank=True, null=True)
+    study_method = models.CharField(max_length=100, help_text="Study method/approach", blank=True, null=True)
+    current_location = models.CharField(max_length=100, help_text="Current study location", blank=True, null=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -217,32 +202,7 @@ class UserFeedback(models.Model):
     overall_rating = models.IntegerField(null=True, blank=True)
     sentiment = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'user_feedback'
-
-class UserSummary(models.Model):
-    user = models.OneToOneField(
-        UserProfile, on_delete=models.CASCADE,
-        primary_key=True
-    )
-    total_sessions = models.IntegerField(default=0)
-    total_focus_time_minutes = models.FloatField(default=0)
-    average_focus_score = models.FloatField(default=0)
-    best_focus_score = models.FloatField(default=0)
-    optimal_focus_time_of_day = models.CharField(max_length=20, blank=True)
-    first_session_date = models.DateField(null=True, blank=True)
-    last_session_date = models.DateField(null=True, blank=True)
-    stimulus_used = models.CharField(max_length=200, blank=True)
-    recommendation_feedback = models.CharField(max_length=50, blank=True)
-    most_effective_stimulus = models.CharField(max_length=50, blank=True)
-    least_effective_stimulus = models.CharField(max_length=50, blank=True)
-    average_feedback_rating = models.IntegerField(default=0)
-    positive_feedback_count = models.IntegerField(default=0)
-    negative_feedback_count = models.IntegerField(default=0)
-    overall_sentiment_score = models.FloatField(default=0)
-    total_recommendations_rated = models.IntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'user_summary'
+        db_table = 'user_feedback'

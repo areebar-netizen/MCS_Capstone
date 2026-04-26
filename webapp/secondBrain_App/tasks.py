@@ -30,7 +30,7 @@ from .services.EEG_feature_extraction_adv import generate_feature_vectors_from_m
 from .services.enhanced_feature_extraction import load_preprocessing_artifacts, apply_feature_pipeline
 
 # Import Django models
-from secondBrain_App.models import UserProfile, Prediction
+from secondBrain_App.models import UserProfile, SessionSummary
 
 # Constants
 LABEL_MAP = {0: 'relaxed', 1: 'neutral', 2: 'concentrating'}
@@ -51,7 +51,8 @@ def run_live_inference(self, user_email, duration_minutes=1):
     """
     try:
         # Generate unique session info
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        from django.utils import timezone
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
         user_prefix = user_email.split('@')[0]
         raw_output_path = ROOT / 'dataset' / 'our_data' / f'{user_prefix}_new' / f'{user_prefix}_{timestamp}_session.csv'
         
@@ -230,31 +231,41 @@ def aggregate_predictions(predictions, user_email, session_id):
         'focus_latency': focus_latency(window_labels) * 0.5,
         'state_switch_count': state_switch_count(window_labels),
         'confidence': avg_confidence,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': timezone.now().isoformat()
     }
 
 
 def save_prediction_to_db(result, user_email):
-    """Save prediction results to database."""
+    """Save prediction results to database using SessionSummary."""
     try:
         # Get user profile
         user_profile = UserProfile.objects.get(email=user_email)
         
-        # Create prediction record
-        prediction = Prediction.objects.create(
-            user=user_profile,
+        # Create or update SessionSummary record
+        session_summary, created = SessionSummary.objects.update_or_create(
             session_id=result['session_id'],
-            predicted_label=result['predicted_label'],
-            confidence=result['confidence'],
-            n_windows=result['n_windows'],
-            total_seconds=result['total_seconds'],
-            relaxed_seconds=result['relaxed_seconds'],
-            neutral_seconds=result['neutral_seconds'],
-            concentrating_seconds=result['concentrating_seconds']
+            defaults={
+                'user': user_profile,
+                'csv_file_path': result.get('csv_file_path', ''),
+                'start_time': result.get('start_time', timezone.now()),
+                'end_time': result.get('end_time', timezone.now()),
+                'session_date': result.get('start_time', timezone.now()).date(),
+                'total_duration_seconds': result['total_seconds'],
+                'average_focus_score': result.get('focus_score', 0.5),
+                'peak_focus_score': result.get('peak_focus_score', 0.5),
+                'relaxed_seconds': result['relaxed_seconds'],
+                'neutral_seconds': result['neutral_seconds'],
+                'concentrating_seconds': result['concentrating_seconds'],
+                'data_points_count': result['n_windows'],
+                'longest_focus_streak': result.get('focus_streak', 0.0),
+                'focus_latency': result.get('focus_latency', 0.0),
+                'state_switch_count': result.get('state_switch_count', 0),
+                'avg_confidence': result.get('confidence', 0.0)
+            }
         )
         
-        print(f"Saved prediction to database: {prediction.prediction_id}")
-        return prediction
+        print(f"Saved session summary to database: {session_summary.session_id}")
+        return session_summary
         
     except UserProfile.DoesNotExist:
         print(f"User profile not found for email: {user_email}")

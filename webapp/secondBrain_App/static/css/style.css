@@ -185,53 +185,207 @@ body {
 }
 
 /* Focus Track Setup */
-.focus-track-setup .duration-section {
-    margin-bottom: 2rem;
+.focus-track-setup {
+    border-radius: 24px;
+    border-color: rgba(255, 145, 104, 0.85);
 }
 
-.section-title {
-    font-size: 1.125rem;
+.focus-track-setup .card-header {
+    margin-bottom: 0.5rem;
+}
+
+.focus-track-setup .card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 1.25rem;
     font-weight: 600;
-    margin-bottom: 1rem;
-    color: #000000;
+    line-height: 1.1;
 }
 
-.duration-grid {
+.focus-track-setup .card-title::before {
+    content: "";
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid #ff9182;
+    box-shadow: inset 0 0 0 8px rgba(255, 145, 130, 0.08);
+}
+
+.focus-track-setup .card-subtitle:empty {
+    display: none;
+}
+
+.focus-setup-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.focus-label,
+.focus-track-setup .section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #131313;
+    margin: 0;
+}
+
+.focus-text-input {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 145, 104, 0.7);
+    background: rgba(255, 255, 255, 0.48);
+    color: #121212;
+    font-size: 0.9rem;
+    padding: 0 1rem;
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.focus-text-input::placeholder {
+    color: rgba(20, 20, 20, 0.5);
+}
+
+.focus-text-input:focus {
+    border-color: #ff8f70;
+    box-shadow: 0 0 0 3px rgba(255, 145, 104, 0.2);
+}
+
+.focus-track-setup .duration-section {
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.focus-track-setup .duration-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
 }
 
-.duration-btn {
-    padding: 0.75rem;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    border-radius: 0.5rem;
-    background: #F6F2F0;
-    color: #000000;
-    font-weight: 500;
+.focus-track-setup .duration-option-wrap {
+    position: relative;
+}
+
+.focus-track-setup .duration-tag {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: #19c254;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.focus-track-setup .duration-btn {
+    width: 100%;
+    height: 52px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 145, 104, 0.8);
+    background: rgba(255, 255, 255, 0.48);
+    color: #121212;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.duration-btn.btn-selected {
-    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34));
-    border-color: #FF9168;
+.focus-track-setup .duration-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(255, 145, 104, 0.12);
 }
 
-.duration-btn.btn-deselected:hover {
-    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34));
-    border-color: rgba(254, 147, 140, 0.8);
+.focus-track-setup .duration-btn.btn-selected {
+    background: linear-gradient(90deg, #fe938c 0%, rgba(254, 147, 140, 0.34) 100%);
+    color: #ffffff;
+    border-color: transparent;
 }
 
-.duration-btn.btn-deselected {
-    background: white;
-    border-color: rgba(254, 147, 140, 0.8);
+.focus-track-setup .duration-btn.btn-deselected {
+    background: rgba(255, 255, 255, 0.48) !important;
+    border: 1px solid rgba(255, 145, 104, 0.8) !important;
+    color: #121212 !important;
+}
+
+.focus-track-setup .focus-continue-btn {
+    margin-top: 0.5rem;
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #fe938c 0%, rgba(254, 147, 140, 0.34) 100%);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.focus-track-setup .focus-continue-arrow {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.focus-track-setup .focus-note {
+    margin-top: 0.35rem;
+    border: 1px solid rgba(255, 145, 104, 0.6);
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    color: #1b1b1b;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.focus-track-setup .focus-note p {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.focus-track-setup .focus-note-icon {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: rgba(255, 145, 104, 0.95);
 }
 
 .session-controls {
     display: flex;
     justify-content: center;
     margin-top: 2rem;
+}
+
+@media (max-width: 900px) {
+    .focus-track-setup .card-title {
+        font-size: 1.1rem;
+    }
+
+    .focus-label,
+    .focus-track-setup .section-title {
+        font-size: 0.85rem;
+    }
+
+    .focus-text-input,
+    .focus-track-setup .duration-btn {
+        font-size: 0.85rem;
+        height: 44px;
+    }
+
+    .focus-track-setup .focus-continue-btn {
+        font-size: 0.9rem;
+        height: 48px;
+    }
+
+    .focus-track-setup .focus-note p {
+        font-size: 0.78rem;
+    }
 }
 
 /* Base Style for all Onboarding Buttons */

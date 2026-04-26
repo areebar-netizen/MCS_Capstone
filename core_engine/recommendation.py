@@ -34,8 +34,9 @@ except Exception:
 # ── Django model imports ──────────────────────────────────────
 from secondBrain_App.models import (
     UserProfile, SessionSummary, Recommendation,
-    UserFeedback, UserSummary
+    UserFeedback
 )
+from django.db import models
 from google import genai
 
 API_KEY = os.getenv("GEMINI_API_KEY")
@@ -45,8 +46,8 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 # HELPER
 # ============================================================
 def get_time_of_day():
-    from datetime import datetime
-    hour = datetime.now().hour
+    from django.utils import timezone
+    hour = timezone.localtime(timezone.now()).hour
     if hour < 12:   return 'morning'
     elif hour < 17: return 'afternoon'
     else:           return 'evening'
@@ -96,13 +97,33 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
                     print(f"[REC] SessionSummary not found for {session_id} after {max_retries} attempts — using fallback")
                     return _fallback_recommendation(final_summary)
 
-        # ── Get user summary ──────────────────────────────────
-        try:
-            user_summary   = UserSummary.objects.get(user=user_profile)
-            total_sessions = user_summary.total_sessions
-        except UserSummary.DoesNotExist:
-            total_sessions = 0
-            user_summary   = None
+        # ── Get user summary from SessionSummary ───────────────
+        total_sessions = SessionSummary.objects.filter(user=user_profile).count()
+        
+        # Calculate aggregates from SessionSummary
+        user_summary_data = {
+            'total_sessions': total_sessions,
+            'average_focus_score': 0,
+            'best_focus_score': 0,
+            'most_effective_stimulus': 'lo_fi',
+            'least_effective_stimulus': 'none',
+            'optimal_focus_time_of_day': 'morning',
+            'average_feedback_rating': 0,
+            'overall_sentiment_score': 0
+        }
+        
+        if total_sessions > 0:
+            sessions = SessionSummary.objects.filter(user=user_profile)
+            avg_focus = sessions.aggregate(models.Avg('average_focus_score'))['average_focus_score__avg'] or 0
+            best_focus = sessions.aggregate(models.Max('peak_focus_score'))['peak_focus_score__max'] or 0
+            user_summary_data['average_focus_score'] = avg_focus
+            user_summary_data['best_focus_score'] = best_focus
+        
+        # Get feedback aggregates
+        feedbacks = UserFeedback.objects.filter(user=user_profile)
+        if feedbacks.exists():
+            avg_rating = feedbacks.aggregate(models.Avg('overall_rating'))['overall_rating__avg'] or 0
+            user_summary_data['average_feedback_rating'] = avg_rating
 
         print(f"[REC] User has {total_sessions} sessions — Phase {'1' if total_sessions <= 5 else '2'}")
 
@@ -112,7 +133,7 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
         else:
             return _phase2_llm(
                 user_profile, session,
-                user_summary, user_email,
+                user_summary_data, user_email,
                 final_summary
             )
 
@@ -182,7 +203,7 @@ RESPOND WITH:
 # ============================================================
 # PHASE 2 — Sessions 6+
 # ============================================================
-def _phase2_llm(user_profile, session, user_summary, user_email, final_summary):
+def _phase2_llm(user_profile, session, user_summary_data, user_email, final_summary):
     """Phase 2 LLM recommendation using full history and feedback."""
     client = genai.Client(api_key=API_KEY)
 
@@ -255,14 +276,14 @@ RESPOND WITH:
         relax        = relaxed_seconds,
         duration     = round(session.total_duration_seconds / 60, 1),
         time_of_day  = get_time_of_day(),
-        sessions     = user_summary.total_sessions,
-        hist_focus   = user_summary.average_focus_score,
-        best_focus   = user_summary.best_focus_score,
-        best_stim    = user_summary.most_effective_stimulus  or 'lo_fi',
-        worst_stim   = user_summary.least_effective_stimulus or 'none',
-        opt_time     = user_summary.optimal_focus_time_of_day,
-        avg_rating   = user_summary.average_feedback_rating,
-        sentiment    = user_summary.overall_sentiment_score,
+        sessions     = user_summary_data['total_sessions'],
+        hist_focus   = user_summary_data['average_focus_score'],
+        best_focus   = user_summary_data['best_focus_score'],
+        best_stim    = user_summary_data['most_effective_stimulus'],
+        worst_stim   = user_summary_data['least_effective_stimulus'],
+        opt_time     = user_summary_data['optimal_focus_time_of_day'],
+        avg_rating   = user_summary_data['average_feedback_rating'],
+        sentiment    = user_summary_data['overall_sentiment_score'],
         last_rating  = last_overall_rating,
         last_sent    = last_sentiment
     )

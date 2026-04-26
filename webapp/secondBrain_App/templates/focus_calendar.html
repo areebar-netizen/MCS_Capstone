@@ -6,7 +6,7 @@
     </div>
     
     <div class="card-content">
-        <div class="calendar-grid">
+        <div class="calendar-grid" data-current-month="{{ current_month }}" data-current-year="{{ current_year }}">
             <!-- Calendar Header -->
             <div class="calendar-header">
                 <button class="nav-btn" id="prevMonth" data-month="{{ prev_month }}" data-year="{{ prev_year }}">&lt;</button>
@@ -52,7 +52,7 @@
                 <span class="stat-label">Sessions This Month</span>
             </div>
             <div class="summary-stat">
-                <span class="stat-value">{{ avg_focus_10_point|floatformat:1 }}</span>
+                <span class="stat-value">{{ avg_focus_10_point|floatformat:1 }}%</span>
                 <span class="stat-label">Avg Focus</span>
             </div>
             <div class="summary-stat">
