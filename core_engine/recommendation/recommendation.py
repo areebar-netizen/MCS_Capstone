@@ -29,7 +29,8 @@ SessionLocal = sessionmaker(bind=engine)
 # 2. USER DEFINED FUNCTIONS
 
 def get_time_of_day():
-    hour = datetime.now().hour
+    from django.utils import timezone
+    hour = timezone.localtime(timezone.now()).hour
     if hour < 12:   return 'morning'
     elif hour < 17: return 'afternoon'
     else:           return 'evening'
@@ -59,8 +60,9 @@ def rotate_stimulus(available, last_stimulus):
 
 def save_recommendation(db, user_id, session_id, inference_id,
                         category, stimulus, trigger, message):
+    from django.utils import timezone
     rec_id = str(uuid.uuid4())
-    now    = datetime.utcnow()
+    now    = timezone.now()
 
     query = text("""
         INSERT INTO recommendation (

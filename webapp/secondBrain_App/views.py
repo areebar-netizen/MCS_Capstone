@@ -18,7 +18,7 @@ from .tasks_realtime import run_live_inference_streaming
 from django.views.decorators.csrf import csrf_exempt
 import csv
 
-from .models import UserProfile, Recommendation, Prediction, SessionSummary
+from .models import UserProfile, Recommendation, SessionSummary
 from .services.eeg_service import EEGService
 
 # Create your views here.
@@ -54,24 +54,39 @@ def calendar_view(request):
         current_year = requested_year
     except (ValueError, TypeError):
         # Default to current date if parameters are invalid or missing
-        now = datetime.now()
+        now = timezone.localtime(timezone.now())  # Use local timezone
         current_month = now.month
         current_year = now.year
     
     # Query SessionSummary for current user and requested month/year
+    # Note: Database times are UTC, so we need to get a range that covers the local month
+    from datetime import datetime, timedelta
+    
+    # Convert local month/year to UTC range for query
+    # Create the month boundaries in local timezone, then convert to UTC
+    month_start_local = datetime(current_year, current_month, 1, 0, 0, 0)
+    month_start = timezone.make_aware(month_start_local)
+    
+    if current_month == 12:
+        month_end_local = datetime(current_year + 1, 1, 1, 0, 0, 0)
+    else:
+        month_end_local = datetime(current_year, current_month + 1, 1, 0, 0, 0)
+    month_end = timezone.make_aware(month_end_local)
+    
     sessions = SessionSummary.objects.filter(
         user=user_profile,
-        start_time__year=current_year,
-        start_time__month=current_month
+        start_time__gte=month_start,
+        start_time__lt=month_end
     ).order_by('start_time')
     
-    # Create session data mapping by day
+    # Create session data mapping by day (using local timezone)
     session_data_by_day = {}
     for session in sessions:
-        day = session.start_time.day
+        local_time = timezone.localtime(session.start_time)
+        day = local_time.day
         
-        # Calculate focus percentage using 0-1 scale: score * 100
-        focus_percentage = session.average_focus_score * 100
+        # Calculate focus percentage from 2-10 scale to 0-100% for image mapping
+        focus_percentage = (session.average_focus_score / 10) * 100
         
         # If multiple sessions on same day, keep the one with highest focus score
         if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
@@ -86,6 +101,8 @@ def calendar_view(request):
             }
     
     # Generate calendar weeks using calendar.monthcalendar(year, month)
+    # Set Sunday as first day of week to match typical calendar display
+    calendar.setfirstweekday(calendar.SUNDAY)
     cal = calendar.monthcalendar(current_year, current_month)
     calendar_weeks = []
     
@@ -217,24 +234,39 @@ def calendar_api_data(request):
         current_year = requested_year
     except (ValueError, TypeError):
         # Default to current date if parameters are invalid or missing
-        now = datetime.now()
+        now = timezone.now()
         current_month = now.month
         current_year = now.year
     
     # Query SessionSummary for current user and requested month/year
+    # Note: Database times are UTC, so we need to get a range that covers the local month
+    from datetime import datetime, timedelta
+    
+    # Convert local month/year to UTC range for query
+    # Create the month boundaries in local timezone, then convert to UTC
+    month_start_local = datetime(current_year, current_month, 1, 0, 0, 0)
+    month_start = timezone.make_aware(month_start_local)
+    
+    if current_month == 12:
+        month_end_local = datetime(current_year + 1, 1, 1, 0, 0, 0)
+    else:
+        month_end_local = datetime(current_year, current_month + 1, 1, 0, 0, 0)
+    month_end = timezone.make_aware(month_end_local)
+    
     sessions = SessionSummary.objects.filter(
         user=user_profile,
-        start_time__year=current_year,
-        start_time__month=current_month
+        start_time__gte=month_start,
+        start_time__lt=month_end
     ).order_by('start_time')
     
-    # Create session data mapping by day
+    # Create session data mapping by day (using local timezone)
     session_data_by_day = {}
     for session in sessions:
-        day = session.start_time.day
+        local_time = timezone.localtime(session.start_time)
+        day = local_time.day
         
-        # Calculate focus percentage using 0-1 scale: score * 100
-        focus_percentage = session.average_focus_score * 100
+        # Calculate focus percentage from 2-10 scale to 0-100% for image mapping
+        focus_percentage = (session.average_focus_score / 10) * 100
         
         # If multiple sessions on same day, keep the one with highest focus score
         if day not in session_data_by_day or session.average_focus_score > session_data_by_day[day]['average_focus_score']:
@@ -249,6 +281,8 @@ def calendar_api_data(request):
             }
     
     # Generate calendar weeks using calendar.monthcalendar(year, month)
+    # Set Sunday as first day of week to match typical calendar display
+    calendar.setfirstweekday(calendar.SUNDAY)
     cal = calendar.monthcalendar(current_year, current_month)
     calendar_weeks = []
     
@@ -303,7 +337,8 @@ def calendar_api_data(request):
     avg_focus = 0
     if sessions_count > 0:
         avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
-        avg_focus_10_point = avg_focus * 10  # Scale to 10-point display (0-1 to 0-10)
+        # Convert from 2-10 scale to 0-100% for display
+        avg_focus_10_point = (avg_focus * 10)  # 2-10 scale becomes 20-100%
     else:
         avg_focus_10_point = 0
     
@@ -370,15 +405,22 @@ def study_time_api_data(request):
     from django.db.models import Sum, Count
     from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, Extract
     
-    now = datetime.now()
+    now = timezone.now()
     
     if scale == 'week':
-        # Get data for current week (last 7 days)
-        start_date = now - timedelta(days=6)
+        # Get data for current week (last 7 days) - use local timezone
+        start_date = timezone.localtime(now) - timedelta(days=6)
+        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = timezone.localtime(now).replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        # Convert to UTC for database query
+        start_date_utc = timezone.make_aware(start_date.replace(tzinfo=None))
+        end_date_utc = timezone.make_aware(end_date.replace(tzinfo=None))
+        
         sessions = SessionSummary.objects.filter(
             user=user_profile,
-            start_time__gte=start_date,
-            start_time__lte=now
+            start_time__gte=start_date_utc,
+            start_time__lte=end_date_utc
         ).annotate(
             date=TruncDay('start_time')
         ).values('date').annotate(
@@ -391,7 +433,9 @@ def study_time_api_data(request):
         
         for i in range(7):
             date = start_date + timedelta(days=i)
-            day_sessions = [s for s in sessions if s['date'].date() == date.date()]
+            # Convert date to UTC for comparison with database dates
+            date_utc = timezone.make_aware(datetime.combine(date.date(), datetime.min.time()))
+            day_sessions = [s for s in sessions if s['date'].date() == date_utc.date()]
             total_seconds = day_sessions[0]['total_seconds'] if day_sessions else 0
             week_data.append({
                 'label': day_names[i],
@@ -408,11 +452,18 @@ def study_time_api_data(request):
         best_day = day_names[best_day_idx] if week_data[best_day_idx]['seconds'] > 0 else 'None'
         
     elif scale == 'month':
-        # Get data for current month grouped by week
+        # Get data for current month grouped by week - use local timezone
+        local_now = timezone.localtime(now)
+        month_start = timezone.make_aware(datetime(local_now.year, local_now.month, 1))
+        if local_now.month == 12:
+            month_end = timezone.make_aware(datetime(local_now.year + 1, 1, 1))
+        else:
+            month_end = timezone.make_aware(datetime(local_now.year, local_now.month + 1, 1))
+        
         sessions = SessionSummary.objects.filter(
             user=user_profile,
-            start_time__year=now.year,
-            start_time__month=now.month
+            start_time__gte=month_start,
+            start_time__lt=month_end
         ).annotate(
             week=TruncWeek('start_time')
         ).values('week').annotate(
@@ -425,10 +476,10 @@ def study_time_api_data(request):
         
         # Map sessions to week indices
         for session in sessions:
-            # Calculate week of month (0-3)
-            week_start = session['week'].date()
-            month_start = datetime(now.year, now.month, 1).date()
-            week_index = (week_start - month_start).days // 7
+            # Calculate week of month (0-3) using local timezone
+            week_start = timezone.localtime(session['week']).date()
+            month_start_local = month_start.date()
+            week_index = (week_start - month_start_local).days // 7
             if 0 <= week_index <= 3:  # Ensure we don't exceed 4 weeks
                 week_seconds[week_index] = session['total_seconds'] or 0
         
@@ -443,8 +494,8 @@ def study_time_api_data(request):
         total_seconds = sum(item['seconds'] for item in month_data)
         active_days = SessionSummary.objects.filter(
             user=user_profile,
-            start_time__year=now.year,
-            start_time__month=now.month
+            start_time__gte=month_start,
+            start_time__lt=month_end
         ).values('start_time__date').distinct().count()
         daily_avg = total_seconds / active_days if active_days > 0 else 0
         
@@ -453,10 +504,15 @@ def study_time_api_data(request):
         best_day = f'Week {best_week_idx + 1}' if month_data[best_week_idx]['seconds'] > 0 else 'None'
         
     else:  # year
-        # Get data for current year grouped by month
+        # Get data for current year grouped by month - use local timezone
+        local_now = timezone.localtime(now)
+        year_start = timezone.make_aware(datetime(local_now.year, 1, 1))
+        year_end = timezone.make_aware(datetime(local_now.year + 1, 1, 1))
+        
         sessions = SessionSummary.objects.filter(
             user=user_profile,
-            start_time__year=now.year
+            start_time__gte=year_start,
+            start_time__lt=year_end
         ).annotate(
             month=TruncMonth('start_time')
         ).values('month').annotate(
@@ -470,7 +526,7 @@ def study_time_api_data(request):
         # Create data for all 12 months
         month_seconds = {i: 0 for i in range(1, 13)}
         for session in sessions:
-            month = session['month'].month
+            month = timezone.localtime(session['month']).month
             month_seconds[month] = session['total_seconds'] or 0
         
         for i in range(1, 13):
@@ -484,13 +540,14 @@ def study_time_api_data(request):
         
         # For year view, calculate daily average based on days passed in current year
         from datetime import date
-        year_start = date(now.year, 1, 1)
-        days_passed = (now.date() - year_start).days + 1  # +1 to include current day
+        year_start_local = date(local_now.year, 1, 1)
+        days_passed = (local_now.date() - year_start_local).days + 1  # +1 to include current day
         
         # Use actual active days if they exist, otherwise use days passed
         active_days = SessionSummary.objects.filter(
             user=user_profile,
-            start_time__year=now.year
+            start_time__gte=year_start,
+            start_time__lt=year_end
         ).values('start_time__date').distinct().count()
         
         daily_avg = total_seconds / active_days if active_days > 0 else total_seconds / days_passed
@@ -580,12 +637,8 @@ def send_otp(request):
                 recipient_list,
                 fail_silently=False,
             )
-            print(f"OTP email sent successfully to {email}")
         except Exception as e:
-            print(f"Failed to send OTP email: {e}")
-            # For development, you might want to still show the OTP in console
-            print(f"DEBUG: OTP for {email} is {otp_code}")
-            # In production, you might want to handle this differently
+            pass
             # For now, we'll continue with the flow even if email fails
         
         # Redirect to OTP verification page
@@ -1002,7 +1055,7 @@ def dashboard_view(request):
         current_year = requested_year
     except (ValueError, TypeError):
         # Default to current date if parameters are invalid or missing
-        now = datetime.now()
+        now = timezone.now()
         current_month = now.month
         current_year = now.year
     
@@ -1042,6 +1095,8 @@ def dashboard_view(request):
         }
     
     # Generate calendar weeks using calendar.monthcalendar(year, month)
+    # Set Sunday as first day of week to match typical calendar display
+    calendar.setfirstweekday(calendar.SUNDAY)
     cal = calendar.monthcalendar(current_year, current_month)
     calendar_weeks = []
     
@@ -1096,7 +1151,8 @@ def dashboard_view(request):
     avg_focus = 0
     if sessions_count > 0:
         avg_focus = sum(session.average_focus_score for session in sessions) / sessions_count
-        avg_focus_10_point = min(round(avg_focus, 1), 10.0)  # Already 0-10 scale, cap at 10
+        # Convert from 2-10 scale to 0-100% for display
+        avg_focus_10_point = min(round(avg_focus * 10, 1), 100.0)  # 2-10 scale becomes 20-100%, cap at 100%
     else:
         avg_focus_10_point = 0
     
@@ -1413,11 +1469,8 @@ def onboarding_view(request):
                     del request.session['onboarding_data']
                 request.session.modified = True
                 
-                print(f"User profile {'created' if created else 'updated'} for {user_email}")
-                
             except Exception as e:
-                print(f"Error saving user profile: {e}")
-                # Continue to dashboard even if save fails
+                pass
             
             return redirect('/dashboard/')
     
@@ -1465,24 +1518,23 @@ def prediction_view(request):
             return JsonResponse(result, status=400)
         
     except Exception as e:
-        print(f'Error in prediction view: {e}')
         return JsonResponse({'error': str(e)}, status = 500)
 
 @csrf_exempt
 def start_realtime_eeg_view(request):
     """Start real-time EEG inference with per-second streaming"""
-    print("Starting Real-time EEG Session")
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=400)
     
     try:
-        # Get duration from request
+        # Get duration and session_id from request
         data = json.loads(request.body) if request.body else {}
         duration = int(data.get('duration', 1))
+        session_id = data.get('session_id')  # Get session_id from pre-session check-in for linking
         
-        # Trigger real-time Celery task
-        task = run_live_inference_streaming.delay(user_email, duration)
+        # Trigger real-time Celery task with session_id
+        task = run_live_inference_streaming.delay(user_email, duration, session_id)
         
         # Store task ID in session
         request.session['current_eeg_task_id'] = task.id
@@ -1495,21 +1547,19 @@ def start_realtime_eeg_view(request):
             'message': 'Real-time EEG inference started',
             'task_id': task.id,
             'duration_minutes': duration,
+            'session_id': session_id,
             'session_type': 'realtime',
             'status': 'initializing'
         })
-
         
         
     except Exception as e:
-        print(f'Error starting real-time EEG task: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
 @csrf_exempt
 def stop_realtime_eeg_view(request):
     """Stop real-time EEG session and get final summary"""
-    print("Stopping Real-time EEG Session")
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
@@ -1566,7 +1616,6 @@ def stop_realtime_eeg_view(request):
             })
 
     except Exception as e:
-        print(f'Error stopping real-time EEG task: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -1587,11 +1636,6 @@ def get_realtime_eeg_status_view(request):
         
         # Get task status
         task_result = get_task_status(task_id)
-        
-        print(f"[VIEW] Session active: {is_active}")
-        print(f"[VIEW] Task status: {task_result['status']}")
-        print(f"[VIEW] Task ID: {task_id}")
-        
         # Get live prediction data from cache if session is active
         current_state = None
         confidence = None
@@ -1611,8 +1655,7 @@ def get_realtime_eeg_status_view(request):
                     confidence = cached_data.get('confidence')
                     focus_score = cached_data.get('focus_score')
             except Exception as e:
-                print(f"Cache error: {e}")
-        
+                pass
         # Determine session status for frontend
         if task_result['status'] == 'PENDING':
             # Check if we have cache data (session is actually running)
@@ -1638,7 +1681,6 @@ def get_realtime_eeg_status_view(request):
         })
         
     except Exception as e:
-        print(f'Error getting real-time EEG status: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -1650,17 +1692,8 @@ def get_latest_eeg_state_view(request):
     
     try:
         from django.core.cache import cache
-        # This must match the key in the worker exactly!
         cache_key = f"live_eeg_stream_{user_email}"
         data = cache.get(cache_key)
-        
-        # DEBUG: Show what we're looking for
-        print(f"[VIEW] Looking for cache key: {cache_key}")
-        print(f"[VIEW] Cache hit: {data is not None}")
-        if data:
-            print(f"[VIEW] Cache data: {data}")
-        
-        # Cache key debugging removed for cleaner logs
         
         if not data:
             return JsonResponse({'ok': False, 'status': 'idle', 'message': 'Waiting for worker...', 'cache_key': cache_key})
@@ -1670,7 +1703,6 @@ def get_latest_eeg_state_view(request):
         return JsonResponse(data)
             
     except Exception as e:
-        print(f'Error getting live brain data: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -1702,15 +1734,9 @@ def test_cache_view(request):
         
         # Write to cache
         cache.set(cache_key, test_data, timeout=10)
-        print(f"[TEST] SET cache key: {cache_key}")
-        print(f"[TEST] SET cache data: {test_data}")
         
-        # Read from cache
+        # Try to retrieve it
         retrieved_data = cache.get(cache_key)
-        print(f"[TEST] GET cache data found: {retrieved_data is not None}")
-        if retrieved_data:
-            print(f"[TEST] GET cache data: {retrieved_data}")
-        
         # Return the retrieved data
         if retrieved_data:
             return JsonResponse({
@@ -1727,14 +1753,12 @@ def test_cache_view(request):
             })
             
     except Exception as e:
-        print(f'[TEST] Error: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 EEGSERVICE = EEGService()  
 @csrf_exempt
 def start_live_eeg_view(request):
     """Start EEG inference as a Celery task"""
-    print("Starting EEG inference task")
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=400)
@@ -1764,13 +1788,11 @@ def start_live_eeg_view(request):
         })
         
     except Exception as e:
-        print(f'Error starting EEG task: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
 def stop_live_eeg_view(request):
     """Check EEG inference task status and return results"""
-    print("Checking EEG task status")
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
@@ -1822,7 +1844,6 @@ def stop_live_eeg_view(request):
             })
             
     except Exception as e:
-        print(f'Error checking EEG task status: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
@@ -1849,7 +1870,6 @@ def eeg_task_status_view(request):
         })
         
     except Exception as e:
-        print(f'Error checking task status: {e}')
         return JsonResponse({'error': str(e)}, status=500)
 
     
@@ -1872,22 +1892,18 @@ def upload_csv_view(request):
             return JsonResponse(result)
         
         except Exception as e:
-            print(f'Error processsing uploaded csv: {e}')
             return JsonResponse({'error': str(e)}, status=500)
     return render(request, 'upload_csv.html')
 
 def test_csv():
-    print("Running test_csv...")  # add this
-
     rows = []
     with open(r"C:\Users\binom\OneDrive\Desktop\KeystoneProject\MCS_Capstone\dataset\our_data\areeba_new\areeba_concentrating_3min.csv") as f:
         reader = csv.reader(f)
         next(reader)
+
         for row in reader:
             rows.append([float(x) for x in row])
-
     result = MODEL_SERVICE.run(rows)
-    print("RESULT:", result)
 
 def recommendation_view(request):
     """Fetch the latest recommendation for the user"""
@@ -1944,7 +1960,6 @@ def end_session(request):
             })
             
         except Exception as e:
-            print(f'Error creating stop signal: {e}')
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
@@ -1988,7 +2003,7 @@ def focus_track_history(request):
     elif filter_value == '7':
         # Last 7 Days
         from datetime import datetime, timedelta
-        seven_days_ago = datetime.now() - timedelta(days=7)
+        seven_days_ago = timezone.now() - timedelta(days=7)
         recent_sessions = SessionSummary.objects.filter(
             user=user_profile,
             start_time__gte=seven_days_ago
@@ -1996,7 +2011,7 @@ def focus_track_history(request):
     elif filter_value == '30':
         # Last 30 Days
         from datetime import datetime, timedelta
-        thirty_days_ago = datetime.now() - timedelta(days=30)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
         recent_sessions = SessionSummary.objects.filter(
             user=user_profile,
             start_time__gte=thirty_days_ago
@@ -2027,16 +2042,26 @@ def focus_track_history(request):
             user=user_profile,
             session=session
         ).order_by('-created_at')
-        print(f"[DEBUG] Session {session.id} ({session.session_id}) has {recommendations.count()} recommendations")
-        for rec in recommendations:
-            print(f"[DEBUG]   - Rec: {rec.recommendation_id}, session_id={rec.session_id}")
+        
+        # Try to get session_name from PreSessionCheckIn
+        try:
+            presession = PreSessionCheckIn.objects.filter(
+                user=user_profile,
+                session_id=session.session_id
+            ).first()
+            # Use session_name if available, otherwise fall back to task_id
+            display_name = presession.session_name if presession and presession.session_name else (
+                session.task_id if session.task_id else session.session_id.replace('_', ' ').title()
+            )
+        except Exception as e:
+            display_name = session.task_id if session.task_id else session.session_id.replace('_', ' ').title()
         
         session_data = {
             'id': session.id,
             'session_id': session.session_id,
-            'name': session.session_id.replace('_', ' ').title(),
-            'date': session.start_time.date(),
-            'time': session.start_time.strftime('%H:%M'),
+            'name': display_name,
+            'date': timezone.localtime(session.start_time).date(),
+            'time': timezone.localtime(session.start_time).strftime('%H:%M'),
             'duration': round(session.total_duration_seconds / 60, 1),  # Convert to minutes
             'focus_score': round(session.average_focus_score * 10, 1),  # Convert to 0-10 scale
             'peak_focus': round(session.peak_focus_score * 10, 1),
@@ -2074,10 +2099,153 @@ def calculate_aggregate_stats(sessions):
     
     avg_focus = 0
     if session_count > 0:
-        avg_focus = round((total_focus_score / session_count) * 10, 1)  # Convert to 0-10 scale
+        avg_focus = round((total_focus_score / session_count) * 10, 1)  # Convert from 2-10 scale to 0-100%
     
     return {
         'total_minutes': round(total_minutes, 1),
         'avg_focus': avg_focus,
-        'total_checkins': session_count
+        'session_count': session_count
     }
+
+
+@csrf_exempt
+def presession_checkin_view(request):
+    """Handle pre-session check-in questionnaire submission"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    if request.method == 'POST':
+        try:
+            from .models import UserProfile, PreSessionCheckIn
+            from datetime import datetime
+            from django.utils import timezone
+            
+            data = json.loads(request.body)
+            
+            # Get user profile
+            user_profile = UserProfile.objects.get(email=user_email)
+            
+            # Generate session_id if not provided
+            session_id = data.get('session_id') or f"{user_email}_{timezone.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            # Parse deadline if provided
+            assignment_deadline = None
+            deadline_val = data.get('assignment_deadline')
+            if deadline_val and deadline_val != '':
+                from django.utils import timezone
+                now = timezone.now()
+                if deadline_val == 'today':
+                    assignment_deadline = now.replace(hour=23, minute=59, second=59)
+                elif deadline_val == 'tomorrow':
+                    assignment_deadline = now + timezone.timedelta(days=1)
+                    assignment_deadline = assignment_deadline.replace(hour=23, minute=59, second=59)
+                elif deadline_val == 'this_week':
+                    assignment_deadline = now + timezone.timedelta(days=7)
+                elif deadline_val == 'next_week':
+                    assignment_deadline = now + timezone.timedelta(days=14)
+            
+            # Map mood emoji to model choice
+            mood_mapping = {
+                'Happy': 'Happy',
+                'Calm': 'Calm',
+                'Anxious': 'Anxious',
+                'Overwhelmed': 'Stressed',
+                'Motivated': 'Focused',
+                'Tired': 'Tired'
+            }
+            mood_emoji = mood_mapping.get(data.get('mood'), 'Neutral')
+            
+            # Map subject to model choice
+            subject_mapping = {
+                'Math/Problem-solving': 'Math',
+                'Reading/Comprehension': 'Reading',
+                'Writing/Essay': 'Writing',
+                'Note-taking': 'Studying',
+                'Memorization': 'Studying',
+                'Creative work': 'Creative Work',
+                'Coding/Technical': 'Coding',
+                'Other': 'Other'
+            }
+            subject_task = subject_mapping.get(data.get('subject'), 'Studying')
+            
+            # Map task length to model choice
+            task_length_mapping = {
+                '15-30 minutes': '15-30m',
+                '30-60 minutes': '30-60m',
+                '1-2 hours': '1-2h',
+                '2+ hours': '2h+'
+            }
+            estimated_length = task_length_mapping.get(data.get('tasklength'), '30-60m')
+            
+            # Map time since meal to model choice
+            meal_mapping = {
+                '<1 hour': '<1h',
+                '1-2 hours': '1-2h',
+                '2-4 hours': '2-4h',
+                '4+ hours': '4h+'
+            }
+            time_since_meal = meal_mapping.get(data.get('meal'), '1-2h')
+            
+            # Map caffeine to model choice
+            caffeine_mapping = {
+                'None': 'None',
+                '1 cup': '1 cup',
+                '2 cups': '2 cups',
+                '3-5 cups': '3-5 cups'
+            }
+            caffeine_intake = caffeine_mapping.get(data.get('caffeine'), 'None')
+            
+            # Map time since waking to model choice
+            wake_mapping = {
+                '<1 hour': '<1h',
+                '1-3 hours': '1-3h',
+                '3-6 hours': '3-6h',
+                '6+ hours': '6h+'
+            }
+            time_since_waking = wake_mapping.get(data.get('wake'), '1-3h')
+            
+            # Map physical activity to model choice
+            activity_mapping = {
+                'None': 'None',
+                'Light (walk)': 'Light',
+                'Moderate (jog)': 'Moderate',
+                'Intense (workout)': 'Intense'
+            }
+            physical_activity = activity_mapping.get(data.get('activity'), 'None')
+            
+            # Create PreSessionCheckIn record
+            checkin = PreSessionCheckIn.objects.create(
+                user=user_profile,
+                session_id=session_id,
+                session_name=data.get('session_name', ''),
+                subject_task=subject_task,
+                task_difficulty=int(data.get('difficulty', 5)),
+                estimated_length=estimated_length,
+                assignment_deadline=assignment_deadline,
+                session_goal=data.get('goal', ''),
+                energy_level=int(data.get('energy', 5)),
+                mood_emoji=mood_emoji,
+                stress_level=int(data.get('stress', 5)),
+                time_since_meal=time_since_meal,
+                caffeine_intake=caffeine_intake,
+                time_since_waking=time_since_waking,
+                physical_activity=physical_activity,
+                current_noise=data.get('noise', ''),
+                lighting_conditions=data.get('lighting', ''),
+                study_method=data.get('method', ''),
+                current_location=data.get('location', '')
+            )
+            
+            return JsonResponse({
+                'ok': True,
+                'session_id': session_id,
+                'checkin_id': str(checkin.check_in_id),
+                'message': 'Pre-session check-in saved successfully'
+            })
+            
+        except Exception as e:
+            pass
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

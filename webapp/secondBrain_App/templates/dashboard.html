@@ -37,7 +37,7 @@
         <!-- Live Brain State Card -->
         <div class="grid-row mt-4">
             <div class="col-span-12">
-                <div id="liveBrainStateCard" class="card shadow-sm border-0" style="background: #ffffff; border-radius: 15px; border-left: 5px solid #28a745; display: none;">
+                <div id="liveBrainStateCard" class="card shadow-sm border-0" style="background: #ffffff; border-radius: 15px; border-left: 5px solid #28a745; display: block;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="card-title mb-0" style="color: #28a745; font-weight: bold;">
@@ -128,6 +128,134 @@ function loadDemoData() {
     alert('Demo data loaded successfully!');
 }
 
+// Check for session start from focus_track_setup
+let sessionTimerInterval = null;
+let sessionRemainingSeconds = 0;
+let sessionElapsedSeconds = 0;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const startTimer = sessionStorage.getItem('start_timer');
+    const sessionDuration = sessionStorage.getItem('session_duration');
+    const sessionId = sessionStorage.getItem('session_id');
+    
+    if (startTimer === 'true' && sessionDuration) {
+        // Clear sessionStorage
+        sessionStorage.removeItem('start_timer');
+        sessionStorage.removeItem('session_name');
+        sessionStorage.removeItem('session_duration');
+        sessionStorage.removeItem('session_id');
+        // Start EEG session with timer and session_id for linking
+        startDashboardSession(sessionDuration, sessionId);
+    }
+});
+
+function formatTime(totalSeconds) {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+}
+
+function startSessionTimer(durationMinutes) {
+    sessionRemainingSeconds = durationMinutes * 60;
+    sessionElapsedSeconds = 0;
+
+    // Update timer in focus_track_setup component
+    const sessionTimerEl = document.getElementById('sessionTimer');
+    const elapsedTimeEl = document.getElementById('elapsedTime');
+    
+    if (sessionTimerEl) {
+        sessionTimerEl.textContent = formatTime(sessionRemainingSeconds);
+    }
+    if (elapsedTimeEl) {
+        elapsedTimeEl.textContent = formatTime(elapsedSeconds);
+    }
+
+    // Show active session view in focus_track_setup
+    const setupView = document.getElementById('setupView');
+    const checkinView = document.getElementById('checkinView');
+    const activeSession = document.getElementById('activeSession');
+    const cardTitle = document.getElementById('cardTitle');
+    const cardSubtitle = document.getElementById('cardSubtitle');
+    
+    if (setupView) setupView.style.display = 'none';
+    if (checkinView) checkinView.style.display = 'none';
+    if (activeSession) activeSession.style.display = 'block';
+    if (cardTitle) cardTitle.textContent = 'Focus Track Session';
+    if (cardSubtitle) cardSubtitle.textContent = 'Session in progress';
+
+    if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+
+    sessionTimerInterval = setInterval(async function() {
+        sessionRemainingSeconds -= 1;
+        sessionElapsedSeconds += 1;
+
+        if (sessionTimerEl) {
+            sessionTimerEl.textContent = formatTime(Math.max(sessionRemainingSeconds, 0));
+        }
+        if (elapsedTimeEl) {
+            elapsedTimeEl.textContent = formatTime(elapsedSeconds);
+        }
+
+        if (sessionRemainingSeconds <= 0) {
+            clearInterval(sessionTimerInterval);
+            sessionTimerInterval = null;
+            console.log("Timer ended, stopping EEG session");
+            await stopDashboardSession();
+        }
+    }, 1000);
+    
+    console.log("Timer started in focus_track_setup component");
+}
+
+async function stopDashboardSession() {
+    try {
+        const res = await fetch('/stop_realtime_eeg/', {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        console.log("EEG session stopped:", data);
+        
+        // Update session output
+        const sessionOutput = document.getElementById('sessionOutput');
+        if (sessionOutput) {
+            sessionOutput.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        // Stop live brainwave polling
+        stopLiveStatePolling();
+        // Reload dashboard to show results
+        window.location.reload();
+    } catch (err) {
+        console.error("Error stopping EEG session:", err);
+    }
+}
+
+async function startDashboardSession(durationMinutes, sessionId) {
+    try {
+        const res = await fetch('/start_realtime_eeg/', {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ duration_minutes: Number(durationMinutes), session_id: sessionId })
+        });
+        const data = await res.json();
+        console.log("EEG session started from dashboard:", data);
+        
+        // Update session output
+        const sessionOutput = document.getElementById('sessionOutput');
+        if (sessionOutput) {
+            sessionOutput.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        // Start live brainwave polling
+        startLiveStatePolling();
+        // Start session timer in focus_track_setup component
+        startSessionTimer(durationMinutes);
+    } catch (err) {
+        console.error("Error starting EEG session:", err);
+    }
+}
+
 // Profile reset
 function resetProfile() {
     if (confirm('Are you sure you want to reset your profile? This will clear all your data.')) {
@@ -207,78 +335,68 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Start session button
-    const startBtn = document.getElementById('startSessionBtn');
-    const activeSession = document.getElementById('activeSession');
-    const setupSection = document.querySelector('.duration-section');
-    
-    if (startBtn) {
-        startBtn.addEventListener('click', function() {
-            // Get selected duration
-            const selectedDuration = document.querySelector('.duration-btn.btn-selected');
-            if (selectedDuration) {
-                const duration = selectedDuration.dataset.duration;
-                console.log('Starting session for', duration, 'minutes');
-                
-                // Hide setup, show active session
-                if (setupSection) setupSection.style.display = 'none';
-                if (startBtn) startBtn.style.display = 'none';
-                if (activeSession) activeSession.style.display = 'block';
-                
-                // Restart polling when starting a new session
-                startLiveStatePolling();
-                
-                // Start timer (mock implementation)
-                //startTimer(duration);
-            } else {
-                alert('Please select a duration first!');
-            }
-        });
-    }
+    // Start session button logic is handled in focus_track_setup.html
 
     // Calendar AJAX navigation
     const prevBtn = document.getElementById('prevMonth');
     const nextBtn = document.getElementById('nextMonth');
     const calendarContainer = document.querySelector('.focus-calendar-container');
     
-    if (prevBtn && nextBtn && calendarContainer) {
-        // Add loading state class to calendar container position relative
-        calendarContainer.style.position = 'relative';
-        
-        async function loadCalendarData(month, year) {
-            try {
-                // Add loading state
+    async function loadCalendarData(month, year) {
+        try {
+            // Add loading state
+            if (calendarContainer) {
                 calendarContainer.classList.add('loading');
-                
-                // Fetch calendar data
-                const response = await fetch(`/api/calendar-data/?month=${month}&year=${year}`);
-                
-                if (!response.ok) {
-                    throw new Error('Failed to load calendar data');
-                }
-                
-                const data = await response.json();
-                
-                // Update calendar grid
-                updateCalendarGrid(data);
-                
-                // Update monthly summary
-                updateMonthlySummary(data);
-                
-                // Update navigation buttons
-                updateNavigationButtons(data);
-                
-                // Update month title
-                document.getElementById('currentMonth').textContent = `${data.month_name} ${data.current_year}`;
-                
-            } catch (error) {
-                console.error('Error loading calendar data:', error);
-                // Optionally show error message to user
-            } finally {
-                // Remove loading state
+            }
+            
+            // Fetch calendar data
+            const response = await fetch(`/api/calendar-data/?month=${month}&year=${year}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to load calendar data');
+            }
+            
+            const data = await response.json();
+            
+            // Update calendar grid
+            updateCalendarGrid(data);
+            
+            // Update monthly summary
+            updateMonthlySummary(data);
+            
+            // Update navigation buttons
+            updateNavigationButtons(data);
+            
+            // Update month title
+            const monthTitle = document.getElementById('currentMonth');
+            if (monthTitle) {
+                monthTitle.textContent = `${data.month_name} ${data.current_year}`;
+            }
+            
+        } catch (error) {
+            console.error('Error loading calendar data:', error);
+            // Optionally show error message to user
+        } finally {
+            // Remove loading state
+            if (calendarContainer) {
                 calendarContainer.classList.remove('loading');
             }
         }
+    }
+    
+    // Load initial calendar data on page load
+    const calendarGrid = document.querySelector('.calendar-grid');
+    if (calendarGrid) {
+        const initialMonth = calendarGrid.getAttribute('data-current-month');
+        const initialYear = calendarGrid.getAttribute('data-current-year');
+        if (initialMonth && initialYear) {
+            loadCalendarData(parseInt(initialMonth), parseInt(initialYear));
+        }
+    }
+    
+    if (prevBtn && nextBtn && calendarContainer) {
+        // Add loading state class to calendar container position relative
+        calendarContainer.style.position = 'relative';
         
         function updateCalendarGrid(data) {
             const calendarDays = document.querySelector('.calendar-days');
@@ -583,41 +701,27 @@ function updateLiveBrainBox() {
         .then(data => {
             console.log('Live brain state data:', data); // Debug logging
             
-            // Always update the display, even for idle state
-            updateLiveStateDisplay(data);
+            const liveStateCard = document.getElementById('liveBrainStateCard');
             
-            if (data.ok) {
-                const liveStateCard = document.getElementById('liveBrainStateCard');
-                
-                // Show/hide the live brain state box based on session status
-                if (data.status === 'active') {
-                    if (liveStateCard) {
-                        liveStateCard.style.display = 'block';
-                    }
-                    console.log('Session active, data:', data);
-                } else {
-                    // Hide the box when session is idle or no data
-                    if (liveStateCard) {
-                        liveStateCard.style.display = 'none';
-                    }
-                    console.log('Session idle, hiding live brain state box');
-                    // Stop polling when session is not active
-                    stopLiveStatePolling();
+            if (data.ok && data.status === 'active') {
+                // Session is active - show box and update display
+                updateLiveStateDisplay(data);
+                if (liveStateCard) {
+                    liveStateCard.style.display = 'block';
                 }
+                console.log('Session active, data:', data);
             } else {
-                // Hide the box when no data available
-                const liveStateCard = document.getElementById('liveBrainStateCard');
+                // Session is idle or no data - hide box and stop polling
                 if (liveStateCard) {
                     liveStateCard.style.display = 'none';
                 }
-                console.log('No data available, hiding live brain state box');
-                // Stop polling when no data is available
+                console.log('Session idle or no data, hiding box and stopping polling');
                 stopLiveStatePolling();
             }
         })
         .catch(error => {
             console.error('Error fetching live brain state:', error);
-            // Stop polling on error to prevent unnecessary requests
+            // Stop polling on error
             stopLiveStatePolling();
         });
 }

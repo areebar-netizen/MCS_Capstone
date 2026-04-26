@@ -1,0 +1,207 @@
+<div id="checkinView" style="display:none;">
+            <h3 style="margin:0 0 4px;font-size:1rem;color:#222;">Pre-Session Check-In</h3>
+            <p style="margin:0 0 18px;color:#888;font-size:0.82rem;">Help us personalize your session by answering a few quick questions about your current state and goals.</p>
+
+            <div class="psc-section">
+                <label class="psc-label"><span style="color:#e05a2b;">&#9632;</span> What subject/task are you studying?</label>
+                <div class="psc-grid">
+                    <button class="psc-opt" data-group="subject" data-val="Math/Problem-solving">Math/Problem-solving</button>
+                    <button class="psc-opt" data-group="subject" data-val="Reading/Comprehension">Reading/Comprehension</button>
+                    <button class="psc-opt" data-group="subject" data-val="Writing/Essay">Writing/Essay</button>
+                    <button class="psc-opt" data-group="subject" data-val="Note-taking">Note-taking</button>
+                    <button class="psc-opt" data-group="subject" data-val="Memorization">Memorization</button>
+                    <button class="psc-opt" data-group="subject" data-val="Creative work">Creative work</button>
+                    <button class="psc-opt" data-group="subject" data-val="Coding/Technical">Coding/Technical</button>
+                    <button class="psc-opt" data-group="subject" data-val="Other">Other</button>
+                </div>
+            </div>
+
+            <div class="psc-section">
+                <label class="psc-label">Task difficulty (1-10)</label>
+                <input type="range" min="1" max="10" value="5" id="psc-difficulty" class="psc-slider">
+                <div class="psc-slider-val" id="psc-difficulty-val">5/10</div>
+                <div class="psc-slider-labels"><span>Very Easy</span><span>Very Difficult</span></div>
+            </div>
+
+            <div class="psc-section">
+                <label class="psc-label">Estimated task length</label>
+                <div class="psc-grid psc-grid-2">
+                    <button class="psc-opt" data-group="tasklength" data-val="15-30 minutes">15-30 minutes</button>
+                    <button class="psc-opt" data-group="tasklength" data-val="30-60 minutes">30-60 minutes</button>
+                    <button class="psc-opt" data-group="tasklength" data-val="1-2 hours">1-2 hours</button>
+                    <button class="psc-opt" data-group="tasklength" data-val="2+ hours">2+ hours</button>
+                </div>
+            </div>
+
+            <div class="psc-section">
+                <label class="psc-label"><span style="color:#e05a2b;">&#128197;</span> Assignment deadline</label>
+                <select id="psc-deadline" class="psc-select">
+                    <option value="">No specific deadline</option>
+                    <option value="today">Due today</option>
+                    <option value="tomorrow">Due tomorrow</option>
+                    <option value="this_week">Due this week</option>
+                    <option value="next_week">Due next week</option>
+                </select>
+            </div>
+
+            <div class="psc-section">
+                <label class="psc-label"><span style="color:#e8c22a;">&#9650;</span> Current energy level</label>
+                <input type="range" min="1" max="10" value="5" id="psc-energy" class="psc-slider">
+                <div class="psc-slider-val" id="psc-energy-val">5/10</div>
+                <div class="psc-slider-labels"><span>Exhausted</span><span>Energized</span></div>
+            </div>
+
+            <div class="psc-section">
+                <label class="psc-label"><span style="color:#e05a2b;">&#9787;</span> Current mood</label>
+                <div class="psc-grid psc-grid-2">
+                    <button class="psc-opt" data-group="mood" data-val="Happy">&#128512; Happy</button>
+                    <button class="psc-opt" data-group="mood" data-val="Calm">&#128528; Calm</button>
+                    <button class="psc-opt" data-group="mood" data-val="Anxious">&#128543; Anxious</button>
+                    <button class="psc-opt" data-group="mood" data-val="Overwhelmed">&#128565; Overwhelmed</button>
+                    <button class="psc-opt" data-group="mood" data-val="Motivated">&#128640; Motivated</button>
+                    <button class="psc-opt" data-group="mood" data-val="Tired">&#128558; Tired</button>
+                </div>
+            </div>
+
+            <div class="psc-section">
+                <label class="psc-label"><span style="color:#e8c22a;">&#9650;</span> Current stress/anxiety level</label>
+                <input type="range" min="1" max="10" value="5" id="psc-stress" class="psc-slider">
+                <div class="psc-slider-val" id="psc-stress-val">5/10</div>
+                <div class="psc-slider-labels"><span>Very Calm</span><span>Very Stressed</span></div>
+            </div>
+
+            <div class="psc-section">
+                <label class="psc-label">&#127860; Time since last meal</label>
+                <div class="psc-grid psc-grid-2">
+                    <button class="psc-opt" data-group="meal" data-val="<1 hour">&lt;1 hour</button>
+                    <button class="psc-opt" data-group="meal" data-val="1-2 hours">1-2 hours</button>
+                    <button class="psc-opt" data-group="meal" data-val="2-4 hours">2-4 hours</button>
+                    <button class="psc-opt" data-group="meal" data-val="4+ hours">4+ hours</button>
+                </div>
+            </div>
+
+            <div class="psc-section">
+                <label class="psc-label">&#9749; Caffeinated drinks today</label>
+                <div class="psc-grid psc-grid-2">
+                    <button class="psc-opt psc-opt-selected" data-group="caffeine" data-val="None">None</button>
+                    <button class="psc-opt" data-group="caffeine" data-val="1 cup">1 cup</button>
+                    <button class="psc-opt" data-group="caffeine" data-val="2 cups">2 cups</button>
+                    <button class="psc-opt" data-group="caffeine" data-val="3-5 cups">3-5 cups</button>
+                </div>
+            </div>
+
+            <!-- Additional questions toggle -->
+            <div class="psc-section psc-additional-toggle-section">
+                <label class="psc-label">Would you like to answer additional questions?</label>
+                <div class="psc-yn-row">
+                    <button type="button" class="psc-yn-btn" id="psc-extra-yes" onclick="pscToggleExtra(true)">Yes</button>
+                    <button type="button" class="psc-yn-btn psc-yn-selected" id="psc-extra-no" onclick="pscToggleExtra(false)">No</button>
+                </div>
+            </div>
+
+            <!-- Additional questions (hidden by default) -->
+            <div id="psc-extra-section" style="display:none;">
+                <div class="psc-section">
+                    <label class="psc-label">&#128336; Time since waking up</label>
+                    <div class="psc-grid psc-grid-2">
+                        <button class="psc-opt" data-group="wake" data-val="<1 hour">&lt;1 hour</button>
+                        <button class="psc-opt" data-group="wake" data-val="1-3 hours">1-3 hours</button>
+                        <button class="psc-opt" data-group="wake" data-val="3-6 hours">3-6 hours</button>
+                        <button class="psc-opt" data-group="wake" data-val="6+ hours">6+ hours</button>
+                    </div>
+                </div>
+
+                <div class="psc-section">
+                    <label class="psc-label">&#127939; Physical activity today</label>
+                    <div class="psc-grid psc-grid-2">
+                        <button class="psc-opt" data-group="activity" data-val="None">None</button>
+                        <button class="psc-opt" data-group="activity" data-val="Light (walk)">Light (walk)</button>
+                        <button class="psc-opt" data-group="activity" data-val="Moderate (jog)">Moderate (jog)</button>
+                        <button class="psc-opt" data-group="activity" data-val="Intense (workout)">Intense (workout)</button>
+                    </div>
+                </div>
+
+                <div class="psc-section">
+                    <label class="psc-label">&#127919; Goal for this session</label>
+                    <textarea id="psc-goal" class="psc-textarea" placeholder="e.g., Complete 3 chapters, Understand calculus concepts, Write 500 words..."></textarea>
+                </div>
+
+                <div class="psc-section">
+                    <label class="psc-label">&#128266; Current noise environment</label>
+                    <div class="psc-grid psc-grid-2">
+                        <button class="psc-opt" data-group="noise" data-val="Complete Silence">Complete Silence</button>
+                        <button class="psc-opt" data-group="noise" data-val="Ambient/White Noise">Ambient/White Noise</button>
+                        <button class="psc-opt" data-group="noise" data-val="Lo-fi/Music">Lo-fi/Music</button>
+                        <button class="psc-opt" data-group="noise" data-val="Loud/Busy">Loud/Busy</button>
+                    </div>
+                </div>
+
+                <div class="psc-section">
+                    <label class="psc-label">&#128218; Intended study method</label>
+                    <div class="psc-grid psc-grid-2">
+                        <button class="psc-opt" data-group="method" data-val="Active Recall">Active Recall</button>
+                        <button class="psc-opt" data-group="method" data-val="Note-taking">Note-taking</button>
+                        <button class="psc-opt" data-group="method" data-val="Practice Problems">Practice Problems</button>
+                        <button class="psc-opt" data-group="method" data-val="Reading">Reading</button>
+                    </div>
+                </div>
+
+                <div class="psc-section">
+                    <label class="psc-label">&#128205; Current location</label>
+                    <div class="psc-grid psc-grid-2">
+                        <button class="psc-opt" data-group="location" data-val="Library">Library</button>
+                        <button class="psc-opt" data-group="location" data-val="Home Office">Home Office</button>
+                        <button class="psc-opt" data-group="location" data-val="Cafe">Cafe</button>
+                        <button class="psc-opt" data-group="location" data-val="Outdoors">Outdoors</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="psc-footer">
+                <button type=button class="psc-back-btn" onclick="showSetup()">Back</button>
+                <button type="button" class="psc-start-btn" onclick="confirmPreSessionAndStart()">&#9654; Start Session</button>
+            </div>
+        </div>
+
+<style>
+.psc-section { margin-bottom: 16px; }
+.psc-label { display:block; margin-bottom:7px; font-weight:600; font-size:0.85rem; color:#333; }
+.psc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:7px; }
+.psc-grid-2 { grid-template-columns: 1fr 1fr; }
+.psc-opt {
+    padding: 8px 10px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    font-size: 0.83rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    color: #333;
+}
+.psc-opt:hover { border-color: #e05a2b; background: #fff5f1; }
+.psc-opt-selected { background: #e05a2b !important; color: #fff !important; border-color: #e05a2b !important; }
+.psc-slider { width:100%; accent-color:#e05a2b; margin:6px 0 2px; }
+.psc-slider-val { text-align:center; font-size:1.3rem; font-weight:600; color:#222; }
+.psc-slider-labels { display:flex; justify-content:space-between; font-size:0.72rem; color:#aaa; margin-top:2px; }
+.psc-select { width:100%; padding:8px 11px; border:1px solid #ddd; border-radius:8px; font-size:0.88rem; background:#fafafa; }
+.psc-textarea { width:100%; padding:9px 11px; border:1px solid #ddd; border-radius:8px; font-size:0.88rem; resize:vertical; min-height:65px; background:#fafafa; box-sizing:border-box; }
+.psc-footer { display:flex; gap:10px; margin-top:22px; }
+.psc-back-btn { flex:1; padding:11px; border:2px solid #e05a2b; background:#fff; color:#e05a2b; border-radius:8px; font-size:0.92rem; cursor:pointer; font-weight:500; }
+.psc-start-btn { flex:2; padding:11px; background:#e05a2b; color:#fff; border:none; border-radius:8px; font-size:0.92rem; cursor:pointer; font-weight:600; }
+.psc-back-btn:hover { background:#fff5f1; }
+.psc-start-btn:hover { background:#c94d22; }
+.psc-yn-row { display:flex; gap:10px; }
+.psc-yn-btn { flex:1; padding:9px; border:1.5px solid #ddd; border-radius:8px; background:#fafafa; font-size:0.88rem; font-weight:600; cursor:pointer; transition:background 0.12s, border-color 0.12s, color 0.12s; color:#333; }
+.psc-yn-btn:hover { border-color:#e05a2b; background:#fff5f1; }
+.psc-yn-selected { background:#e05a2b !important; color:#fff !important; border-color:#e05a2b !important; }
+</style>
+
+<script>
+function pscToggleExtra(show) {
+    document.getElementById('psc-extra-section').style.display = show ? 'block' : 'none';
+    document.getElementById('psc-extra-yes').classList.toggle('psc-yn-selected', show);
+    document.getElementById('psc-extra-no').classList.toggle('psc-yn-selected', !show);
+}
+</script>
+
