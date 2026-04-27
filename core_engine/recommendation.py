@@ -307,3 +307,41 @@ def _fallback_recommendation(final_summary):
         return "Decent session! Try reducing distractions next time — a quieter space might boost your score."
     else:
         return "Tough session! Consider trying a different study location or time of day next time."
+
+
+# ============================================================
+# SAVE RECOMMENDATION
+# ============================================================
+def save_recommendation(user_email, session_id, inference_id,
+                        category, stimulus, trigger, message):
+    """
+    Save recommendation to database using Django models.
+    Replaces the SQLAlchemy-based save_recommendation from the subdirectory.
+    """
+    from django.utils import timezone
+    import uuid
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+        
+        recommendation = Recommendation.objects.create(
+            recommendation_id=str(uuid.uuid4()),
+            user=user_profile,
+            session_id=session_id,
+            inference_id=inference_id,
+            recommendation_category=category,
+            stimulus_name=stimulus,
+            trigger_reason=trigger,
+            action_started_at=timezone.now(),
+            message=message
+        )
+        
+        print(f"[SAVED] Recommendation: {stimulus} ({category}) for user {user_email}")
+        return recommendation.recommendation_id
+        
+    except UserProfile.DoesNotExist:
+        print(f"[ERROR] UserProfile not found for {user_email}")
+        return None
+    except Exception as e:
+        print(f"[ERROR] Failed to save recommendation: {e}")
+        return None
