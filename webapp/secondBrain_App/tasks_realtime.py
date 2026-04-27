@@ -678,31 +678,17 @@ def save_session_summary(summary_data):
 
         # ── STEP 3: Save recommendation to database (if recommendation engine is available) ──
         try:
-            from core_engine.recommendation.recommendation import save_recommendation
-            from sqlalchemy import create_engine, text
-            import uuid
+            from core_engine.recommendation import save_recommendation
             
-            # Database connection
-            DB_USER = os.getenv('DB_USER', 'root')
-            DB_PASSWORD = os.getenv('DB_PASSWORD', 'password')
-            DB_HOST = os.getenv('DB_HOST', 'localhost')
-            DB_PORT = os.getenv('DB_PORT', '3306')
-            DB_NAME = os.getenv('DB_NAME', 'secondbrain')
-            
-            DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-            engine = create_engine(DATABASE_URL, echo=False)
-            
-            with engine.connect() as conn:
-                save_recommendation(
-                    db=conn,
-                    user_id=summary_data['user_email'],
-                    session_id=summary_data['session_id'],
-                    inference_id=summary_data.get('task_id', 'unknown'),
-                    category='general',
-                    stimulus='study_tip',
-                    trigger='session_end',
-                    message=recommendation_text
-                )
+            save_recommendation(
+                user_email=summary_data['user_email'],
+                session_id=summary_data['session_id'],
+                inference_id=summary_data.get('task_id', 'unknown'),
+                category='general',
+                stimulus='study_tip',
+                trigger='session_end',
+                message=recommendation_text
+            )
         
         except Exception as e:
             pass
