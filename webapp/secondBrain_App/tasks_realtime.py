@@ -598,6 +598,84 @@ def save_session_summary(summary_data):
     try:
         user_profile = UserProfile.objects.get(email=summary_data['user_email'])
 
+        # ── STEP 1: Retrieve wave averages from cache (pre-calculated by live_predict) ──
+        # live_predict.py calculates filtered wave averages during the session and stores them in cache
+        # This ensures we use the same filtered values that were used during live prediction
+        
+        beta_avg = 0
+        gamma_avg = 0
+        alpha_avg = 0
+        theta_avg = 0
+        
+        try:
+            from django.core.cache import cache
+            wave_averages_cache_key = f"wave_averages_{summary_data['user_email']}"
+            cached_wave_averages = cache.get(wave_averages_cache_key)
+            
+            if cached_wave_averages:
+                beta_avg = cached_wave_averages.get('beta_avg', 0)
+                gamma_avg = cached_wave_averages.get('gamma_avg', 0)
+                alpha_avg = cached_wave_averages.get('alpha_avg', 0)
+                theta_avg = cached_wave_averages.get('theta_avg', 0)
+                print(f"[WAVE AVERAGES] Retrieved from cache - Beta: {beta_avg:.2f}Hz, Gamma: {gamma_avg:.2f}Hz, Alpha: {alpha_avg:.2f}Hz, Theta: {theta_avg:.2f}Hz")
+            else:
+                # Fallback: Calculate from data_points if cache not available
+                print(f"[WAVE AVERAGES] Cache miss, calculating from data_points")
+                data_points = summary_data.get('data_points', [])
+                beta_values = []
+                gamma_values = []
+                alpha_values = []
+                theta_values = []
+                
+                for point in data_points:
+                    wave_data = point.get('wave_data', {})
+                    if wave_data:
+                        beta_values.append(wave_data.get('beta', 0))
+                        gamma_values.append(wave_data.get('gamma', 0))
+                        alpha_values.append(wave_data.get('alpha', 0))
+                        theta_values.append(wave_data.get('theta', 0))
+                
+                beta_avg = np.mean(beta_values) if beta_values else 0
+                gamma_avg = np.mean(gamma_values) if gamma_values else 0
+                alpha_avg = np.mean(alpha_values) if alpha_values else 0
+                theta_avg = np.mean(theta_values) if theta_values else 0
+                print(f"[WAVE AVERAGES] Calculated from data_points - Beta: {beta_avg:.2f}Hz, Gamma: {gamma_avg:.2f}Hz, Alpha: {alpha_avg:.2f}Hz, Theta: {theta_avg:.2f}Hz")
+        except Exception as e:
+            print(f"[ERROR] Failed to retrieve wave averages from cache: {e}")
+            # Fallback to calculation from data_points
+            data_points = summary_data.get('data_points', [])
+            beta_values = []
+            gamma_values = []
+            alpha_values = []
+            theta_values = []
+            
+            for point in data_points:
+                wave_data = point.get('wave_data', {})
+                if wave_data:
+                    beta_values.append(wave_data.get('beta', 0))
+                    gamma_values.append(wave_data.get('gamma', 0))
+                    alpha_values.append(wave_data.get('alpha', 0))
+                    theta_values.append(wave_data.get('theta', 0))
+            
+            beta_avg = np.mean(beta_values) if beta_values else 0
+            gamma_avg = np.mean(gamma_values) if gamma_values else 0
+            alpha_avg = np.mean(alpha_values) if alpha_values else 0
+            theta_avg = np.mean(theta_values) if theta_values else 0
+            print(f"[WAVE AVERAGES] Fallback calculation - Beta: {beta_avg:.2f}Hz, Gamma: {gamma_avg:.2f}Hz, Alpha: {alpha_avg:.2f}Hz, Theta: {theta_avg:.2f}Hz")
+        
+        # Calculate high-level string inferences
+        inferences = calculate_inferences(beta_avg, gamma_avg, alpha_avg, theta_avg)
+        print(f"[INFERENCE] Neural State: {inferences['neural_state']}, Signal Integrity: {inferences['signal_integrity']}, Focus Depth: {inferences['focus_depth']}")
+        
+        # Add wave averages and inferences to summary_data
+        summary_data['beta_avg'] = beta_avg
+        summary_data['gamma_avg'] = gamma_avg
+        summary_data['alpha_avg'] = alpha_avg
+        summary_data['theta_avg'] = theta_avg
+        summary_data['neural_state'] = inferences['neural_state']
+        summary_data['signal_integrity'] = inferences['signal_integrity']
+        summary_data['focus_depth'] = inferences['focus_depth']
+
         session_summary = SessionSummary.objects.create(
             session_id              = summary_data['session_id'],
             user                    = user_profile,
@@ -615,7 +693,16 @@ def save_session_summary(summary_data):
             data_points_count       = summary_data['data_points_count'],
             longest_focus_streak    = summary_data['longest_focus_streak'],
             focus_latency           = summary_data['focus_latency'],
-            state_switch_count      = summary_data['state_switch_count']
+            state_switch_count      = summary_data['state_switch_count'],
+            # Wave averages (filtered)
+            beta_avg                = summary_data.get('beta_avg', 0),
+            gamma_avg               = summary_data.get('gamma_avg', 0),
+            alpha_avg               = summary_data.get('alpha_avg', 0),
+            theta_avg               = summary_data.get('theta_avg', 0),
+            # High-level inferences
+            neural_state            = summary_data.get('neural_state', 'Unknown'),
+            signal_integrity        = summary_data.get('signal_integrity', 'Unknown'),
+            focus_depth             = summary_data.get('focus_depth', 'Unknown')
         )
         
         # Update user summary (if table exists)
@@ -635,7 +722,7 @@ def save_session_summary(summary_data):
         except Exception as e:
             pass
 
-        # ── STEP 2: Generate recommendation using updated summary ──
+        # ── STEP 2: Generate recommendation using updated summary with inferences ──
         try:
             from core_engine.recommendation import generate_recommendation_for_session
             recommendation_text = generate_recommendation_for_session(
@@ -645,7 +732,14 @@ def save_session_summary(summary_data):
                     'average_focus_score'  : summary_data['average_focus_score'],
                     'concentrating_seconds': summary_data['concentrating_seconds'],
                     'neutral_seconds'      : summary_data['neutral_seconds'],
-                    'relaxed_seconds'      : summary_data['relaxed_seconds']
+                    'relaxed_seconds'      : summary_data['relaxed_seconds'],
+                    'beta_avg'             : summary_data.get('beta_avg', 0),
+                    'gamma_avg'            : summary_data.get('gamma_avg', 0),
+                    'alpha_avg'            : summary_data.get('alpha_avg', 0),
+                    'theta_avg'            : summary_data.get('theta_avg', 0),
+                    'neural_state'         : summary_data.get('neural_state', 'Unknown'),
+                    'signal_integrity'     : summary_data.get('signal_integrity', 'Unknown'),
+                    'focus_depth'          : summary_data.get('focus_depth', 'Unknown')
                 }
             )
             print(f"[RECOMMENDATION] Generated successfully")
@@ -701,6 +795,82 @@ def save_session_summary(summary_data):
     except Exception as e:
         print(f"Error saving session summary: {e}")
         return None
+
+
+def notch_filter(signal, freq=50, fs=256, Q=30):
+    """Apply notch filter to remove power line noise"""
+    try:
+        b, a = iirnotch(freq/(fs/2), Q)
+        return filtfilt(b, a, signal)
+    except Exception as e:
+        print(f"[FILTER ERROR] notch_filter failed: {e}")
+        return signal
+
+
+def calculate_inferences(beta_avg, gamma_avg, alpha_avg, theta_avg):
+    """
+    Convert raw wave power averages into high-level string inferences.
+    
+    Args:
+        beta_avg: Average Beta wave power (Hz)
+        gamma_avg: Average Gamma wave power (Hz)
+        alpha_avg: Average Alpha wave power (Hz)
+        theta_avg: Average Theta wave power (Hz)
+    
+    Returns:
+        dict: {
+            'neural_state': str,
+            'signal_integrity': str,
+            'focus_depth': str
+        }
+    """
+    # Data Guard: Check for artifact-heavy signals
+    max_wave = max(beta_avg, gamma_avg, alpha_avg, theta_avg)
+    if max_wave > 500:
+        return {
+            'neural_state': 'Unknown',
+            'signal_integrity': 'Poor',
+            'focus_depth': 'Unknown'
+        }
+    
+    # Determine Signal Integrity
+    if max_wave > 100:
+        signal_integrity = 'Artifact-Heavy'
+    elif max_wave > 50:
+        signal_integrity = 'Clean'
+    else:
+        signal_integrity = 'Clean'
+    
+    # Determine Neural State based on wave patterns
+    # High Beta (15-30Hz) + High Gamma = Focus
+    # High Alpha + High Theta = Drowsy
+    # High Beta (>30Hz) = Anxious
+    # High Theta = Distracted
+    
+    if beta_avg > 30:
+        neural_state = 'Anxious'
+    elif alpha_avg > 15 and theta_avg > 12:
+        neural_state = 'Drowsy'
+    elif theta_avg > 15:
+        neural_state = 'Distracted'
+    elif beta_avg >= 15 and beta_avg <= 30 and gamma_avg > 30:
+        neural_state = 'Focus'
+    else:
+        neural_state = 'Neutral'
+    
+    # Determine Focus Depth
+    if neural_state == 'Focus' and gamma_avg > 40:
+        focus_depth = 'Deep Flow'
+    elif neural_state == 'Focus':
+        focus_depth = 'Light Focus'
+    else:
+        focus_depth = 'Surface Level'
+    
+    return {
+        'neural_state': neural_state,
+        'signal_integrity': signal_integrity,
+        'focus_depth': focus_depth
+    }
 
 
 @shared_task(bind=True)
