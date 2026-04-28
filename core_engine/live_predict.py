@@ -42,6 +42,9 @@ state_switch_count = 0
 last_prediction_state = None
 session_result = None  # Global result dictionary 
 
+# Wave power tracking for session averages
+session_wave_powers = {'delta': [], 'theta': [], 'alpha': [], 'beta': [], 'gamma': []}
+
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -232,7 +235,7 @@ def reset_session_analytics():
     """Resets all session analytics variables for a new session"""
     global session_predictions, session_confidence_scores, session_start_time
     global current_focus_streak, longest_focus_streak, state_switch_count
-    global last_prediction_state, session_result
+    global last_prediction_state, session_result, session_wave_powers
     
     session_predictions = []
     session_confidence_scores = []
@@ -242,6 +245,7 @@ def reset_session_analytics():
     state_switch_count = 0
     last_prediction_state = None
     session_result = None
+    session_wave_powers = {'delta': [], 'theta': [], 'alpha': [], 'beta': [], 'gamma': []}
 
 def load_model(models_dir: Path, model_name: str):
     """Loads model, feature selector, and enhanced preprocessing artifacts."""
@@ -588,6 +592,7 @@ def run_eeg_mode(args):
     def stop_recording():
         global session_predictions, session_confidence_scores, session_start_time
         global current_focus_streak, longest_focus_streak, state_switch_count
+        global session_wave_powers
         
         print("\nStop signal received. Calculating session analytics...")
         
@@ -617,6 +622,28 @@ def run_eeg_mode(args):
                 average_focus_score = total_focus_score / len(session_predictions) if session_predictions else 0.0
                 peak_focus_score = max(session_predictions) if session_predictions else 0.0
                 
+                # Calculate wave averages from filtered band powers
+                beta_avg = np.mean(session_wave_powers['beta']) if session_wave_powers['beta'] else 0
+                gamma_avg = np.mean(session_wave_powers['gamma']) if session_wave_powers['gamma'] else 0
+                alpha_avg = np.mean(session_wave_powers['alpha']) if session_wave_powers['alpha'] else 0
+                theta_avg = np.mean(session_wave_powers['theta']) if session_wave_powers['theta'] else 0
+                
+                print(f"[WAVE AVERAGES] Beta: {beta_avg:.2f}, Gamma: {gamma_avg:.2f}, Alpha: {alpha_avg:.2f}, Theta: {theta_avg:.2f}")
+                
+                # Store wave averages in Django cache for tasks_realtime to retrieve
+                try:
+                    from django.core.cache import cache
+                    wave_averages_cache_key = f"wave_averages_{args.user_id}"
+                    cache.set(wave_averages_cache_key, {
+                        'beta_avg': beta_avg,
+                        'gamma_avg': gamma_avg,
+                        'alpha_avg': alpha_avg,
+                        'theta_avg': theta_avg
+                    }, timeout=3600)  # Store for 1 hour
+                    print(f"[CACHE] Stored wave averages for {args.user_id}")
+                except Exception as e:
+                    print(f"[CACHE ERROR] Failed to store wave averages: {e}")
+                
                 # Create result dict like the CSV processing mode
                 result = {
                     'session_id': args.user_id,
@@ -633,6 +660,11 @@ def run_eeg_mode(args):
                     'avg_confidence': avg_confidence,
                     'average_focus_score': average_focus_score,
                     'peak_focus_score': peak_focus_score,
+                    # Wave averages (filtered)
+                    'beta_avg': beta_avg,
+                    'gamma_avg': gamma_avg,
+                    'alpha_avg': alpha_avg,
+                    'theta_avg': theta_avg,
                     # Additional fields to match SessionSummary model
                     'start_time': session_start_time,
                     'end_time': session_end_time,
@@ -806,6 +838,12 @@ def run_eeg_mode(args):
                     
                     session_predictions.append(latest_pred)
                     session_confidence_scores.append(latest_conf)
+                    
+                    # Track wave powers from filtered data
+                    from EEG_feature_extraction_adv import get_raw_band_powers
+                    raw_band_powers = get_raw_band_powers(np.array(rows))
+                    for band in ['delta', 'theta', 'alpha', 'beta', 'gamma']:
+                        session_wave_powers[band].append(raw_band_powers.get(band, 0))
                     
                     # Calculate focus streak and state switches
                     if latest_pred != last_prediction_state:

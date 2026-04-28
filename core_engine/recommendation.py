@@ -154,6 +154,15 @@ def _phase1_llm(user_profile, session, final_summary):
     neutral_seconds       = final_summary.get('neutral_seconds', 0)
     relaxed_seconds       = final_summary.get('relaxed_seconds', 0)
 
+    # Extract brainwave inferences
+    neural_state      = final_summary.get('neural_state', 'Unknown')
+    signal_integrity  = final_summary.get('signal_integrity', 'Unknown')
+    focus_depth       = final_summary.get('focus_depth', 'Unknown')
+    beta_avg          = final_summary.get('beta_avg', 0)
+    gamma_avg         = final_summary.get('gamma_avg', 0)
+    alpha_avg         = final_summary.get('alpha_avg', 0)
+    theta_avg         = final_summary.get('theta_avg', 0)
+
     # Map UserProfile fields to readable values
     sound_env     = user_profile.sound_environment or 'unknown'
     study_goals   = user_profile.main_goals        or 'study improvement'
@@ -176,6 +185,15 @@ EEG SESSION RESULTS:
 - Session duration   : {duration} mins
 - Time of day        : {time_of_day}
 
+BRAINWAVE ANALYSIS:
+- Neural State       : {neural_state}
+- Signal Integrity   : {signal_integrity}
+- Focus Depth        : {focus_depth}
+- Beta waves        : {beta_avg:.2f} Hz
+- Gamma waves       : {gamma_avg:.2f} Hz
+- Alpha waves       : {alpha_avg:.2f} Hz
+- Theta waves       : {theta_avg:.2f} Hz
+
 RESPOND WITH:
 1. 1-2 line fun personalized recommendation based on their EEG session results
 2. Recommended Study Methods (3-4 bullet points)
@@ -190,7 +208,14 @@ RESPOND WITH:
         neut         = neutral_seconds,
         relax        = relaxed_seconds,
         duration     = round(session.total_duration_seconds / 60, 1),
-        time_of_day  = get_time_of_day()
+        time_of_day  = get_time_of_day(),
+        neural_state = neural_state,
+        signal_integrity = signal_integrity,
+        focus_depth  = focus_depth,
+        beta_avg     = beta_avg,
+        gamma_avg    = gamma_avg,
+        alpha_avg    = alpha_avg,
+        theta_avg    = theta_avg
     )
 
     response = client.models.generate_content(
@@ -211,6 +236,15 @@ def _phase2_llm(user_profile, session, user_summary_data, user_email, final_summ
     concentrating_seconds = final_summary.get('concentrating_seconds', 0)
     neutral_seconds       = final_summary.get('neutral_seconds', 0)
     relaxed_seconds       = final_summary.get('relaxed_seconds', 0)
+
+    # Extract brainwave inferences
+    neural_state      = final_summary.get('neural_state', 'Unknown')
+    signal_integrity  = final_summary.get('signal_integrity', 'Unknown')
+    focus_depth       = final_summary.get('focus_depth', 'Unknown')
+    beta_avg          = final_summary.get('beta_avg', 0)
+    gamma_avg         = final_summary.get('gamma_avg', 0)
+    alpha_avg         = final_summary.get('alpha_avg', 0)
+    theta_avg         = final_summary.get('theta_avg', 0)
 
     sound_env     = user_profile.sound_environment or 'unknown'
     study_goals   = user_profile.main_goals        or 'study improvement'
@@ -244,6 +278,15 @@ EEG SESSION RESULTS:
 - Session duration   : {duration} mins
 - Time of day        : {time_of_day}
 
+BRAINWAVE ANALYSIS:
+- Neural State       : {neural_state}
+- Signal Integrity   : {signal_integrity}
+- Focus Depth        : {focus_depth}
+- Beta waves        : {beta_avg:.2f} Hz
+- Gamma waves       : {gamma_avg:.2f} Hz
+- Alpha waves       : {alpha_avg:.2f} Hz
+- Theta waves       : {theta_avg:.2f} Hz
+
 HISTORY ({sessions} sessions):
 - Historical avg focus      : {hist_focus}
 - Best focus score ever     : {best_focus}
@@ -276,6 +319,13 @@ RESPOND WITH:
         relax        = relaxed_seconds,
         duration     = round(session.total_duration_seconds / 60, 1),
         time_of_day  = get_time_of_day(),
+        neural_state = neural_state,
+        signal_integrity = signal_integrity,
+        focus_depth  = focus_depth,
+        beta_avg     = beta_avg,
+        gamma_avg    = gamma_avg,
+        alpha_avg    = alpha_avg,
+        theta_avg    = theta_avg,
         sessions     = user_summary_data['total_sessions'],
         hist_focus   = user_summary_data['average_focus_score'],
         best_focus   = user_summary_data['best_focus_score'],
