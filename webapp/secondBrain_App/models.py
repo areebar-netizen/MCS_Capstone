@@ -85,6 +85,17 @@ class SessionSummary(models.Model):
     state_switch_count = models.IntegerField(default=0, help_text="Number of times focus state changed")
     avg_confidence = models.FloatField(default=0.0, help_text="Mean confidence score across all windows")
     
+    # Wave averages (filtered)
+    beta_avg = models.FloatField(default=0.0, help_text="Average Beta wave power (Hz)")
+    gamma_avg = models.FloatField(default=0.0, help_text="Average Gamma wave power (Hz)")
+    alpha_avg = models.FloatField(default=0.0, help_text="Average Alpha wave power (Hz)")
+    theta_avg = models.FloatField(default=0.0, help_text="Average Theta wave power (Hz)")
+    
+    # High-level inferences
+    neural_state = models.CharField(max_length=50, default='Unknown', help_text="Neural state: Focus, Drowsy, Anxious, Distracted, Neutral")
+    signal_integrity = models.CharField(max_length=50, default='Unknown', help_text="Signal integrity: Clean, Artifact-Heavy, Poor")
+    focus_depth = models.CharField(max_length=50, default='Unknown', help_text="Focus depth: Deep Flow, Light Focus, Surface Level")
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
