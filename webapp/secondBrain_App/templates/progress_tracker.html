@@ -9,81 +9,39 @@
         <!-- Current Level -->
         <div class="current-level">
             <div class="level-display">
-                <span class="level-emoji">🌟</span>
-                <span class="level-text">Advanced</span>
+                <span class="level-emoji">{{ current_level.emoji }}</span>
+                <span class="level-text">{{ current_level.name }}</span>
             </div>
             <div class="level-stats">
                 <div class="stat">
                     <span class="stat-label">Average Focus</span>
-                    <span class="stat-value">7.2/10</span>
+                    <span class="stat-value">{{ progress_stats.avg_focus|default:"0.0" }}%</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">Total Sessions</span>
-                    <span class="stat-value">47</span>
+                    <span class="stat-value">{{ progress_stats.total_sessions|default:"0" }}</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">Study Time</span>
-                    <span class="stat-value">142h 30min</span>
+                    <span class="stat-value">{{ progress_stats.study_hours|default:0 }}h {{ progress_stats.study_remaining_minutes|default:0 }}min</span>
                 </div>
             </div>
         </div>
 
         <!-- Progress Levels -->
         <div class="progress-levels">
-            <div class="level-item completed">
+            {% for level in levels %}
+            <div class="level-item {{ level.status }}">
                 <div class="level-indicator">
-                    <span class="level-emoji">🎯</span>
-                    <span class="level-name">Beginner</span>
-                    <span class="level-range">< 5.0</span>
+                    <span class="level-emoji">{{ level.emoji }}</span>
+                    <span class="level-name">{{ level.name }}</span>
+                    <span class="level-range">{{ level.range }}</span>
                 </div>
                 <div class="level-bar">
-                    <div class="level-progress" style="width: 100%;"></div>
+                    <div class="level-progress" style="width: {{ level.progress }}%;"></div>
                 </div>
             </div>
-
-            <div class="level-item completed">
-                <div class="level-indicator">
-                    <span class="level-emoji">🌱</span>
-                    <span class="level-name">Developing</span>
-                    <span class="level-range">5.0-5.9</span>
-                </div>
-                <div class="level-bar">
-                    <div class="level-progress" style="width: 100%;"></div>
-                </div>
-            </div>
-
-            <div class="level-item completed">
-                <div class="level-indicator">
-                    <span class="level-emoji">📈</span>
-                    <span class="level-name">Intermediate</span>
-                    <span class="level-range">6.0-6.9</span>
-                </div>
-                <div class="level-bar">
-                    <div class="level-progress" style="width: 100%;"></div>
-                </div>
-            </div>
-
-            <div class="level-item current">
-                <div class="level-indicator">
-                    <span class="level-emoji">🌟</span>
-                    <span class="level-name">Advanced</span>
-                    <span class="level-range">7.0-7.9</span>
-                </div>
-                <div class="level-bar">
-                    <div class="level-progress" style="width: 20%;"></div>
-                </div>
-            </div>
-
-            <div class="level-item locked">
-                <div class="level-indicator">
-                    <span class="level-emoji">🏆</span>
-                    <span class="level-name">Expert</span>
-                    <span class="level-range">≥ 8.0</span>
-                </div>
-                <div class="level-bar">
-                    <div class="level-progress" style="width: 0%;"></div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
 
         <!-- Recommended Study Method -->

@@ -25,4 +25,5 @@ urlpatterns = [
     path('end_session/', views.end_session, name='end_session'),
     path('recommendation/', views.recommendation_view, name='recommendation'),
     path('focus-history/', views.focus_track_history, name='focus_track_history'),
+    path('api/presession-checkin/', views.presession_checkin_view, name='presession_checkin'),
 ]

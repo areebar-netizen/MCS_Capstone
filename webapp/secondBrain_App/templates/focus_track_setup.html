@@ -1,33 +1,71 @@
 ﻿<!-- Focus Track Setup Component -->
 <div class="card focus-track-setup">
     <div class="card-header">
-        <h2 class="card-title">Focus Track Session</h2>
-        <p class="card-subtitle">Start a new focus session</p>
+        <h2 class="card-title" id="cardTitle">Start Focus Track</h2>
+        <p class="card-subtitle" id="cardSubtitle"></p>
     </div>
-    
+
     <div class="card-content">
-        <!-- Duration Selection -->
-        <div class="duration-section">
-            <h3 class="section-title">Select Duration</h3>
-            <div class="duration-grid">
-                <button class="duration-btn btn-deselected" data-duration="1">1 min</button>
-                <button class="duration-btn btn-deselected" data-duration="15">15 min</button>
-                <button class="duration-btn btn-deselected" data-duration="25">25 min</button>
-                <button class="duration-btn btn-deselected" data-duration="30">30 min</button>
-                <button class="duration-btn btn-deselected" data-duration="45">45 min</button>
-                <button class="duration-btn btn-deselected" data-duration="60">60 min</button>
-                <button class="duration-btn btn-deselected" data-duration="90">90 min</button>
+
+        <!-- VIEW 1: Setup -->
+        <div id="setupView">
+            <div class="focus-setup-shell">
+                <label class="focus-label" for="sessionNameInput">Session Name</label>
+                <input
+                    type="text"
+                    id="sessionNameInput"
+                    class="focus-text-input"
+                    placeholder="e.g. Deep Work, Study Session, Creative Flow"
+                    maxlength="80"
+                >
+
+                <div class="duration-section">
+                    <h3 class="section-title">Duration</h3>
+                    <div class="duration-grid">
+                        <button class="duration-btn btn-deselected" data-duration="15">15 min</button>
+
+                        <div class="duration-option-wrap">
+                            <button class="duration-btn btn-selected" data-duration="25">25 min</button>
+                            <span class="duration-tag">Pomodoro</span>
+                        </div>
+
+                        <button class="duration-btn btn-deselected" data-duration="30">30 min</button>
+                        <button class="duration-btn btn-deselected" data-duration="45">45 min</button>
+                        <button class="duration-btn btn-deselected" data-duration="60">1 hour</button>
+                        <button class="duration-btn btn-deselected" data-duration="90">90 min</button>
+                    </div>
+                </div>
+
+                <label class="focus-label" for="customDurationInput">Custom Duration (minutes)</label>
+                <input
+                    type="number"
+                    id="customDurationInput"
+                    class="focus-text-input"
+                    min="1"
+                    max="360"
+                    step="1"
+                    value="25"
+                >
+
+                <button class="btn-primary btn-start focus-continue-btn" id="startSessionBtn" onclick="showCheckin()">
+                    <span class="focus-continue-arrow">&#8594;</span>
+                    <span>Continue to Pre-Session Check-In</span>
+                </button>
+
+                <div class="focus-note">
+                    <span class="focus-note-icon" aria-hidden="true">&#9432;</span>
+                    <p>
+                        The pre-session check-in helps us provide better AI recommendations by understanding your
+                        current state and goals. It takes less than 2 minutes.
+                    </p>
+                </div>
             </div>
         </div>
 
-        <!-- Session Controls -->
-        <div class="session-controls">
-            <button class="btn-primary btn-start" id="startSessionBtn" onclick="startEEGsession()">
-                <span>Start Focus Session</span>
-            </button>
-        </div>
+        <!-- VIEW 2: Pre-Session Check-In (inline) -->
+        {% include 'presession_checkin.html'%}
 
-        <!-- Active Session Display (Hidden by default) -->
+        <!-- VIEW 3: Active Session -->
         <div class="active-session" id="activeSession" style="display: none;">
             <div class="timer-display">
                 <span id="sessionTimer">00:00</span>
@@ -47,62 +85,236 @@
                 </div>
             </div>
             <div class="session-controls">
-                <button type="button" class="btn-danger" id="endBtn" onclick="stopEEGsession()">
-                    End Session
-                </button>
+                <button type="button" class="btn-danger" id="endBtn" onclick="stopEEGsession()">End Session</button>
             </div>
             <div class="session-controls">
                 <pre id="sessionOutput"></pre>
-            </div>  
+            </div>
         </div>
-        
+
     </div>
 </div>
 
 <script>
-    let selectedDuration = 1;
+    let selectedDuration = 25;
     let timerInterval = null;
     let remainingSeconds = 0;
     let elapsedSeconds = 0;
+    let preSessionData = {};
 
-    document.querySelectorAll('.duration-btn').forEach(btn => {
+    // ---- View switching ----
+    function showSetup() {
+        document.getElementById('setupView').style.display = 'block';
+        document.getElementById('checkinView').style.display = 'none';
+        document.getElementById('activeSession').style.display = 'none';
+        document.getElementById('cardTitle').textContent = 'Start Focus Track';
+        document.getElementById('cardSubtitle').textContent = '';
+    }
+
+    function showCheckin() {
+        document.getElementById('setupView').style.display = 'none';
+        document.getElementById('checkinView').style.display = 'block';
+        document.getElementById('activeSession').style.display = 'none';
+        document.getElementById('cardTitle').textContent = 'Pre-Session Check-In';
+        document.getElementById('cardSubtitle').textContent = 'Tell us about your current state and goals';
+    }
+
+    function showActiveSession() {
+        document.getElementById('setupView').style.display = 'none';
+        document.getElementById('checkinView').style.display = 'none';
+        document.getElementById('activeSession').style.display = 'block';
+        document.getElementById('cardTitle').textContent = 'Focus Track Session';
+        document.getElementById('cardSubtitle').textContent = 'Session in progress';
+    }
+
+
+    // ---- Duration selection ----
+    function setSelectedDuration(duration, fromCustomInput) {
+        selectedDuration = duration;
+
+        document.querySelectorAll('#setupView .duration-btn').forEach(btn => {
+            if (Number(btn.dataset.duration) === duration && !fromCustomInput) {
+                btn.classList.remove('btn-deselected');
+                btn.classList.add('btn-selected');
+            } else {
+                btn.classList.remove('btn-selected');
+                btn.classList.add('btn-deselected');
+            }
+        });
+
+        const customInput = document.getElementById('customDurationInput');
+        if (customInput && String(customInput.value) !== String(duration)) {
+            customInput.value = duration;
+        }
+
+        console.log("Selected:", selectedDuration);
+    }
+
+    document.querySelectorAll('#setupView .duration-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.duration-btn').forEach(b => {
-                b.classList.remove('btn-selected');
-                b.classList.add('btn-deselected');
-            });
-
-            btn.classList.remove('btn-deselected');
-            btn.classList.add('btn-selected');
-
-            selectedDuration = Number(btn.dataset.duration);
-            console.log("Selected:", selectedDuration);
+            setSelectedDuration(Number(btn.dataset.duration), false);
         });
     });
 
+    const customDurationInput = document.getElementById('customDurationInput');
+    if (customDurationInput) {
+        customDurationInput.addEventListener('input', () => {
+            const value = Number(customDurationInput.value);
+            if (Number.isFinite(value) && value >= 1) {
+                setSelectedDuration(value, true);
+            }
+        });
+    }
+
+    setSelectedDuration(selectedDuration, false);
+
+    // ---- Pre-session option toggle ----
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('psc-opt')) {
+            const group = e.target.dataset.group;
+            document.querySelectorAll('.psc-opt[data-group="' + group + '"]').forEach(b => b.classList.remove('psc-opt-selected'));
+            e.target.classList.add('psc-opt-selected');
+        }
+    });
+
+    // ---- Slider live update ----
+    ['psc-difficulty', 'psc-energy', 'psc-stress'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function() {
+                document.getElementById(id + '-val').textContent = el.value + '/10';
+            });
+        }
+    });
+
+    function collectPreSessionData() {
+        var groups = ['subject','tasklength','mood','meal','caffeine','wake','activity','noise','lighting','method','location'];
+        var data = {};
+        groups.forEach(function(g) {
+            var sel = document.querySelector('#checkinView .psc-opt-selected[data-group="' + g + '"]');
+            data[g] = sel ? sel.dataset.val : null;
+        });
+        data.difficulty = document.getElementById('psc-difficulty').value;
+        data.energy = document.getElementById('psc-energy').value;
+        data.stress = document.getElementById('psc-stress').value;
+        data.deadline = document.getElementById('psc-deadline').value;
+        data.goal = document.getElementById('psc-goal').value;
+        data.session_name = document.getElementById('sessionNameInput').value;
+        return data;
+    }
+
+    //Start session button
+    const startBtn = document.getElementById('startSessionBtn');
+    const activeSession = document.getElementById('activeSession');
+    const setupSection = document.querySelector('.duration-section');
+    
+    // ---- Pre-session data collection ----
+    function collectPreSessionData() {
+        const sessionName = document.getElementById('sessionNameInput').value;
+        const subjectTask = document.querySelector('.psc-opt[data-group="subject"].psc-opt-selected')?.dataset.val;
+        const taskDifficulty = document.getElementById('psc-difficulty')?.value;
+        const estimatedLength = document.querySelector('.psc-opt[data-group="tasklength"].psc-opt-selected')?.dataset.val;
+        const assignmentDeadline = document.getElementById('psc-deadline')?.value;
+        const sessionGoal = document.getElementById('psc-goal')?.value;
+        const energyLevel = document.getElementById('psc-energy')?.value;
+        const moodEmoji = document.querySelector('.psc-opt[data-group="mood"].psc-opt-selected')?.dataset.val;
+        const stressLevel = document.getElementById('psc-stress')?.value;
+        const timeSinceMeal = document.querySelector('.psc-opt[data-group="meal"].psc-opt-selected')?.dataset.val;
+        const caffeineIntake = document.querySelector('.psc-opt[data-group="caffeine"].psc-opt-selected')?.dataset.val;
+        const timeSinceWaking = document.querySelector('.psc-opt[data-group="wake"].psc-opt-selected')?.dataset.val;
+        const physicalActivity = document.querySelector('.psc-opt[data-group="activity"].psc-opt-selected')?.dataset.val;
+        const currentNoise = document.querySelector('.psc-opt[data-group="noise"].psc-opt-selected')?.dataset.val;
+        const studyMethod = document.querySelector('.psc-opt[data-group="method"].psc-opt-selected')?.dataset.val;
+        const currentLocation = document.querySelector('.psc-opt[data-group="location"].psc-opt-selected')?.dataset.val;
+
+        return {
+            session_name: sessionName,
+            subject_task: subjectTask,
+            task_difficulty: parseInt(taskDifficulty) || 5,
+            estimated_length: estimatedLength,
+            assignment_deadline: assignmentDeadline || null,
+            session_goal: sessionGoal,
+            energy_level: parseInt(energyLevel) || 5,
+            mood_emoji: moodEmoji,
+            stress_level: parseInt(stressLevel) || 5,
+            time_since_meal: timeSinceMeal,
+            caffeine_intake: caffeineIntake,
+            time_since_waking: timeSinceWaking,
+            physical_activity: physicalActivity,
+            current_noise: currentNoise,
+            lighting_conditions: '',
+            study_method: studyMethod,
+            current_location: currentLocation
+        };
+    }
+
+    async function confirmPreSessionAndStart() {
+        console.log("BOTTOM BUTTON: confirmPreSessionAndStart fired");
+        preSessionData = collectPreSessionData();
+        console.log("Collected data:", preSessionData);
+        
+        // Send pre-session data to backend
+        try {
+            const res = await fetch('/api/presession-checkin/', {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(preSessionData)
+            });
+            const data = await res.json();
+            console.log("Pre-session check-in response:", data);
+            if (data.ok) {
+                preSessionData.session_id = data.session_id;
+                // Store session data to trigger timer on dashboard
+                sessionStorage.setItem('session_name', preSessionData.session_name);
+                sessionStorage.setItem('session_duration', selectedDuration);
+                sessionStorage.setItem('start_timer', 'true');
+                sessionStorage.setItem('session_id', data.session_id);  // Store session_id for EEG session linking
+                // Redirect to dashboard to use dashboard's timer and brainwave logic
+                window.location.href = '/dashboard/';
+            } else {
+                console.error("Failed to save pre-session check-in:", data.error);
+                alert("Failed to save pre-session check-in. Please try again.");
+            }
+        } catch (err) {
+            console.error("Error submitting pre-session check-in:", err);
+            alert("Error submitting pre-session check-in. Please try again.");
+        }
+    }
+
+    // ---- Timer ----
     function formatTime(totalSeconds) {
-        const mins = Math.floor(totalSeconds / 60);
-        const secs = totalSeconds % 60;
+        var mins = Math.floor(totalSeconds / 60);
+        var secs = totalSeconds % 60;
         return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
     }
 
     function startTimer(durationMinutes) {
+        console.log("Starting timer for", durationMinutes, "minutes");
         remainingSeconds = durationMinutes * 60;
         elapsedSeconds = 0;
 
-        document.getElementById('sessionTimer').textContent = formatTime(remainingSeconds);
-        document.getElementById('elapsedTime').textContent = formatTime(elapsedSeconds);
-
-        if (timerInterval) {
-            clearInterval(timerInterval);
+        const sessionTimerEl = document.getElementById('sessionTimer');
+        const elapsedTimeEl = document.getElementById('elapsedTime');
+        
+        if (sessionTimerEl) {
+            sessionTimerEl.textContent = formatTime(remainingSeconds);
+        }
+        if (elapsedTimeEl) {
+            elapsedTimeEl.textContent = formatTime(elapsedSeconds);
         }
 
-        timerInterval = setInterval(async () => {
+        if (timerInterval) clearInterval(timerInterval);
+
+        timerInterval = setInterval(async function() {
             remainingSeconds -= 1;
             elapsedSeconds += 1;
 
-            document.getElementById('sessionTimer').textContent = formatTime(Math.max(remainingSeconds, 0));
-            document.getElementById('elapsedTime').textContent = formatTime(elapsedSeconds);
+            if (sessionTimerEl) {
+                sessionTimerEl.textContent = formatTime(Math.max(remainingSeconds, 0));
+            }
+            if (elapsedTimeEl) {
+                elapsedTimeEl.textContent = formatTime(elapsedSeconds);
+            }
 
             if (remainingSeconds <= 0) {
                 clearInterval(timerInterval);
@@ -111,30 +323,31 @@
                 await stopEEGsession();
             }
         }, 1000);
+        
+        console.log("Timer interval started");
     }
 
+    // ---- EEG session ----
     async function startEEGsession() {
-        console.log("Starting real-time EEG session");
+        console.log("starting EEG session");
+        showActiveSession();
+        startTimer(Number(selectedDuration));
 
         try {
-            const res = await fetch('/start_realtime_eeg/', {
+            var res = await fetch('/start_realtime_eeg/', {
                 method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    duration: Number(selectedDuration)
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ duration_minutes: Number(selectedDuration) })
             });
 
-            const data = await res.json();
+            var data = await res.json();
             console.log(data);
-
             document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
 
             if (res.ok) {
-                document.getElementById('activeSession').style.display = 'block';
-                startTimer(Number(selectedDuration));
+                console.log("EEG session started successfully");
+                // Redirect to dashboard where brainwave box and recommendations exist
+                window.location.href = '/dashboard/';
             }
         } catch (err) {
             console.error(err);
@@ -142,30 +355,70 @@
         }
     }
 
+    function startHistogramPolling() {
+        // Reset data
+        focusHistogramData = [];
+        focusHistogramLabels = [];
+        if (focusHistogramChart) {
+            focusHistogramChart.data.labels = [];
+            focusHistogramChart.data.datasets[0].data = [];
+            focusHistogramChart.update();
+        }
+        if (histogramPolling) clearInterval(histogramPolling);
+        histogramPolling = setInterval(fetchHistogramData, 1000);
+    }
+
+    async function fetchHistogramData() {
+        // Example: fetch from a new endpoint that returns real-time focus data array
+        try {
+            const res = await fetch('/realtime_eeg_status/', { method: 'GET' });
+            const status = await res.json();
+            if (status.ok && status.result && status.result.data_points) {
+                // data_points: [{timestamp, focus_score, ...}]
+                focusHistogramLabels = status.result.data_points.map(p => p.timestamp);
+                focusHistogramData = status.result.data_points.map(p => p.focus_score);
+                if (focusHistogramChart) {
+                    focusHistogramChart.data.labels = focusHistogramLabels;
+                    focusHistogramChart.data.datasets[0].data = focusHistogramData;
+                    focusHistogramChart.update();
+                }
+                // Show info below
+                if (focusHistogramInfo && status.result.final_summary) {
+                    const s = status.result.final_summary;
+                    focusHistogramInfo.innerHTML = `Avg: ${(s.average_focus_score*100).toFixed(1)}% | Peak: ${(s.peak_focus_score*100).toFixed(1)}% | Duration: ${Math.floor(s.total_duration_seconds/60)}m ${(s.total_duration_seconds%60)}s`;
+                }
+            }
+        } catch (e) {
+            // Ignore errors during polling
+        }
+    }
+
     async function stopEEGsession() {
-        console.log("Ending real-time EEG session");
+        console.log("Ending EEG session");
 
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
+        if (histogramPolling) {
+            clearInterval(histogramPolling);
+            histogramPolling = null;
+        }
 
         try {
-            const res = await fetch('/stop_realtime_eeg/', {
+            var res = await fetch('/stop_realtime_eeg/', {
                 method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             });
 
-            const data = await res.json();
+            var data = await res.json();
             console.log(data);
             document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
 
             
             if (data.status === 'completed' || data.status === "SUCCESS") {
                 console.log("will recommend")
-                window.location.href = '/recommendation/';
+                window.location.href = '/dashboard/';
             } else if (data.status === 'processing' ||
                 data.status === 'PENDING' ||
                 data.status === 'running' ||
@@ -177,5 +430,4 @@
             document.getElementById('sessionOutput').textContent = "Stop error: " + err;
         }
     }
-        
 </script>

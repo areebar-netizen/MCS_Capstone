@@ -79,9 +79,6 @@ class EEGDataStreamer:
                 ]
                 self.csv_writer.writerow(header)
                 self.is_writing = True
-                
-                print(f"Started CSV recording: {self.csv_file_path}")
-    
     def write_data_point(self, timestamp, focus_state, confidence, probabilities):
         """Write a single data point to CSV"""
         with self.lock:
@@ -106,7 +103,6 @@ class EEGDataStreamer:
             if self.csv_file:
                 self.csv_file.close()
                 self.is_writing = False
-                print(f"Stopped CSV recording: {self.csv_file_path}")
 
 
 def validate_eeg_connection():
@@ -129,7 +125,6 @@ def validate_eeg_connection():
         acq.stop()
         
         if len(buffer) > 10:  # Got some data
-            print("EEG device connection validated")
             return True, None
         else:
             return False, "EEG Device not connected. Please check your hardware."
@@ -173,10 +168,13 @@ def focus_latency(labels):
 
 
 @shared_task(bind=True)
-def run_live_inference_streaming(self, user_email, duration_minutes=1):
+def run_live_inference_streaming(self, user_email, duration_minutes=1, session_id=None):
     """
     Real-time EEG inference with per-second focus streaming
     """
+    # Initialize state_counts to ensure it's available in all code paths
+    state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
+    
     all_session_labels = []
     try:
         # CACHE CLEANUP: Remove old cache entries for this user to prevent buildup
@@ -185,21 +183,28 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             cache.delete(f"session_final_result_{user_email}")
             cache.delete(f"live_status_{user_email}")
             cache.delete(f"recommendation_{user_email}")
-            print(f"[CACHE] Cleaned old entries for {user_email}")
         except Exception as e:
-            print(f"[CACHE WARNING] Failed to clean old entries: {e}")
-        # Generate unique session info
-        print(f"Starting Real-time EEG Inference")
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        user_prefix = user_email.split('@')[0]
-        session_id = f"{user_prefix}_{timestamp}"
-        csv_output_path = ROOT / 'dataset' / 'our_data' / f'{user_prefix}_new' / f'{session_id}.csv'
+            pass
         
-        print(f"Starting Real-time EEG Inference")
-        print(f"   User: {user_email}")
-        print(f"   Duration: {duration_minutes} minutes")
-        print(f"   Session ID: {session_id}")
-        print(f"   CSV Path: {csv_output_path}")
+        # Set initial cache immediately to show brainwave box right away
+        from django.utils import timezone
+        initial_package = {
+            'status': 'active',
+            'state': 'INITIALIZING',
+            'confidence': 0.0,
+            'waves': {'delta': 0, 'theta': 0, 'alpha': 0, 'beta': 0, 'gamma': 0},
+            'last_updated': timezone.localtime(timezone.now()).strftime("%H:%M:%S")
+        }
+        cache_key = f"live_eeg_stream_{user_email}"
+        cache.set(cache_key, initial_package, timeout=30)
+        print(f"[INIT] Set initial cache package immediately to show brainwave box")
+        
+        # Generate unique session info if not provided
+        user_prefix = user_email.split('@')[0]
+        if not session_id:
+            timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+            session_id = f"{user_prefix}_{timestamp}"
+        csv_output_path = ROOT / 'dataset' / 'our_data' / f'{user_prefix}_new' / f'{session_id}.csv'
         
         # Validate EEG connection first
         is_connected, error_msg = validate_eeg_connection()
@@ -215,7 +220,6 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         # Initialize data streamer
         streamer = EEGDataStreamer(csv_output_path, session_id)
         streamer.start_recording()
-        print(f"[DEBUG 1] Streamer started")
         
         # Initialize prediction service
         print(f"[DEBUG 2] Loading prediction service...")
@@ -233,36 +237,31 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         acq.start()
         
         # Session tracking
-        start_time = datetime.now()
+        start_time = timezone.now()
         end_time = start_time + pd.Timedelta(minutes=duration_minutes)
         data_points = []
         focus_scores = []
         confidence_scores = []
-        
-        print(f"Starting real-time inference...")
-        print(f"   Start: {start_time.strftime('%H:%M:%S')}")
-        print(f"   End: {end_time.strftime('%H:%M:%S')}")
         
         # Main processing loop - run every second
         stop_key = f"stop eeg task{self.request.id}"
         
         # CACHE OPTIMIZATION: Throttle cache updates to reduce pressure
         last_cache_update = 0
-        cache_update_interval = 2  # Update cache every 2 seconds instead of every second
+        cache_update_interval = 1  # Update cache every 1 second for immediate feedback
         
-        while datetime.now() < end_time:
+        # Initialize cache immediately when session starts
+        initial_cache_set = False
+        
+        while timezone.now() < end_time:
             
             try:
                 # Get buffer data
                 rows = acq.get_buffer_copy()
                 
-                # Debug: Track if EEG data is actually changing
-                print(f"[DEBUG] EEG buffer size: {len(rows)} rows")
-                if len(rows) > 0:
-                    # Convert to numpy array if needed
-                    rows_array = np.array(rows)
-                    print(f"[DEBUG] EEG data range: [{np.min(rows_array[:,1:]):.6f}, {np.max(rows_array[:,1:]):.6f}]")
-                    print(f"[DEBUG] EEG timestamp range: [{rows_array[0,0]:.3f}, {rows_array[-1,0]:.3f}]")
+                # Track EEG buffer size
+                if len(rows) == 0:
+                    print(f"[DEBUG] Empty EEG buffer, waiting for data...")
                 
                 # Need minimum samples for prediction (approximately 1 second)
                 min_samples = int(256 * 1.0)
@@ -272,7 +271,6 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 
                 try:
                     # Process prediction
-                    print(f"[DEBUG] Processing prediction with {len(rows)} rows...")
                     result = prediction_service.run(rows, nsamples=150, period=1.0, cols_to_ignore=-1)
                     if result.get('ok'):
                         predicted_label = result.get('predicted_label')
@@ -291,11 +289,15 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                         # Extract raw band powers for live visualization
                         raw_band_powers = get_raw_band_powers(np.array(rows))
                         
+                        # Reduce brainwave debug logging
+                        if len(data_points) % 10 == 0:  # Log every 10th data point
+                            print(f"[DEBUG] Brainwave: delta:{raw_band_powers.get('delta', 0):.1f} theta:{raw_band_powers.get('theta', 0):.1f} alpha:{raw_band_powers.get('alpha', 0):.1f}")
+                        
                         # Calculate focus score
                         focus_score = FOCUS_SCORES.get(predicted_label, 0.5)
                         
                         # Store data point
-                        current_time = datetime.now().strftime('%H:%M:%S')
+                        current_time = timezone.now().strftime('%H:%M:%S')
                         data_points.append({
                             'timestamp': current_time,
                             'focus_state': predicted_label,
@@ -314,8 +316,10 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                         if result.get('ok'):
                             current_time_sec = time.time()
                             
-                            # CACHE THROTTLING: Only update cache every 2 seconds
-                            if current_time_sec - last_cache_update >= cache_update_interval:
+                            # CACHE THROTTLING: Update immediately on first prediction, then every second
+                            should_update_cache = (current_time_sec - last_cache_update >= cache_update_interval) or (last_cache_update == 0)
+                            
+                            if should_update_cache:
                                 # Normalize brainwave values using fixed scale to prevent over-smoothing
                                 def normalize_with_fixed_scale(v, band_name):
                                     # Updated ranges based on actual Muse output observed in logs
@@ -383,7 +387,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                                         'beta': normalize_with_fixed_scale(current_waves['beta'], 'beta'),
                                         'gamma': normalize_with_fixed_scale(current_waves['gamma'], 'gamma')
                                     },
-                                    'last_updated': timezone.now().strftime("%H:%M:%S")
+                                    'last_updated': timezone.localtime(timezone.now()).strftime("%H:%M:%S")
                                 }
                                 
                                 # Debug: Show scaling results
@@ -414,7 +418,6 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 time.sleep(1.0)  # Process every second
                 
             except Exception as e:
-                print(f"Error in processing loop: {e}")
                 time.sleep(1.0)
                 continue
         
@@ -423,12 +426,18 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         streamer.stop_recording()
         
         # Calculate session summary
-        actual_end_time = datetime.now()
+        actual_end_time = timezone.now()
         total_duration = (actual_end_time - start_time).total_seconds()
+        
+        # Initialize state_counts to ensure it's available in all code paths
+        state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
+        for label in all_session_labels:
+            if label in state_counts:
+                state_counts[label] += 0.5  # Each window represents 0.5 seconds
+        
         
         # Calculate statistics - NO DUMMY FALLBACKS
         if not all_session_labels:
-            print(f"[ERROR] No data captured during session - all_session_labels is empty!")
             avg_focus = 0.0
             peak_focus = 0.0
         else:
@@ -443,32 +452,6 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
                 # Weighted calculation: (state_seconds × state_value) summed, then divided by total_time
                 total_focus_points = (relaxed_seconds * 2) + (neutral_seconds * 5) + (concentrating_seconds * 10)
                 avg_focus = (total_focus_points / total_time)
-            else:
-                avg_focus = 0.0
-                
-            peak_focus = np.max(focus_scores) if focus_scores else 0.0
-            
-            print(f"[DEBUG] Weighted Focus calculation:")
-            print(f"  Relaxed: {relaxed_seconds}s × 2 = {relaxed_seconds * 2} points")
-            print(f"  Neutral: {neutral_seconds}s × 5 = {neutral_seconds * 5} points") 
-            print(f"  Concentrating: {concentrating_seconds}s × 10 = {concentrating_seconds * 10} points")
-            print(f"  Total: {total_focus_points} points ÷ {total_time}s = {avg_focus:.2f}/10 score")
-        
-        # Collect all window labels for proper statistics
-        print(f"[DEBUG] Final all_session_labels count: {len(all_session_labels)}")
-        print(f"[DEBUG] Sample labels: {all_session_labels[:10] if all_session_labels else 'None'}")
-        print(f"[DEBUG] Total data_points collected: {len(data_points)}")
-        print(f"[DEBUG] Total focus_scores collected: {len(focus_scores)}")
-        
-        if len(all_session_labels) == 0:
-            print(f"[ERROR] No labels captured! Checking prediction service results...")
-            # Let's debug what went wrong
-            if len(data_points) == 0:
-                print(f"[ERROR] No data points were created - predictions likely failed")
-            else:
-                print(f"[DEBUG] Data points exist but labels empty - checking window_labels...")
-                for i, point in enumerate(data_points[:3]):  # Check first 3 points
-                    print(f"[DEBUG] Point {i}: {point}")
         
         # Count time spent in each state based on accumulated session labels (each window = 0.5 seconds)
         state_counts = {'relaxed': 0, 'neutral': 0, 'concentrating': 0}
@@ -476,46 +459,41 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             if label in state_counts:
                 state_counts[label] += 0.5  # Each window represents 0.5 seconds
         
-        print(f"[DEBUG] State counts: {state_counts}")
-        
         # Calculate statistics based on accumulated session labels - NO DUMMY FALLBACKS
         
-        # Peak Focus Score: Longest continuous concentration streak (20-min Flow State threshold)
+        # Peak Focus Score: Longest continuous concentration streak relative to ideal performance
         longest_streak_seconds = longest_focus_streak(all_session_labels) * 0.5 if all_session_labels else 0.0
-        longest_streak_minutes = longest_streak_seconds / 60.0
+        total_session_seconds = total_duration
         
-        # Scientific 1-10 scale: 20-minute continuous focus = 10/10 (Peak Flow State)
-        FLOW_THRESHOLD_MINUTES = 20.0
-        peak_focus_score = (longest_streak_minutes / FLOW_THRESHOLD_MINUTES) * 10
-        peak_focus_score = min(peak_focus_score, 10)  # Cap at 10
+        # Scientific 1-10 scale based on streak quality:
+        # 10 = 30+ second continuous concentration (excellent deep work)
+        # 8 = 20-30 seconds (very good)
+        # 6 = 10-20 seconds (good)
+        # 4 = 5-10 seconds (fair)
+        # 2 = <5 seconds (poor)
+        if longest_streak_seconds >= 30:
+            peak_focus_score = 10.0
+        elif longest_streak_seconds >= 20:
+            peak_focus_score = 8.0
+        elif longest_streak_seconds >= 10:
+            peak_focus_score = 6.0
+        elif longest_streak_seconds >= 5:
+            peak_focus_score = 4.0
+        else:
+            peak_focus_score = 2.0
         
-        print(f"[DEBUG] Peak Focus: {longest_streak_minutes:.1f}min streak → {peak_focus_score:.1f}/10 score")
-        
+        # Update peak_focus to use the new calculation
+        peak_focus = peak_focus_score
         lfocus_streak = longest_streak_seconds
+        
+        # Collect all window labels for proper statistics
         
         # Debug state switch calculation
         switch_count = state_switch_count(all_session_labels) if all_session_labels else 0
-        if all_session_labels and len(all_session_labels) > 0:
-            switches = []
-            for i in range(1, len(all_session_labels)):
-                if all_session_labels[i-1] != all_session_labels[i]:
-                    switches.append(f"{all_session_labels[i-1]}→{all_session_labels[i]}")
-            print(f"[DEBUG] State switches ({len(switches)}): {switches}")
-        else:
-            print(f"[DEBUG] No session labels for switch counting")
         
         # Debug focus latency calculation
         latency_windows = focus_latency(all_session_labels) if all_session_labels else 0
         latency = latency_windows * 0.5
-        print(f"[DEBUG] Focus latency: {latency_windows} windows × 0.5s = {latency:.1f}s")
-        if all_session_labels and len(all_session_labels) > 0:
-            first_concentrating_idx = next((i for i, label in enumerate(all_session_labels) if label.strip().lower() == 'concentrating'), None)
-            if first_concentrating_idx is not None:
-                print(f"[DEBUG] First concentrating at window {first_concentrating_idx} (time: {first_concentrating_idx * 0.5:.1f}s)")
-            else:
-                print(f"[DEBUG] No concentrating states found in session")
-        else:
-            print(f"[DEBUG] No session labels for latency calculation")
 
         # Convert to seconds - NO DUMMY FALLBACKS
         relaxed_seconds = state_counts.get('relaxed', 0)
@@ -525,15 +503,13 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         # Sanity check: ensure calculated state seconds don't exceed total duration
         calculated_total = relaxed_seconds + neutral_seconds + concentrating_seconds
         if calculated_total > total_duration * 1.1:  # Allow 10% tolerance
-            print(f"[WARNING] Calculated state time ({calculated_total}s) exceeds session duration ({total_duration}s)")
             # Scale proportionally to fit total duration
             scale_factor = total_duration / calculated_total
             relaxed_seconds *= scale_factor
             neutral_seconds *= scale_factor
             concentrating_seconds *= scale_factor
-            print(f"[DEBUG] Scaled to fit duration - Relaxed: {relaxed_seconds:.1f}, Neutral: {neutral_seconds:.1f}, Concentrating: {concentrating_seconds:.1f}")
         
-        print(f"[DEBUG] Final seconds - Relaxed: {relaxed_seconds}, Neutral: {neutral_seconds}, Concentrating: {concentrating_seconds}")
+        # Final seconds calculated
         
         # Save session summary to database
         save_session_summary({
@@ -576,16 +552,16 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         
         # Prepare final summary for caching and return
         final_summary = {
-            'average_focus_score': avg_focus,
-            'peak_focus_score': peak_focus,
-            'total_duration_seconds': total_duration,
-            'relaxed_seconds': relaxed_seconds,
-            'neutral_seconds': neutral_seconds,
-            'concentrating_seconds': concentrating_seconds,
-            'longest_focus_streak': lfocus_streak,
-            'state_switch_count': switch_count,
-            'focus_latency': latency,
-            'data_points_count': len(data_points)
+            'average_focus_score': float(avg_focus),
+            'peak_focus_score': float(peak_focus),
+            'total_duration_seconds': float(total_duration),
+            'relaxed_seconds': float(relaxed_seconds),
+            'neutral_seconds': float(neutral_seconds),
+            'concentrating_seconds': float(concentrating_seconds),
+            'longest_focus_streak': float(lfocus_streak),
+            'state_switch_count': int(switch_count),
+            'focus_latency': float(latency),
+            'data_points_count': int(len(data_points))
         }
         
         # Save final result to Django cache for frontend access
@@ -594,7 +570,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
             'summary': final_summary
         }, timeout=300)
         
-        print(f"[DEBUG] Final summary cached for {user_email}: {final_summary}")
+        # Final summary cached
         
         return {
             'status': 'completed',
@@ -606,7 +582,6 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1):
         }
         
     except Exception as e:
-        print(f"Error in real-time inference: {e}")
         return {
             'status': 'error',
             'session_id': session_id if 'session_id' in locals() else 'unknown',
@@ -621,13 +596,85 @@ def save_session_summary(summary_data):
     """Save session summary to database"""
     from secondBrain_App.models import UserProfile, SessionSummary
     try:
-        print(f"[DB] Attempting to save session summary for: {summary_data['session_id']}")
-        print(f"[DB] User email: {summary_data['user_email']}")
-        print(f"[DB] Data points count: {summary_data['data_points_count']}")
-        print(f"[DB] Neutral seconds: {summary_data['neutral_seconds']}")
-        
         user_profile = UserProfile.objects.get(email=summary_data['user_email'])
-        print(f"[DB] Found user profile: {user_profile.email}")
+
+        # ── STEP 1: Retrieve wave averages from cache (pre-calculated by live_predict) ──
+        # live_predict.py calculates filtered wave averages during the session and stores them in cache
+        # This ensures we use the same filtered values that were used during live prediction
+        
+        beta_avg = 0
+        gamma_avg = 0
+        alpha_avg = 0
+        theta_avg = 0
+        
+        try:
+            from django.core.cache import cache
+            wave_averages_cache_key = f"wave_averages_{summary_data['user_email']}"
+            cached_wave_averages = cache.get(wave_averages_cache_key)
+            
+            if cached_wave_averages:
+                beta_avg = cached_wave_averages.get('beta_avg', 0)
+                gamma_avg = cached_wave_averages.get('gamma_avg', 0)
+                alpha_avg = cached_wave_averages.get('alpha_avg', 0)
+                theta_avg = cached_wave_averages.get('theta_avg', 0)
+                print(f"[WAVE AVERAGES] Retrieved from cache - Beta: {beta_avg:.2f}Hz, Gamma: {gamma_avg:.2f}Hz, Alpha: {alpha_avg:.2f}Hz, Theta: {theta_avg:.2f}Hz")
+            else:
+                # Fallback: Calculate from data_points if cache not available
+                print(f"[WAVE AVERAGES] Cache miss, calculating from data_points")
+                data_points = summary_data.get('data_points', [])
+                beta_values = []
+                gamma_values = []
+                alpha_values = []
+                theta_values = []
+                
+                for point in data_points:
+                    wave_data = point.get('wave_data', {})
+                    if wave_data:
+                        beta_values.append(wave_data.get('beta', 0))
+                        gamma_values.append(wave_data.get('gamma', 0))
+                        alpha_values.append(wave_data.get('alpha', 0))
+                        theta_values.append(wave_data.get('theta', 0))
+                
+                beta_avg = np.mean(beta_values) if beta_values else 0
+                gamma_avg = np.mean(gamma_values) if gamma_values else 0
+                alpha_avg = np.mean(alpha_values) if alpha_values else 0
+                theta_avg = np.mean(theta_values) if theta_values else 0
+                print(f"[WAVE AVERAGES] Calculated from data_points - Beta: {beta_avg:.2f}Hz, Gamma: {gamma_avg:.2f}Hz, Alpha: {alpha_avg:.2f}Hz, Theta: {theta_avg:.2f}Hz")
+        except Exception as e:
+            print(f"[ERROR] Failed to retrieve wave averages from cache: {e}")
+            # Fallback to calculation from data_points
+            data_points = summary_data.get('data_points', [])
+            beta_values = []
+            gamma_values = []
+            alpha_values = []
+            theta_values = []
+            
+            for point in data_points:
+                wave_data = point.get('wave_data', {})
+                if wave_data:
+                    beta_values.append(wave_data.get('beta', 0))
+                    gamma_values.append(wave_data.get('gamma', 0))
+                    alpha_values.append(wave_data.get('alpha', 0))
+                    theta_values.append(wave_data.get('theta', 0))
+            
+            beta_avg = np.mean(beta_values) if beta_values else 0
+            gamma_avg = np.mean(gamma_values) if gamma_values else 0
+            alpha_avg = np.mean(alpha_values) if alpha_values else 0
+            theta_avg = np.mean(theta_values) if theta_values else 0
+            print(f"[WAVE AVERAGES] Fallback calculation - Beta: {beta_avg:.2f}Hz, Gamma: {gamma_avg:.2f}Hz, Alpha: {alpha_avg:.2f}Hz, Theta: {theta_avg:.2f}Hz")
+        
+        # Calculate high-level string inferences
+        inferences = calculate_inferences(beta_avg, gamma_avg, alpha_avg, theta_avg)
+        print(f"[INFERENCE] Neural State: {inferences['neural_state']}, Signal Integrity: {inferences['signal_integrity']}, Focus Depth: {inferences['focus_depth']}")
+        
+        # Add wave averages and inferences to summary_data
+        summary_data['beta_avg'] = beta_avg
+        summary_data['gamma_avg'] = gamma_avg
+        summary_data['alpha_avg'] = alpha_avg
+        summary_data['theta_avg'] = theta_avg
+        summary_data['neural_state'] = inferences['neural_state']
+        summary_data['signal_integrity'] = inferences['signal_integrity']
+        summary_data['focus_depth'] = inferences['focus_depth']
 
         session_summary = SessionSummary.objects.create(
             session_id              = summary_data['session_id'],
@@ -643,38 +690,39 @@ def save_session_summary(summary_data):
             relaxed_seconds         = summary_data['relaxed_seconds'],
             neutral_seconds         = summary_data['neutral_seconds'],
             concentrating_seconds   = summary_data['concentrating_seconds'],
-            longest_focus_streak    = summary_data.get('longest_focus_streak', 0.0),
-            focus_latency           = summary_data.get('focus_latency', 0.0),
-            state_switch_count      = summary_data.get('state_switch_count', 0),
-            avg_confidence         = summary_data.get('avg_confidence', 0.0),
-            data_points_count       = summary_data['data_points_count']
+            data_points_count       = summary_data['data_points_count'],
+            longest_focus_streak    = summary_data['longest_focus_streak'],
+            focus_latency           = summary_data['focus_latency'],
+            state_switch_count      = summary_data['state_switch_count'],
+            # Wave averages (filtered)
+            beta_avg                = summary_data.get('beta_avg', 0),
+            gamma_avg               = summary_data.get('gamma_avg', 0),
+            alpha_avg               = summary_data.get('alpha_avg', 0),
+            theta_avg               = summary_data.get('theta_avg', 0),
+            # High-level inferences
+            neural_state            = summary_data.get('neural_state', 'Unknown'),
+            signal_integrity        = summary_data.get('signal_integrity', 'Unknown'),
+            focus_depth             = summary_data.get('focus_depth', 'Unknown')
         )
-
-        print(f"[SESSION] Summary saved successfully: {session_summary.session_id}")
-        print(f"[SESSION] SessionSummary ID: {session_summary.id}")
-
-        # ---- STEP 1: Update MySQL user_summary table ----──
-        try:
-            from core_engine.recommendation.user_summary import main as update_summary
-            update_summary(user_id=summary_data['user_email'])
-            print(f"[SUMMARY] user_summary table updated")
-        except Exception as e:
-            print(f"[SUMMARY ERROR] {e}")
         
-        # ---- CRITICAL: Ensure UI gets completion signal even if summary fails ----
+        # Update user summary (if table exists)
         try:
-            from django.core.cache import cache
+            from core_engine.recommendation.user_summary import update_summary
+            update_summary(user_id=summary_data['user_email'])
+        except Exception as e:
+            pass
+        
+        # Update live status cache
+        try:
             cache.set(f"live_status_{summary_data['user_email']}", "completed", timeout=300)
-            print(f"[STATUS] Live status set to 'completed' for {summary_data['user_email']}")
             
-            # Clean up live brainwave cache to hide live brainwave box
+            # Clean up live brainwave cache
             cache.delete(f"live_eeg_stream_{summary_data['user_email']}")
-            print(f"[CACHE] Cleaned up live brainwave cache for {summary_data['user_email']}")
             
         except Exception as e:
-            print(f"[STATUS ERROR] Failed to set live status: {e}")
+            pass
 
-        # ── STEP 2: Generate recommendation using updated summary ──
+        # ── STEP 2: Generate recommendation using updated summary with inferences ──
         try:
             from core_engine.recommendation import generate_recommendation_for_session
             recommendation_text = generate_recommendation_for_session(
@@ -684,15 +732,27 @@ def save_session_summary(summary_data):
                     'average_focus_score'  : summary_data['average_focus_score'],
                     'concentrating_seconds': summary_data['concentrating_seconds'],
                     'neutral_seconds'      : summary_data['neutral_seconds'],
-                    'relaxed_seconds'      : summary_data['relaxed_seconds']
+                    'relaxed_seconds'      : summary_data['relaxed_seconds'],
+                    'beta_avg'             : summary_data.get('beta_avg', 0),
+                    'gamma_avg'            : summary_data.get('gamma_avg', 0),
+                    'alpha_avg'            : summary_data.get('alpha_avg', 0),
+                    'theta_avg'            : summary_data.get('theta_avg', 0),
+                    'neural_state'         : summary_data.get('neural_state', 'Unknown'),
+                    'signal_integrity'     : summary_data.get('signal_integrity', 'Unknown'),
+                    'focus_depth'          : summary_data.get('focus_depth', 'Unknown')
                 }
             )
             print(f"[RECOMMENDATION] Generated successfully")
 
             from secondBrain_App.models import Recommendation
+            import uuid
             Recommendation.objects.create(
                 user=user_profile,
-                session_id=summary_data['session_id'],
+                session=session_summary,
+                inference_id=str(uuid.uuid4()),
+                recommendation_category='general',
+                stimulus_name='study_tip',
+                trigger_reason='session_end',
                 message=recommendation_text
             )
             # ----------------------------------------
@@ -708,7 +768,24 @@ def save_session_summary(summary_data):
             }, timeout=3600)  # store for 1 hour
 
         except Exception as e:
-            print(f"[RECOMMENDATION ERROR] {e}")
+            pass
+
+        # ── STEP 3: Save recommendation to database (if recommendation engine is available) ──
+        try:
+            from core_engine.recommendation import save_recommendation
+            
+            save_recommendation(
+                user_email=summary_data['user_email'],
+                session_id=summary_data['session_id'],
+                inference_id=summary_data.get('task_id', 'unknown'),
+                category='general',
+                stimulus='study_tip',
+                trigger='session_end',
+                message=recommendation_text
+            )
+        
+        except Exception as e:
+            pass
 
         return session_summary
 
@@ -718,6 +795,82 @@ def save_session_summary(summary_data):
     except Exception as e:
         print(f"Error saving session summary: {e}")
         return None
+
+
+def notch_filter(signal, freq=50, fs=256, Q=30):
+    """Apply notch filter to remove power line noise"""
+    try:
+        b, a = iirnotch(freq/(fs/2), Q)
+        return filtfilt(b, a, signal)
+    except Exception as e:
+        print(f"[FILTER ERROR] notch_filter failed: {e}")
+        return signal
+
+
+def calculate_inferences(beta_avg, gamma_avg, alpha_avg, theta_avg):
+    """
+    Convert raw wave power averages into high-level string inferences.
+    
+    Args:
+        beta_avg: Average Beta wave power (Hz)
+        gamma_avg: Average Gamma wave power (Hz)
+        alpha_avg: Average Alpha wave power (Hz)
+        theta_avg: Average Theta wave power (Hz)
+    
+    Returns:
+        dict: {
+            'neural_state': str,
+            'signal_integrity': str,
+            'focus_depth': str
+        }
+    """
+    # Data Guard: Check for artifact-heavy signals
+    max_wave = max(beta_avg, gamma_avg, alpha_avg, theta_avg)
+    if max_wave > 500:
+        return {
+            'neural_state': 'Unknown',
+            'signal_integrity': 'Poor',
+            'focus_depth': 'Unknown'
+        }
+    
+    # Determine Signal Integrity
+    if max_wave > 100:
+        signal_integrity = 'Artifact-Heavy'
+    elif max_wave > 50:
+        signal_integrity = 'Clean'
+    else:
+        signal_integrity = 'Clean'
+    
+    # Determine Neural State based on wave patterns
+    # High Beta (15-30Hz) + High Gamma = Focus
+    # High Alpha + High Theta = Drowsy
+    # High Beta (>30Hz) = Anxious
+    # High Theta = Distracted
+    
+    if beta_avg > 30:
+        neural_state = 'Anxious'
+    elif alpha_avg > 15 and theta_avg > 12:
+        neural_state = 'Drowsy'
+    elif theta_avg > 15:
+        neural_state = 'Distracted'
+    elif beta_avg >= 15 and beta_avg <= 30 and gamma_avg > 30:
+        neural_state = 'Focus'
+    else:
+        neural_state = 'Neutral'
+    
+    # Determine Focus Depth
+    if neural_state == 'Focus' and gamma_avg > 40:
+        focus_depth = 'Deep Flow'
+    elif neural_state == 'Focus':
+        focus_depth = 'Light Focus'
+    else:
+        focus_depth = 'Surface Level'
+    
+    return {
+        'neural_state': neural_state,
+        'signal_integrity': signal_integrity,
+        'focus_depth': focus_depth
+    }
 
 
 @shared_task(bind=True)

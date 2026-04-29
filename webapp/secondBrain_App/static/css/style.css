@@ -6,6 +6,7 @@
     --bg-card-overlay: rgba(241, 231, 221, 0.2);
     --bg-white-overlay: rgba(255, 255, 255, 0.4);
     --bg-white: #FFFFFF;
+    --primary-color: #FF9168;
     
     /* Text Colors */
     --text-primary: #000000;
@@ -109,6 +110,7 @@ body {
     grid-template-columns: repeat(12, 1fr);
     gap: 1.5rem;
     min-width: 0;
+    align-items: start;
 }
 
 .col-span-12 { grid-column: span 12; }
@@ -116,14 +118,45 @@ body {
 .col-span-6 { grid-column: span 6; }
 .col-span-4 { grid-column: span 4; }
 
+/* Left column for Study Time + Progress Tracker */
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+    margin: 0;
+}
+
+/* Make Study Time and Progress Tracker match Focus Calendar height */
+.grid-row .col-span-6 .left-column {
+    height: 100%;
+    min-height: 500px;
+}
+
+.grid-row .col-span-6 .left-column > .card {
+    flex: 1;
+    margin: 0;
+}
+
 /* Card Styles */
 .card {
-    background: rgba(241, 231, 221, 0.2);
+    background: var(--bg-primary);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 145, 104, 0.7);
     border-radius: 1rem;
     padding: 1.5rem;
     transition: all 0.3s ease;
+}
+
+/* Focus Track History Container */
+.focus-track-history {
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .card:hover {
@@ -152,53 +185,207 @@ body {
 }
 
 /* Focus Track Setup */
-.focus-track-setup .duration-section {
-    margin-bottom: 2rem;
+.focus-track-setup {
+    border-radius: 24px;
+    border-color: rgba(255, 145, 104, 0.85);
 }
 
-.section-title {
-    font-size: 1.125rem;
+.focus-track-setup .card-header {
+    margin-bottom: 0.5rem;
+}
+
+.focus-track-setup .card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 1.25rem;
     font-weight: 600;
-    margin-bottom: 1rem;
-    color: #000000;
+    line-height: 1.1;
 }
 
-.duration-grid {
+.focus-track-setup .card-title::before {
+    content: "";
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid #ff9182;
+    box-shadow: inset 0 0 0 8px rgba(255, 145, 130, 0.08);
+}
+
+.focus-track-setup .card-subtitle:empty {
+    display: none;
+}
+
+.focus-setup-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.focus-label,
+.focus-track-setup .section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #131313;
+    margin: 0;
+}
+
+.focus-text-input {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 145, 104, 0.7);
+    background: rgba(255, 255, 255, 0.48);
+    color: #121212;
+    font-size: 0.9rem;
+    padding: 0 1rem;
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.focus-text-input::placeholder {
+    color: rgba(20, 20, 20, 0.5);
+}
+
+.focus-text-input:focus {
+    border-color: #ff8f70;
+    box-shadow: 0 0 0 3px rgba(255, 145, 104, 0.2);
+}
+
+.focus-track-setup .duration-section {
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.focus-track-setup .duration-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
 }
 
-.duration-btn {
-    padding: 0.75rem;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    border-radius: 0.5rem;
-    background: #F6F2F0;
-    color: #000000;
-    font-weight: 500;
+.focus-track-setup .duration-option-wrap {
+    position: relative;
+}
+
+.focus-track-setup .duration-tag {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: #19c254;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.focus-track-setup .duration-btn {
+    width: 100%;
+    height: 52px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 145, 104, 0.8);
+    background: rgba(255, 255, 255, 0.48);
+    color: #121212;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.duration-btn.btn-selected {
-    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34));
-    border-color: #FF9168;
+.focus-track-setup .duration-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(255, 145, 104, 0.12);
 }
 
-.duration-btn.btn-deselected:hover {
-    background: linear-gradient(90deg, rgba(254, 147, 140, 1) 0%, rgba(254, 147, 140, 0.34));
-    border-color: rgba(254, 147, 140, 0.8);
+.focus-track-setup .duration-btn.btn-selected {
+    background: linear-gradient(90deg, #fe938c 0%, rgba(254, 147, 140, 0.34) 100%);
+    color: #ffffff;
+    border-color: transparent;
 }
 
-.duration-btn.btn-deselected {
-    background: white;
-    border-color: rgba(254, 147, 140, 0.8);
+.focus-track-setup .duration-btn.btn-deselected {
+    background: rgba(255, 255, 255, 0.48) !important;
+    border: 1px solid rgba(255, 145, 104, 0.8) !important;
+    color: #121212 !important;
+}
+
+.focus-track-setup .focus-continue-btn {
+    margin-top: 0.5rem;
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #fe938c 0%, rgba(254, 147, 140, 0.34) 100%);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.focus-track-setup .focus-continue-arrow {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.focus-track-setup .focus-note {
+    margin-top: 0.35rem;
+    border: 1px solid rgba(255, 145, 104, 0.6);
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    color: #1b1b1b;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.focus-track-setup .focus-note p {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.focus-track-setup .focus-note-icon {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: rgba(255, 145, 104, 0.95);
 }
 
 .session-controls {
     display: flex;
     justify-content: center;
     margin-top: 2rem;
+}
+
+@media (max-width: 900px) {
+    .focus-track-setup .card-title {
+        font-size: 1.1rem;
+    }
+
+    .focus-label,
+    .focus-track-setup .section-title {
+        font-size: 0.85rem;
+    }
+
+    .focus-text-input,
+    .focus-track-setup .duration-btn {
+        font-size: 0.85rem;
+        height: 44px;
+    }
+
+    .focus-track-setup .focus-continue-btn {
+        font-size: 0.9rem;
+        height: 48px;
+    }
+
+    .focus-track-setup .focus-note p {
+        font-size: 0.78rem;
+    }
 }
 
 /* Base Style for all Onboarding Buttons */
@@ -273,6 +460,33 @@ body {
     color: #000000;
 }
 
+/* Progress Tracker Stats - horizontal layout like state items */
+.level-stats {
+    display: flex;
+    gap: 2rem;
+    justify-content: space-between;
+}
+
+.level-stats .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+}
+
+.level-stats .stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 0.25rem;
+}
+
+.level-stats .stat-label {
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.6);
+}
+
 /* User Profile */
 .profile-stats {
     display: flex;
@@ -285,13 +499,13 @@ body {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem;
-    background: rgba(241, 231, 221, 0.3);
+    background: var(--bg-primary);
     border-radius: 0.5rem;
     transition: all 0.3s ease;
 }
 
 .profile-stat:hover {
-    background: rgba(241, 231, 221, 0.5);
+    background: var(--bg-secondary);
 }
 
 .stat-icon {
@@ -700,6 +914,7 @@ body {
 /* Focus Track History Styles */
 
 .focus-track-history {
+    background: var(--bg-primary);
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -730,7 +945,7 @@ body {
     padding: 12px 40px 12px 16px;
     border: none;
     border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--bg-secondary);
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
@@ -756,6 +971,7 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
+    background: var(--bg-primary);
     margin-bottom: 40px;
 }
 
@@ -763,6 +979,7 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
+    background-color: var(--bg-primary);
 }
 
 .stat-icon {
@@ -798,6 +1015,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    background: var(--bg-primary);
 }
 
 .session-item {
@@ -843,22 +1061,27 @@ body {
 
 .session-states {
     display: flex;
-    gap: 24px;
+    justify-content: space-between;
+    gap: 16px;
     margin-right: 16px;
+    background: var(--bg-card-overlay);
+    padding: 8px 16px;
+    border-radius: 8px;
+    min-width: 200px;
 }
 
 .state-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 80px;
+    gap: 4px;
+    min-width: 60px;
 }
 
 .state-label {
     font-size: 12px;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-weight: 500;
-    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -866,18 +1089,19 @@ body {
 .state-value {
     font-size: 16px;
     font-weight: 700;
+    color: white;
 }
 
 .state-value.concentrated {
-    color: #10B981;
+    color: white;
 }
 
 .state-value.neutral {
-    color: #3B82F6;
+    color: white;
 }
 
 .state-value.relaxed {
-    color: #8B5CF6;
+    color: white;
 }
 
 .expand-icon {
@@ -890,19 +1114,11 @@ body {
     transform: rotate(180deg);
 }
 
-.session-detail {
-    border-top: 1px solid rgba(255, 145, 104, 0.7);
-    background: rgba(241, 231, 221, 0.2);
-    backdrop-filter: blur(10px);
-    width: 100%;
-    margin-top: 16px;
-    margin-bottom: 20px;
-}
 
 .detail-tabs {
     display: flex;
-    border-bottom: 1px solid rgba(255, 145, 104, 0.7);
-    background: rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(255, 145, 104, 0.2);
+    background: var(--bg-primary);
     backdrop-filter: blur(10px);
 }
 
@@ -929,12 +1145,15 @@ body {
 
 .detail-content {
     padding: 32px;
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--bg-primary);
     backdrop-filter: blur(10px);
 }
 
 .detail-tab-panel {
     display: none;
+    background: var(--bg-primary);
+    backdrop-filter: blur(10px);
+    padding: var(--spacing-lg);
 }
 
 .detail-tab-panel.active {
@@ -945,6 +1164,9 @@ body {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 32px;
+    background: var(--bg-primary);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
 }
 
 @media (max-width: 768px) {
@@ -958,7 +1180,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-top: 20px;
+    background: var(--bg-primary);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
 }
 
 .progress-item {
@@ -1010,6 +1234,9 @@ body {
 
 .session-timeline {
     margin-top: 32px;
+    background: var(--bg-primary);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
 }
 
 .session-timeline h4 {
@@ -1066,6 +1293,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    background: var(--bg-primary);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
 }
 
 .recommendation-item {
@@ -1393,7 +1623,7 @@ body {
 
 /* Focus Track History */
 .focus-track-history {
-    background: var(--bg-card);
+    background: var(--bg-primary);
 }
 
 .focus-track-history .filter-dropdown {
@@ -1458,31 +1688,6 @@ body {
     color: #FF9168;
 }
 
-.session-states {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-right: var(--spacing-md);
-    min-width: 120px;
-}
-
-.state-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.state-label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.state-value {
-    font-size: 14px;
-    font-weight: 700;
-}
-
 .state-value.concentrated {
     color: #22c55e;
 }
@@ -1508,7 +1713,8 @@ body {
 
 .session-detail {
     border-top: 1px solid rgba(255, 145, 104, 0.2);
-    background: rgba(241, 231, 221, 0.1);
+    background: var(--bg-primary);
+    backdrop-filter: blur(10px);
     margin-top: var(--spacing-md);
     padding: 0 var(--spacing-lg) var(--spacing-lg);
 }
@@ -1771,7 +1977,7 @@ body {
 
 .session-item {
     display: flex;
-    flex-wrap: wrap;          /* ← add this */
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
@@ -1802,34 +2008,6 @@ body {
     gap: 1rem;
     font-size: 0.875rem;
     color: rgba(0, 0, 0, 0.6);
-}
-
-.session-states {
-    flex: 0 1 auto;
-    display: flex;
-    gap: 1rem;
-    background: #f8fafc;
-    padding: 10px;
-    border-radius: 8px;
-}
-
-.state-item {
-    text-align: center;
-    min-width: 80px;
-}
-
-.state-label {
-    display: block;
-    font-size: 0.75rem;
-    color: rgba(0, 0, 0, 0.6);
-    margin-bottom: 0.25rem;
-}
-
-.state-value {
-    display: block;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #000000;
 }
 
 /* Brainwave Analysis */

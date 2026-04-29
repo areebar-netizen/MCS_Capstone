@@ -70,11 +70,19 @@ class FocusDataService:
             if session.task_id:
                 session_name = f"Task {session.task_id[:8]}"
             
+            # Get recommendations for this session
+            from secondBrain_App.models import Recommendation
+            recommendations = Recommendation.objects.filter(
+                user__email=self.user_email,
+                session=session
+            ).order_by('-created_at')
+            
             formatted_sessions.append({
-                'id': session.session_id,
+                'id': session.id,  # Database ID for template compatibility
+                'session_id': session.session_id,  # String session ID
                 'name': session_name,
-                'date': session.start_time.date(),
-                'time': session.start_time.strftime('%I:%M %p'),
+                'date': timezone.localtime(session.start_time).date(),
+                'time': timezone.localtime(session.start_time).strftime('%I:%M %p'),
                 'duration': int(session.total_duration_seconds / 60),  # Convert to minutes
                 'focus_score': session.average_focus_score,
                 'states': {
@@ -86,7 +94,8 @@ class FocusDataService:
                 'end_time': session.end_time,
                 'peak_focus': session.peak_focus_score,
                 'focus_streak': session.longest_focus_streak,
-                'created_at': session.created_at
+                'created_at': session.created_at,
+                'recommendations': recommendations
             })
         
         return formatted_sessions
@@ -124,8 +133,8 @@ class FocusDataService:
         avg_focus_raw = sum(s.average_focus_score for s in sessions if s.average_focus_score > 0) / len(sessions)
         total_duration = sum(s.total_duration_seconds for s in sessions) / len(sessions)
         
-        # Convert to 1-100 scale (multiply by 100)
-        avg_focus = min(100, max(1, avg_focus_raw * 100))
+        # Already on 2-10 scale from realtime task, just cap at 10
+        avg_focus = min(10, avg_focus_raw)
         
         # Count unique active days
         active_days = sessions.values('session_date').distinct().count()
@@ -171,7 +180,7 @@ class FocusDataService:
         Get recent recommendations for the user
         """
         try:
-            recommendations = Recommendation.objects.filter(user_id=self.user_email).order_by('-action_started_at')[:limit]
+            recommendations = Recommendation.objects.filter(user__email=self.user_email).order_by('-action_started_at')[:limit]
             return [
                 {
                     'id': rec.recommendation_id,
@@ -180,7 +189,7 @@ class FocusDataService:
                     'stimulus': rec.stimulus_name,
                     'trigger': rec.trigger_reason,
                     'created_at': rec.action_started_at,
-                    'session_id': rec.session_id
+                    'session_id': rec.session.session_id if rec.session else None
                 }
                 for rec in recommendations
             ]
