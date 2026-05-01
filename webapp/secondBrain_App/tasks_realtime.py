@@ -706,11 +706,11 @@ def save_session_summary(summary_data):
         )
         
         # Update user summary (if table exists)
-        try:
-            from core_engine.recommendation.user_summary import update_summary
-            update_summary(user_id=summary_data['user_email'])
-        except Exception as e:
-            pass
+        # try:
+        #     from core_engine.recommendation.user_summary import update_summary
+        #     update_summary(user_id=summary_data['user_email'])
+        # except Exception as e:
+        #     print(f"[UPDATE SUMMARY ERROR] {e}")
         
         # Update live status cache
         try:
@@ -724,7 +724,9 @@ def save_session_summary(summary_data):
 
         # ── STEP 2: Generate recommendation using updated summary with inferences ──
         try:
+            print(f"[RECOMMENDATION] Starting recommendation generation...")
             from core_engine.recommendation import generate_recommendation_for_session
+            print(f"[RECOMMENDATION] Import successful")
             recommendation_text = generate_recommendation_for_session(
                 user_email    = summary_data['user_email'],
                 session_id    = summary_data['session_id'],
@@ -743,6 +745,8 @@ def save_session_summary(summary_data):
                 }
             )
             print(f"[RECOMMENDATION] Generated successfully")
+            print(f"[RECOMMENDATION] Text value: '{recommendation_text}'")
+            print(f"[RECOMMENDATION] Type: {type(recommendation_text)}")
 
             from secondBrain_App.models import Recommendation
             import uuid
@@ -766,26 +770,35 @@ def save_session_summary(summary_data):
                 'text'      : recommendation_text,
                 'session_id': summary_data['session_id']
             }, timeout=3600)  # store for 1 hour
+            print(f"[RECOMMENDATION] Saved to cache key: {cache_key}")
+
+            verify = cache.get(cache_key)
+            print(f"[RECOMMENDATION] Cache verify read back: {verify}")
+
 
         except Exception as e:
-            pass
+            import traceback
+            print(f"[RECOMMENDATION ERROR] {e}")
+            print(traceback.format_exc())
 
         # ── STEP 3: Save recommendation to database (if recommendation engine is available) ──
         try:
             from core_engine.recommendation import save_recommendation
             
-            save_recommendation(
-                user_email=summary_data['user_email'],
-                session_id=summary_data['session_id'],
-                inference_id=summary_data.get('task_id', 'unknown'),
-                category='general',
-                stimulus='study_tip',
-                trigger='session_end',
-                message=recommendation_text
-            )
+            # save_recommendation(
+            #     user_email=summary_data['user_email'],
+            #     session_id=summary_data['session_id'],
+            #     inference_id=summary_data.get('task_id', 'unknown'),
+            #     category='general',
+            #     stimulus='study_tip',
+            #     trigger='session_end',
+            #     message=recommendation_text
+            # )
         
         except Exception as e:
-            pass
+            import traceback
+            print(f"[SAVE RECOMMENDATION ERROR] {e}")
+            print(traceback.format_exc())
 
         return session_summary
 
