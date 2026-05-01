@@ -1,29 +1,309 @@
 <!-- Progress Tracker Component -->
+<style>
+/* ── Progress Tracker ─────────────────────────────── */
+.progress-tracker {
+    font-family: inherit;
+}
+
+.current-level-card {
+    background: linear-gradient(135deg, #fff5f1 0%, #fff 100%);
+    border: 1.5px solid #ffe0d4;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.current-level-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 70px;
+}
+
+.current-level-emoji {
+    font-size: 2.4rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(255,145,104,0.3));
+}
+
+.current-level-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #FF9168;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.current-level-divider {
+    width: 1px;
+    height: 50px;
+    background: #ffe0d4;
+}
+
+.current-level-stats {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.cls-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cls-stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #222;
+    line-height: 1;
+}
+
+.cls-stat-label {
+    font-size: 0.72rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ── Level Items ───────────────────────────────────── */
+.progress-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.level-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #f0f0f0;
+    background: #fafafa;
+    transition: border-color 0.2s;
+}
+
+.level-item.current {
+    border-color: #FF9168;
+    background: #fff8f5;
+}
+
+.level-item.completed {
+    border-color: #e8f5e9;
+    background: #f6faf6;
+}
+
+.level-item.locked {
+    opacity: 0.5;
+}
+
+.level-emoji-wrap {
+    font-size: 1.3rem;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.level-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.level-info-top {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.level-info-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #222;
+}
+
+.level-info-range {
+    font-size: 0.72rem;
+    color: #aaa;
+}
+
+.level-bar-track {
+    height: 5px;
+    background: #ececec;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.level-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #FF9168, #ff6b35);
+    transition: width 0.6s ease;
+}
+
+.level-item.completed .level-bar-fill {
+    background: linear-gradient(90deg, #66bb6a, #43a047);
+}
+
+.level-status-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 99px;
+    flex-shrink: 0;
+}
+
+.level-item.completed .level-status-badge {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.level-item.current .level-status-badge {
+    background: #fff0eb;
+    color: #FF9168;
+}
+
+.level-item.locked .level-status-badge {
+    background: #f0f0f0;
+    color: #bbb;
+}
+
+/* ── Recommended Study Method ──────────────────────── */
+.study-method {
+    margin-top: 4px;
+}
+
+.method-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #222;
+    margin: 0 0 12px 0;
+}
+
+.method-card-new {
+    border-radius: 14px;
+    border: 1.5px solid #ffe0d4;
+    overflow: hidden;
+}
+
+.method-card-header {
+    background: linear-gradient(135deg, #FF9168 0%, #ff6b35 100%);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.method-card-header svg {
+    stroke: rgba(255,255,255,0.9);
+    flex-shrink: 0;
+}
+
+.method-card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.method-card-body {
+    background: #fff;
+    padding: 18px;
+}
+
+.method-card-body p {
+    margin: 0 0 10px 0;
+    font-size: 0.88rem;
+    color: #444;
+    line-height: 1.7;
+}
+
+.method-card-body p:last-child {
+    margin-bottom: 0;
+}
+
+.method-card-body strong {
+    color: #FF9168;
+    font-weight: 700;
+}
+
+.method-card-body ul,
+.method-card-body ol {
+    margin: 6px 0 10px 0;
+    padding-left: 20px;
+}
+
+.method-card-body li {
+    font-size: 0.88rem;
+    color: #444;
+    line-height: 1.7;
+    margin-bottom: 4px;
+}
+
+.method-empty {
+    text-align: center;
+    padding: 24px;
+    color: #aaa;
+    font-size: 0.85rem;
+}
+
+.method-section {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.method-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.method-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #FF9168;
+    margin: 0 0 8px 0;
+}
+</style>
+
+<!-- Progress Tracker Component -->
 <div class="card progress-tracker">
     <div class="card-header">
         <h2 class="card-title">Progress Tracker</h2>
         <p class="card-subtitle">Your focus improvement journey</p>
     </div>
-    
+
     <div class="card-content">
-        <!-- Current Level -->
-        <div class="current-level">
-            <div class="level-display">
-                <span class="level-emoji">{{ current_level.emoji }}</span>
-                <span class="level-text">{{ current_level.name }}</span>
+
+        <!-- Current Level Card -->
+        <div class="current-level-card">
+            <div class="current-level-badge">
+                <span class="current-level-emoji">{{ current_level.emoji }}</span>
+                <span class="current-level-name">{{ current_level.name }}</span>
             </div>
-            <div class="level-stats">
-                <div class="stat">
-                    <span class="stat-label">Average Focus</span>
-                    <span class="stat-value">{{ progress_stats.avg_focus|default:"0.0" }}%</span>
+            <div class="current-level-divider"></div>
+            <div class="current-level-stats">
+                <div class="cls-stat">
+                    <span class="cls-stat-value">{{ progress_stats.avg_focus|default:"0.0" }}%</span>
+                    <span class="cls-stat-label">Average Focus</span>
                 </div>
-                <div class="stat">
-                    <span class="stat-label">Total Sessions</span>
-                    <span class="stat-value">{{ progress_stats.total_sessions|default:"0" }}</span>
+                <div class="cls-stat">
+                    <span class="cls-stat-value">{{ progress_stats.total_sessions|default:"0" }}</span>
+                    <span class="cls-stat-label">Total Sessions</span>
                 </div>
-                <div class="stat">
-                    <span class="stat-label">Study Time</span>
-                    <span class="stat-value">{{ progress_stats.study_hours|default:0 }}h {{ progress_stats.study_remaining_minutes|default:0 }}min</span>
+                <div class="cls-stat">
+                    <span class="cls-stat-value">{{ progress_stats.study_hours|default:0 }}h {{ progress_stats.study_remaining_minutes|default:0 }}m</span>
+                    <span class="cls-stat-label">Study Time</span>
                 </div>
             </div>
         </div>
@@ -32,42 +312,93 @@
         <div class="progress-levels">
             {% for level in levels %}
             <div class="level-item {{ level.status }}">
-                <div class="level-indicator">
-                    <span class="level-emoji">{{ level.emoji }}</span>
-                    <span class="level-name">{{ level.name }}</span>
-                    <span class="level-range">{{ level.range }}</span>
+                <div class="level-emoji-wrap">{{ level.emoji }}</div>
+                <div class="level-info">
+                    <div class="level-info-top">
+                        <span class="level-info-name">{{ level.name }}</span>
+                        <span class="level-info-range">{{ level.range }}</span>
+                    </div>
+                    <div class="level-bar-track">
+                        <div class="level-bar-fill" style="width: {{ level.progress }}%;"></div>
+                    </div>
                 </div>
-                <div class="level-bar">
-                    <div class="level-progress" style="width: {{ level.progress }}%;"></div>
-                </div>
+                <span class="level-status-badge">
+                    {% if level.status == 'completed' %}✓ Done
+                    {% elif level.status == 'current' %}In Progress
+                    {% else %}Locked{% endif %}
+                </span>
             </div>
             {% endfor %}
         </div>
 
         <!-- Recommended Study Method -->
-        <div class="study-method">
+        <!-- <div class="study-method">
             <h3 class="method-title">Recommended Study Method</h3>
-            <div class="method-card">
-                <div class="method-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="method-card-new">
+                <div class="method-card-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                         <polyline points="14 2 14 8 20 8"/>
                         <line x1="16" y1="13" x2="8" y2="13"/>
                         <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
                     </svg>
+                    <h4 class="method-card-title">Personalized AI Focus Strategy</h4>
                 </div>
-                <div class="method-content">
-                    <h4 class="method-name">Personalized AI Focus Strategy</h4>
-                    <div class="method-description ai-recommendation-output">
-                        {% if ai_recommendation %}
-                            {{ ai_recommendation|linebreaks }}
-                        {% else %}
-                            <p>Complete a session to generate your custom study method based on your EEG patterns.</p>
-                        {% endif %}
-                    </div>
+                <div class="method-card-body">
+                    {% if ai_recommendation %}
+                        <div class="ai-rec-rendered" data-raw="{{ ai_recommendation }}"></div>
+                    {% else %}
+                        <div class="method-empty">
+                            Complete a session to generate your custom study method based on your EEG patterns.
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-        </div>
+        </div> -->
+
     </div>
 </div>
+
+<script>
+// Render AI recommendation markdown into styled sections
+document.querySelectorAll('.ai-rec-rendered[data-raw]').forEach(function(el) {
+    let text = el.getAttribute('data-raw');
+
+    // Split into numbered sections (1. 2. 3. 4.)
+    const sections = text.split(/(?=\d+\.\s)/);
+
+    let html = '';
+    sections.forEach(function(section) {
+        section = section.trim();
+        if (!section) return;
+
+        // Extract section title (e.g. "1. Personalized Recommendation:")
+        const titleMatch = section.match(/^(\d+)\.\s+\*?\*?([^*\n:]+):?\*?\*?/);
+        if (titleMatch) {
+            const title = titleMatch[2].replace(/\*/g, '').trim();
+            let body = section.slice(titleMatch[0].length).trim();
+
+            // Convert **bold**
+            body = body.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // Convert * bullet lines
+            body = body.replace(/^\*\s+/gm, '• ');
+            body = body.replace(/\n\*\s+/g, '\n• ');
+
+            // Convert newlines to <br>
+            body = body.replace(/\n/g, '<br>');
+
+            html += `<div class="method-section">
+                        <div class="method-section-title">${title}</div>
+                        <div>${body}</div>
+                     </div>`;
+        } else {
+            // No title — just render as paragraph
+            let body = section.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            html += `<div class="method-section"><div>${body}</div></div>`;
+        }
+    });
+
+    el.innerHTML = html || text;
+});
+</script>
