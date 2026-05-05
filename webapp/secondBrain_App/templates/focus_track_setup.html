@@ -96,6 +96,19 @@
 </div>
 
 <script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            document.cookie.split(';').forEach(cookie => {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                }
+            });
+        }
+        return cookieValue;
+    }
+
     let selectedDuration = 25;
     let timerInterval = null;
     let remainingSeconds = 0;
@@ -209,55 +222,58 @@
     const setupSection = document.querySelector('.duration-section');
     
     // ---- Pre-session data collection ----
-    function collectPreSessionData() {
-        const sessionName = document.getElementById('sessionNameInput').value;
-        const subjectTask = document.querySelector('.psc-opt[data-group="subject"].psc-opt-selected')?.dataset.val;
-        const taskDifficulty = document.getElementById('psc-difficulty')?.value;
-        const estimatedLength = document.querySelector('.psc-opt[data-group="tasklength"].psc-opt-selected')?.dataset.val;
-        const assignmentDeadline = document.getElementById('psc-deadline')?.value;
-        const sessionGoal = document.getElementById('psc-goal')?.value;
-        const energyLevel = document.getElementById('psc-energy')?.value;
-        const moodEmoji = document.querySelector('.psc-opt[data-group="mood"].psc-opt-selected')?.dataset.val;
-        const stressLevel = document.getElementById('psc-stress')?.value;
-        const timeSinceMeal = document.querySelector('.psc-opt[data-group="meal"].psc-opt-selected')?.dataset.val;
-        const caffeineIntake = document.querySelector('.psc-opt[data-group="caffeine"].psc-opt-selected')?.dataset.val;
-        const timeSinceWaking = document.querySelector('.psc-opt[data-group="wake"].psc-opt-selected')?.dataset.val;
-        const physicalActivity = document.querySelector('.psc-opt[data-group="activity"].psc-opt-selected')?.dataset.val;
-        const currentNoise = document.querySelector('.psc-opt[data-group="noise"].psc-opt-selected')?.dataset.val;
-        const studyMethod = document.querySelector('.psc-opt[data-group="method"].psc-opt-selected')?.dataset.val;
-        const currentLocation = document.querySelector('.psc-opt[data-group="location"].psc-opt-selected')?.dataset.val;
+    // function collectPreSessionData() {
+    //     const sessionName = document.getElementById('sessionNameInput').value;
+    //     const subjectTask = document.querySelector('.psc-opt[data-group="subject"].psc-opt-selected')?.dataset.val;
+    //     const taskDifficulty = document.getElementById('psc-difficulty')?.value;
+    //     const estimatedLength = document.querySelector('.psc-opt[data-group="tasklength"].psc-opt-selected')?.dataset.val;
+    //     const assignmentDeadline = document.getElementById('psc-deadline')?.value;
+    //     const sessionGoal = document.getElementById('psc-goal')?.value;
+    //     const energyLevel = document.getElementById('psc-energy')?.value;
+    //     const moodEmoji = document.querySelector('.psc-opt[data-group="mood"].psc-opt-selected')?.dataset.val;
+    //     const stressLevel = document.getElementById('psc-stress')?.value;
+    //     const timeSinceMeal = document.querySelector('.psc-opt[data-group="meal"].psc-opt-selected')?.dataset.val;
+    //     const caffeineIntake = document.querySelector('.psc-opt[data-group="caffeine"].psc-opt-selected')?.dataset.val;
+    //     const timeSinceWaking = document.querySelector('.psc-opt[data-group="wake"].psc-opt-selected')?.dataset.val;
+    //     const physicalActivity = document.querySelector('.psc-opt[data-group="activity"].psc-opt-selected')?.dataset.val;
+    //     const currentNoise = document.querySelector('.psc-opt[data-group="noise"].psc-opt-selected')?.dataset.val;
+    //     const studyMethod = document.querySelector('.psc-opt[data-group="method"].psc-opt-selected')?.dataset.val;
+    //     const currentLocation = document.querySelector('.psc-opt[data-group="location"].psc-opt-selected')?.dataset.val;
 
-        return {
-            session_name: sessionName,
-            subject_task: subjectTask,
-            task_difficulty: parseInt(taskDifficulty) || 5,
-            estimated_length: estimatedLength,
-            assignment_deadline: assignmentDeadline || null,
-            session_goal: sessionGoal,
-            energy_level: parseInt(energyLevel) || 5,
-            mood_emoji: moodEmoji,
-            stress_level: parseInt(stressLevel) || 5,
-            time_since_meal: timeSinceMeal,
-            caffeine_intake: caffeineIntake,
-            time_since_waking: timeSinceWaking,
-            physical_activity: physicalActivity,
-            current_noise: currentNoise,
-            lighting_conditions: '',
-            study_method: studyMethod,
-            current_location: currentLocation
-        };
-    }
+    //     return {
+    //         session_name: sessionName,
+    //         subject_task: subjectTask,
+    //         task_difficulty: parseInt(taskDifficulty) || 5,
+    //         estimated_length: estimatedLength,
+    //         assignment_deadline: assignmentDeadline || null,
+    //         session_goal: sessionGoal,
+    //         energy_level: parseInt(energyLevel) || 5,
+    //         mood_emoji: moodEmoji,
+    //         stress_level: parseInt(stressLevel) || 5,
+    //         time_since_meal: timeSinceMeal,
+    //         caffeine_intake: caffeineIntake,
+    //         time_since_waking: timeSinceWaking,
+    //         physical_activity: physicalActivity,
+    //         current_noise: currentNoise,
+    //         lighting_conditions: '',
+    //         study_method: studyMethod,
+    //         current_location: currentLocation
+    //     };
+    // }
 
     async function confirmPreSessionAndStart() {
         console.log("BOTTOM BUTTON: confirmPreSessionAndStart fired");
         preSessionData = collectPreSessionData();
-        console.log("Collected data:", preSessionData);
+        console.log("Collected data:", JSON.stringify(preSessionData, null, 2));
         
         // Send pre-session data to backend
         try {
             const res = await fetch('/api/presession-checkin/', {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                 },
                 body: JSON.stringify(preSessionData)
             });
             const data = await res.json();
@@ -336,7 +352,10 @@
         try {
             var res = await fetch('/start_realtime_eeg/', {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                 },
                 body: JSON.stringify({ duration_minutes: Number(selectedDuration) })
             });
 
@@ -408,7 +427,10 @@
         try {
             var res = await fetch('/stop_realtime_eeg/', {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                 }
             });
 
             var data = await res.json();

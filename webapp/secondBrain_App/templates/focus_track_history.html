@@ -1,22 +1,121 @@
 {% load static %}
-    <!-- Focus Track History Title Card -->
-    <div class="card">
-        <div class="history-header">
-            <h1 class="history-title">Focus Track History</h1>
-            <div class="filter-dropdown">
-                <select class="filter-select" id="sessionFilter">
-                    <option value="5" {% if current_filter == '5' %}selected{% endif %}>Top 5 Sessions</option>
-                    <option value="7" {% if current_filter == '7' %}selected{% endif %}>Last 7 Days</option>
-                    <option value="30" {% if current_filter == '30' %}selected{% endif %}>Last 30 Days</option>
-                </select>
-            </div>
+
+<style>
+.rec-message {
+    line-height: 1.7;
+    font-size: 0.9rem;
+}
+
+.rec-message strong {
+    color: #ff9068;
+}
+
+/* Feedback Widget */
+.rec-feedback {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.feedback-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.star-rating {
+    display: flex;
+    gap: 4px;
+}
+
+.star {
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #d1d5db;
+    transition: color 0.15s, transform 0.1s;
+    user-select: none;
+}
+
+.star:hover,
+.star.active {
+    color: #FF9168;
+}
+
+.star:hover {
+    transform: scale(1.15);
+}
+
+.feedback-reason {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.feedback-textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    font-size: 0.85rem;
+    resize: vertical;
+    min-height: 70px;
+    font-family: inherit;
+    color: #374151;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.feedback-textarea:focus {
+    border-color: #FF9168;
+}
+
+.feedback-submit-btn {
+    align-self: flex-start;
+    padding: 6px 18px;
+    background: #FF9168;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.feedback-submit-btn:hover {
+    background: #e8784f;
+}
+
+.feedback-thanks {
+    display: none;
+    font-size: 0.82rem;
+    color: #22c55e;
+    font-weight: 500;
+}
+</style>
+
+<!-- Focus Track History Title Card -->
+<div class="card">
+    <div class="history-header">
+        <h1 class="history-title">Focus Track History</h1>
+        <div class="filter-dropdown">
+            <select class="filter-select" id="sessionFilter">
+                <option value="5" {% if current_filter == '5' %}selected{% endif %}>Top 5 Sessions</option>
+                <option value="7" {% if current_filter == '7' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30" {% if current_filter == '30' %}selected{% endif %}>Last 30 Days</option>
+            </select>
         </div>
-    
+    </div>
+
     <!-- Focus Track History Content -->
     <div class="focus-track-history">
-        
+
         <!-- Aggregate Statistics -->
-        <div class="aggregate-stats" >
+        <div class="aggregate-stats">
             <div class="card profile-stat">
                 <div class="stat-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
@@ -29,7 +128,7 @@
                     <div class="stat-label">Total Time</div>
                 </div>
             </div>
-            
+
             <div class="card profile-stat">
                 <div class="stat-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
@@ -43,7 +142,7 @@
                     <div class="stat-label">Avg Focus</div>
                 </div>
             </div>
-            
+
             <div class="card profile-stat">
                 <div class="stat-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
@@ -56,52 +155,53 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Sessions Container -->
         <div class="sessions-container">
         {% for session in recent_sessions %}
+
         <div class="card session-item" id="session-{{ session.id }}">
-        <!-- Card Header -->
-        <div class="session-header" onclick="toggleSessionDetail('{{ session.id }}')">
-            <div class="session-info">
-                <h3 class="session-name">{{ session.name }}</h3>
-                <div class="session-meta">
-                    <span class="session-date">{{ session.date|date:"M d, Y" }}</span>
-                    <span class="session-time">{{ session.time }}</span>
-                    <span class="session-duration">{{ session.duration }} min</span>
-                    <span class="session-focus">Focus: {{ session.focus_score|floatformat:1 }}/10</span>
+            <!-- Card Header -->
+            <div class="session-header" onclick="toggleSessionDetail('{{ session.id }}')">
+                <div class="session-info">
+                    <h3 class="session-name">{{ session.name }}</h3>
+                    <div class="session-meta">
+                        <span class="session-date">{{ session.date|date:"M d, Y" }}</span>
+                        <span class="session-time">{{ session.time }}</span>
+                        <span class="session-duration">{{ session.duration }} min</span>
+                        <span class="session-focus">Focus: {{ session.focus_score|floatformat:1 }}/10</span>
+                    </div>
                 </div>
-            </div>
-            <div class="session-states">
-                <div class="state-item">
-                    <span class="state-value concentrated">{{ session.states.concentrated }}%</span>
-                    <span class="state-label">Concentrated</span>
+                <div class="session-states">
+                    <div class="state-item">
+                        <span class="state-value concentrated">{{ session.states.concentrated }}%</span>
+                        <span class="state-label">Concentrated</span>
+                    </div>
+                    <div class="state-item">
+                        <span class="state-value neutral">{{ session.states.neutral }}%</span>
+                        <span class="state-label">Neutral</span>
+                    </div>
+                    <div class="state-item">
+                        <span class="state-value relaxed">{{ session.states.relaxed }}%</span>
+                        <span class="state-label">Relaxed</span>
+                    </div>
                 </div>
-                <div class="state-item">
-                    <span class="state-value neutral">{{ session.states.neutral }}%</span>
-                    <span class="state-label">Neutral</span>
+                <div class="expand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
                 </div>
-                <div class="state-item">
-                    <span class="state-value relaxed">{{ session.states.relaxed }}%</span>
-                    <span class="state-label">Relaxed</span>
-                </div>
-            </div>
-            <div class="expand-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
             </div>
         </div>
-    </div>
-        
-    <!-- Expandable Detail - Full Width Below -->
-    <div class="card session-detail" id="detail-{{ session.id }}" style="display: none;">
+
+        <!-- Expandable Detail - Full Width Below -->
+        <div class="card session-detail" id="detail-{{ session.id }}" style="display: none;">
             <!-- Tab Navigation -->
             <div class="detail-tabs">
                 <button class="detail-tab-btn active" onclick="switchDetailTab('{{ session.id }}', 'overview')">Overview</button>
                 <button class="detail-tab-btn" onclick="switchDetailTab('{{ session.id }}', 'recommendations')">Recommendations</button>
             </div>
-            
+
             <!-- Tab Content -->
             <div class="detail-content">
                 <!-- Overview Tab -->
@@ -133,7 +233,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="session-timeline">
                             <h4>Session Timeline</h4>
                             <div class="timeline-items">
@@ -145,22 +245,18 @@
                                     <span class="timeline-label">Target Duration</span>
                                     <span class="timeline-value">{{ session.duration }} min</span>
                                 </div>
-                                <!-- <div class="timeline-item">
-                                    <span class="timeline-label">Focus Streak</span>
-                                    <span class="timeline-value">{{ session.focus_streak|floatformat:0 }}s</span>
-                                </div> -->
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Recommendations Tab -->
                 <div class="detail-tab-panel" id="recommendations-{{ session.id }}">
                     <div class="session-recommendations">
                         <h4>AI Recommendations</h4>
                         <div class="recommendation-list">
                             {% for rec in session.recommendations %}
-                            <div class="recommendation-item">
+                            <div class="recommendation-item" id="rec-{{ rec.recommendation_id }}">
                                 <div class="rec-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -168,8 +264,33 @@
                                     </svg>
                                 </div>
                                 <div class="rec-content">
-                                    <p class="rec-message">{{ rec.message }}</p>
+                                    <p class="rec-message" data-raw="{{ rec.message }}"></p>
                                     <span class="rec-meta">Session {{ session.session_id }}</span>
+
+                                    <!-- Feedback Widget -->
+                                    <div class="rec-feedback"
+                                         data-rec-id="{{ rec.recommendation_id }}"
+                                         data-session-id="{{ session.session_id }}">
+                                        <span class="feedback-label">How useful was this recommendation?</span>
+                                        <div class="star-rating">
+                                            <span class="star" data-value="1" onclick="rateFeedback('{{ rec.recommendation_id }}', 1)">☆</span>
+                                            <span class="star" data-value="2" onclick="rateFeedback('{{ rec.recommendation_id }}', 2)">☆</span>
+                                            <span class="star" data-value="3" onclick="rateFeedback('{{ rec.recommendation_id }}', 3)">☆</span>
+                                            <span class="star" data-value="4" onclick="rateFeedback('{{ rec.recommendation_id }}', 4)">☆</span>
+                                            <span class="star" data-value="5" onclick="rateFeedback('{{ rec.recommendation_id }}', 5)">☆</span>
+                                        </div>
+                                        <div class="feedback-reason" id="reason-{{ rec.recommendation_id }}">
+                                            <textarea
+                                                class="feedback-textarea"
+                                                id="reason-text-{{ rec.recommendation_id }}"
+                                                placeholder="What didn't work for you? (optional)"></textarea>
+                                            <button class="feedback-submit-btn"
+                                                    onclick="submitFeedback('{{ rec.recommendation_id }}')">
+                                                Submit Feedback
+                                            </button>
+                                        </div>
+                                        <span class="feedback-thanks" id="thanks-{{ rec.recommendation_id }}">Thanks for your feedback! ✓</span>
+                                    </div>
                                 </div>
                             </div>
                             {% empty %}
@@ -181,7 +302,8 @@
                     </div>
                 </div>
             </div>
-    </div>
+        </div>
+
         {% empty %}
         <div class="no-sessions">
             <div class="no-sessions-icon">
@@ -196,9 +318,7 @@
         {% endfor %}
         </div>
     </div>
-
-        </div>
-
+</div>
 
 
 <script>
@@ -206,7 +326,7 @@
 function toggleSessionDetail(sessionId) {
     const detail = document.getElementById(`detail-${sessionId}`);
     const card = document.getElementById(`session-${sessionId}`);
-    
+
     if (detail.style.display === 'none') {
         detail.style.display = 'block';
         card.classList.add('expanded');
@@ -217,51 +337,127 @@ function toggleSessionDetail(sessionId) {
 }
 
 function switchDetailTab(sessionId, tabName) {
-    // Remove active class from all tabs in this session
     const sessionDetail = document.getElementById(`detail-${sessionId}`);
     const tabButtons = sessionDetail.querySelectorAll('.detail-tab-btn');
     const tabPanels = sessionDetail.querySelectorAll('.detail-tab-panel');
-    
+
     tabButtons.forEach(btn => btn.classList.remove('active'));
     tabPanels.forEach(panel => panel.classList.remove('active'));
-    
-    // Add active class to selected tab
+
     const selectedTab = sessionDetail.querySelector(`[onclick="switchDetailTab('${sessionId}', '${tabName}')"]`);
     const selectedPanel = document.getElementById(`${tabName}-${sessionId}`);
-    
+
     if (selectedTab) selectedTab.classList.add('active');
     if (selectedPanel) selectedPanel.classList.add('active');
+}
+
+// Feedback functions
+function rateFeedback(recId, rating) {
+    const widget = document.querySelector(`.rec-feedback[data-rec-id="${recId}"]`);
+    if (!widget) return;
+
+    // Store rating
+    widget.dataset.rating = rating;
+
+    // Update star display
+    const stars = widget.querySelectorAll('.star');
+    stars.forEach((star, idx) => {
+        star.textContent = idx < rating ? '★' : '☆';
+        star.classList.toggle('active', idx < rating);
+    });
+
+    const reasonBox = document.getElementById(`reason-${recId}`);
+
+    if (rating < 5) {
+        // Show text box for lower ratings
+        reasonBox.style.display = 'flex';
+    } else {
+        // Submit immediately for 5 stars
+        reasonBox.style.display = 'none';
+        submitFeedback(recId);
+    }
+}
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(cookie => {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        });
+    }
+    return cookieValue;
+}
+
+function submitFeedback(recId) {
+    const widget = document.querySelector(`.rec-feedback[data-rec-id="${recId}"]`);
+    if (!widget) return;
+
+    const rating = parseInt(widget.dataset.rating);
+    const sessionId = widget.dataset.sessionId;
+    const reasonText = document.getElementById(`reason-text-${recId}`);
+    const reason = reasonText ? reasonText.value.trim() : '';
+
+    if (!rating) return;
+
+    fetch('/api/recommendation-feedback/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')  // ← add this
+        },
+        body: JSON.stringify({
+            recommendation_id: recId,
+            session_id: sessionId,
+            helpfulness_rating: rating,
+            feedback_type: reason
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            const reasonBox = document.getElementById(`reason-${recId}`);
+            const thanks = document.getElementById(`thanks-${recId}`);
+            if (reasonBox) reasonBox.style.display = 'none';
+            if (thanks) thanks.style.display = 'block';
+            widget.querySelectorAll('.star').forEach(star => {
+                star.style.pointerEvents = 'none';
+            });
+        }
+    })
+    .catch(err => console.error('Feedback error:', err));
 }
 
 // Initialize page functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Set progress bar widths from data attributes
-    const progressBars = document.querySelectorAll('.progress-bar');
-    progressBars.forEach(bar => {
+    document.querySelectorAll('.progress-bar').forEach(bar => {
         const width = bar.getAttribute('data-width');
-        if (width) {
-            bar.style.width = width + '%';
-        }
+        if (width) bar.style.width = width + '%';
     });
-    
+
     // Set current filter value on page load
     const urlParams = new URLSearchParams(window.location.search);
     const currentFilter = urlParams.get('filter') || '5';
     const filterSelect = document.getElementById('sessionFilter');
-    if (filterSelect) {
-        filterSelect.value = currentFilter;
-    }
+    if (filterSelect) filterSelect.value = currentFilter;
+
+    // Render markdown in recommendation messages
+    document.querySelectorAll('.rec-message[data-raw]').forEach(el => {
+        let text = el.getAttribute('data-raw');
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/(\d+)\.\s+/g, '<br><br><strong>$1.</strong> ');
+        text = text.replace(/\*\s+/g, '<br>• ');
+        text = text.replace(/^(<br>)+/, '');
+        el.innerHTML = text;
+    });
 });
 
-// Filter functionality - reload page with filter parameter
+// Filter functionality
 document.getElementById('sessionFilter')?.addEventListener('change', function(e) {
-    const filterValue = e.target.value;
-    
-    // Get current URL and update/add filter parameter
     const url = new URL(window.location);
-    url.searchParams.set('filter', filterValue);
-    
-    // Reload page with new filter
+    url.searchParams.set('filter', e.target.value);
     window.location.href = url.toString();
 });
 </script>

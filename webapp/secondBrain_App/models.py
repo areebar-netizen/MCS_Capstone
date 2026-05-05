@@ -192,6 +192,11 @@ class Recommendation(models.Model):
     trigger_reason = models.CharField(max_length=100)
     message = models.TextField()
     action_started_at = models.DateTimeField(auto_now_add=True)
+    subject = models.CharField(max_length=100, blank=True, default='')
+    personalized_recommendation = models.TextField(blank=True, default='')
+    recommended_study_methods = models.TextField(blank=True, default='')
+    optimal_study_environment = models.TextField(blank=True, default='')
+    what_to_avoid = models.TextField(blank=True, default='')
 
     class Meta:
         db_table = 'recommendation'

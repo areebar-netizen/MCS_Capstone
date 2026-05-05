@@ -2216,26 +2216,26 @@ def presession_checkin_view(request):
             
             # Create PreSessionCheckIn record
             checkin = PreSessionCheckIn.objects.create(
-                user=user_profile,
-                session_id=session_id,
-                session_name=data.get('session_name', ''),
-                subject_task=subject_task,
-                task_difficulty=int(data.get('difficulty', 5)),
-                estimated_length=estimated_length,
-                assignment_deadline=assignment_deadline,
-                session_goal=data.get('goal', ''),
-                energy_level=int(data.get('energy', 5)),
-                mood_emoji=mood_emoji,
-                stress_level=int(data.get('stress', 5)),
-                time_since_meal=time_since_meal,
-                caffeine_intake=caffeine_intake,
-                time_since_waking=time_since_waking,
-                physical_activity=physical_activity,
-                current_noise=data.get('noise', ''),
-                lighting_conditions=data.get('lighting', ''),
-                study_method=data.get('method', ''),
-                current_location=data.get('location', '')
-            )
+            user=user_profile,
+            session_id=session_id,
+            session_name=data.get('session_name', ''),
+            subject_task=subject_task,
+            task_difficulty=int(data.get('difficulty', 5)),
+            estimated_length=estimated_length,
+            assignment_deadline=assignment_deadline,
+            session_goal=data.get('goal', ''),
+            energy_level=int(data.get('energy', 5)),
+            mood_emoji=mood_emoji,
+            stress_level=int(data.get('stress', 5)),
+            time_since_meal=time_since_meal,
+            caffeine_intake=caffeine_intake,
+            time_since_waking=time_since_waking,
+            physical_activity=physical_activity,
+            current_noise=data.get('noise') or '',        # ← empty string fallback
+            lighting_conditions=data.get('lighting') or '',  # ← empty string fallback
+            study_method=data.get('method') or '',        # ← empty string fallback
+            current_location=data.get('location') or ''  # ← empty string fallback
+        )
             
             return JsonResponse({
                 'ok': True,
@@ -2249,3 +2249,35 @@ def presession_checkin_view(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def recommendation_feedback_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        from .models import UserProfile, UserFeedback, Recommendation
+        data = json.loads(request.body)
+        
+        user_profile = UserProfile.objects.get(email=user_email)
+        recommendation = Recommendation.objects.get(
+            recommendation_id=data['recommendation_id']
+        )
+        
+        UserFeedback.objects.create(
+            user=user_profile,
+            session_id=data.get('session_id', ''),
+            recommendation=recommendation,
+            helpfulness_rating=data.get('helpfulness_rating'),
+            feedback_type=data.get('feedback_type', ''),
+            sentiment='positive' if data.get('helpfulness_rating', 0) >= 4 else 'negative'
+        )
+        
+        return JsonResponse({'ok': True})
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
