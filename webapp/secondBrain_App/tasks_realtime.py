@@ -748,6 +748,22 @@ def save_session_summary(summary_data):
             print(f"[RECOMMENDATION] Text value: '{recommendation_text}'")
             print(f"[RECOMMENDATION] Type: {type(recommendation_text)}")
 
+            subject = 'General'
+            try:
+                from secondBrain_App.models import PreSessionCheckIn
+                checkin = PreSessionCheckIn.objects.filter(
+                    user=user_profile,
+                    session_id=summary_data['session_id']
+                ).order_by('-created_at').first()
+                if checkin:
+                    subject = checkin.subject_task or 'General'
+            except Exception as e:
+                print(f"[RECOMMENDATION] Could not fetch subject: {e}")
+
+            # Parse sections from recommendation text
+            from core_engine.recommendation import parse_recommendation_sections
+            sections = parse_recommendation_sections(recommendation_text)
+
             from secondBrain_App.models import Recommendation
             import uuid
             Recommendation.objects.create(
@@ -757,7 +773,12 @@ def save_session_summary(summary_data):
                 recommendation_category='general',
                 stimulus_name='study_tip',
                 trigger_reason='session_end',
-                message=recommendation_text
+                message=recommendation_text,
+                subject=subject,                                                        # ← new
+                personalized_recommendation=sections['personalized_recommendation'],    # ← new
+                recommended_study_methods=sections['recommended_study_methods'],        # ← new
+                optimal_study_environment=sections['optimal_study_environment'],        # ← new
+                what_to_avoid=sections['what_to_avoid']                                # ← new
             )
             # ----------------------------------------
 
