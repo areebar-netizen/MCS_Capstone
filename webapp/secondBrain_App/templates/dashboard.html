@@ -1100,7 +1100,21 @@ document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el
             body = body.replace(/\n/g, '<br>');
             body = body.trim();
             if (!body) return;
-            html += `<div class="method-section"><div class="method-section-title">${title}</div><div>${body}</div></div>`;
+            const emojiMap = {
+            'personalized recommendation': '🧠',
+            'recommended study methods': '📚',
+            'optimal study environment': '☀️',
+            'what to avoid': '🚫'
+        };
+
+        const titleLower = title.toLowerCase();
+        let emoji = '';
+        for (const [key, val] of Object.entries(emojiMap)) {
+            if (titleLower.includes(key)) { emoji = val; break; }
+        }
+
+        html += `<div class="method-section"><div class="method-section-title">${emoji} ${title}</div><div>${body}</div></div>`;
+
         } else {
             let body = section
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
