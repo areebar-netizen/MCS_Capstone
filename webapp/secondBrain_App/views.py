@@ -1530,7 +1530,7 @@ def start_realtime_eeg_view(request):
     try:
         # Get duration and session_id from request
         data = json.loads(request.body) if request.body else {}
-        duration = int(data.get('duration', 1))
+        duration = int(data.get('duration_minutes', 1))
         session_id = data.get('session_id')  # Get session_id from pre-session check-in for linking
         
         # Trigger real-time Celery task with session_id
@@ -1770,7 +1770,7 @@ def start_live_eeg_view(request):
     try:
         # Get duration from request (default to 1 minute)
         data = json.loads(request.body) if request.body else {}
-        duration = int(data.get('duration', 1))
+        duration = int(data.get('duration_minutes', 1))
         
         # Trigger Celery task
         task = run_live_inference.delay(user_email, duration)
