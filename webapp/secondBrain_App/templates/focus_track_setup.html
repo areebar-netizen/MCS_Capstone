@@ -374,43 +374,43 @@
         }
     }
 
-    function startHistogramPolling() {
-        // Reset data
-        focusHistogramData = [];
-        focusHistogramLabels = [];
-        if (focusHistogramChart) {
-            focusHistogramChart.data.labels = [];
-            focusHistogramChart.data.datasets[0].data = [];
-            focusHistogramChart.update();
-        }
-        if (histogramPolling) clearInterval(histogramPolling);
-        histogramPolling = setInterval(fetchHistogramData, 1000);
-    }
+    // function startHistogramPolling() {
+    //     // Reset data
+    //     focusHistogramData = [];
+    //     focusHistogramLabels = [];
+    //     if (focusHistogramChart) {
+    //         focusHistogramChart.data.labels = [];
+    //         focusHistogramChart.data.datasets[0].data = [];
+    //         focusHistogramChart.update();
+    //     }
+    //     if (histogramPolling) clearInterval(histogramPolling);
+    //     histogramPolling = setInterval(fetchHistogramData, 1000);
+    // }
 
-    async function fetchHistogramData() {
-        // Example: fetch from a new endpoint that returns real-time focus data array
-        try {
-            const res = await fetch('/realtime_eeg_status/', { method: 'GET' });
-            const status = await res.json();
-            if (status.ok && status.result && status.result.data_points) {
-                // data_points: [{timestamp, focus_score, ...}]
-                focusHistogramLabels = status.result.data_points.map(p => p.timestamp);
-                focusHistogramData = status.result.data_points.map(p => p.focus_score);
-                if (focusHistogramChart) {
-                    focusHistogramChart.data.labels = focusHistogramLabels;
-                    focusHistogramChart.data.datasets[0].data = focusHistogramData;
-                    focusHistogramChart.update();
-                }
-                // Show info below
-                if (focusHistogramInfo && status.result.final_summary) {
-                    const s = status.result.final_summary;
-                    focusHistogramInfo.innerHTML = `Avg: ${(s.average_focus_score*100).toFixed(1)}% | Peak: ${(s.peak_focus_score*100).toFixed(1)}% | Duration: ${Math.floor(s.total_duration_seconds/60)}m ${(s.total_duration_seconds%60)}s`;
-                }
-            }
-        } catch (e) {
-            // Ignore errors during polling
-        }
-    }
+    // async function fetchHistogramData() {
+    //     // Example: fetch from a new endpoint that returns real-time focus data array
+    //     try {
+    //         const res = await fetch('/realtime_eeg_status/', { method: 'GET' });
+    //         const status = await res.json();
+    //         if (status.ok && status.result && status.result.data_points) {
+    //             // data_points: [{timestamp, focus_score, ...}]
+    //             focusHistogramLabels = status.result.data_points.map(p => p.timestamp);
+    //             focusHistogramData = status.result.data_points.map(p => p.focus_score);
+    //             if (focusHistogramChart) {
+    //                 focusHistogramChart.data.labels = focusHistogramLabels;
+    //                 focusHistogramChart.data.datasets[0].data = focusHistogramData;
+    //                 focusHistogramChart.update();
+    //             }
+    //             // Show info below
+    //             if (focusHistogramInfo && status.result.final_summary) {
+    //                 const s = status.result.final_summary;
+    //                 focusHistogramInfo.innerHTML = `Avg: ${(s.average_focus_score*100).toFixed(1)}% | Peak: ${(s.peak_focus_score*100).toFixed(1)}% | Duration: ${Math.floor(s.total_duration_seconds/60)}m ${(s.total_duration_seconds%60)}s`;
+    //             }
+    //         }
+    //     } catch (e) {
+    //         // Ignore errors during polling
+    //     }
+    // }
 
     async function stopEEGsession() {
         console.log("Ending EEG session");
@@ -419,10 +419,10 @@
             clearInterval(timerInterval);
             timerInterval = null;
         }
-        if (histogramPolling) {
-            clearInterval(histogramPolling);
-            histogramPolling = null;
-        }
+        // if (histogramPolling) {
+        //     clearInterval(histogramPolling);
+        //     histogramPolling = null;
+        // }
 
         try {
             var res = await fetch('/stop_realtime_eeg/', {
