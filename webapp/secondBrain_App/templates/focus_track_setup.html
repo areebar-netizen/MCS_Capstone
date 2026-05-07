@@ -96,18 +96,18 @@
 </div>
 
 <script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            document.cookie.split(';').forEach(cookie => {
-                cookie = cookie.trim();
-                if (cookie.startsWith(name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                }
-            });
-        }
-        return cookieValue;
-    }
+    // function getCookie(name) {
+    //     let cookieValue = null;
+    //     if (document.cookie && document.cookie !== '') {
+    //         document.cookie.split(';').forEach(cookie => {
+    //             cookie = cookie.trim();
+    //             if (cookie.startsWith(name + '=')) {
+    //                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+    //             }
+    //         });
+    //     }
+    //     return cookieValue;
+    // }
 
     let selectedDuration = 25;
     let timerInterval = null;
@@ -163,6 +163,20 @@
         console.log("Selected:", selectedDuration);
     }
 
+    // ---- Get current duration from input ----
+    function getCurrentDuration() {
+        const customInput = document.getElementById('customDurationInput');
+        const inputValue = Number(customInput.value);
+        
+        // Validate that input is a valid number between 1 and 360
+        if (Number.isFinite(inputValue) && inputValue >= 1 && inputValue <= 360) {
+            return inputValue;
+        }
+        
+        // Fallback to selectedDuration if input is invalid
+        return selectedDuration;
+    }
+
     document.querySelectorAll('#setupView .duration-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             setSelectedDuration(Number(btn.dataset.duration), false);
@@ -204,8 +218,24 @@
         var groups = ['subject','tasklength','mood','meal','caffeine','wake','activity','noise','lighting','method','location'];
         var data = {};
         groups.forEach(function(g) {
-            var sel = document.querySelector('#checkinView .psc-opt-selected[data-group="' + g + '"]');
-            data[g] = sel ? sel.dataset.val : null;
+            console.log("subjectTask element:", document.querySelector('.psc-opt[data-group="subject"].psc-opt-selected'));
+            console.log("taskDifficulty element:", document.getElementById('psc-difficulty'));
+            console.log("estimatedLength element:", document.querySelector('.psc-opt[data-group="tasklength"].psc-opt-selected'));
+            console.log("assignmentDeadline element:", document.getElementById('psc-deadline'));
+            console.log("sessionGoal element:", document.getElementById('psc-goal'));
+            console.log("energyLevel element:", document.getElementById('psc-energy'));
+            console.log("moodEmoji element:", document.querySelector('.psc-opt[data-group="mood"].psc-opt-selected'));
+            console.log("stressLevel element:", document.getElementById('psc-stress'));
+            console.log("timeSinceMeal element:", document.querySelector('.psc-opt[data-group="meal"].psc-opt-selected'));
+            console.log("caffeineIntake element:", document.querySelector('.psc-opt[data-group="caffeine"].psc-opt-selected'));
+            console.log("timeSinceWaking element:", document.querySelector('.psc-opt[data-group="wake"].psc-opt-selected'));
+            console.log("physicalActivity element:", document.querySelector('.psc-opt[data-group="activity"].psc-opt-selected'));
+            console.log("currentNoise element:", document.querySelector('.psc-opt[data-group="noise"].psc-opt-selected'));
+            console.log("studyMethod element:", document.querySelector('.psc-opt[data-group="method"].psc-opt-selected'));
+            console.log("currentLocation element:", document.querySelector('.psc-opt[data-group="location"].psc-opt-selected'));
+            var sel = document.querySelector('.psc-opt-selected[data-group="' + g + '"]');
+            data[g] = sel ? sel.dataset.val : '';
+            console.log("Group:", g, "Selected:", sel ? sel.dataset.val : 'None');
         });
         data.difficulty = document.getElementById('psc-difficulty').value;
         data.energy = document.getElementById('psc-energy').value;
@@ -213,6 +243,7 @@
         data.deadline = document.getElementById('psc-deadline').value;
         data.goal = document.getElementById('psc-goal').value;
         data.session_name = document.getElementById('sessionNameInput').value;
+        console.log("Collected pre-session data:", JSON.stringify(data, null, 2));
         return data;
     }
 
@@ -221,50 +252,14 @@
     const activeSession = document.getElementById('activeSession');
     const setupSection = document.querySelector('.duration-section');
     
-    // ---- Pre-session data collection ----
-    // function collectPreSessionData() {
-    //     const sessionName = document.getElementById('sessionNameInput').value;
-    //     const subjectTask = document.querySelector('.psc-opt[data-group="subject"].psc-opt-selected')?.dataset.val;
-    //     const taskDifficulty = document.getElementById('psc-difficulty')?.value;
-    //     const estimatedLength = document.querySelector('.psc-opt[data-group="tasklength"].psc-opt-selected')?.dataset.val;
-    //     const assignmentDeadline = document.getElementById('psc-deadline')?.value;
-    //     const sessionGoal = document.getElementById('psc-goal')?.value;
-    //     const energyLevel = document.getElementById('psc-energy')?.value;
-    //     const moodEmoji = document.querySelector('.psc-opt[data-group="mood"].psc-opt-selected')?.dataset.val;
-    //     const stressLevel = document.getElementById('psc-stress')?.value;
-    //     const timeSinceMeal = document.querySelector('.psc-opt[data-group="meal"].psc-opt-selected')?.dataset.val;
-    //     const caffeineIntake = document.querySelector('.psc-opt[data-group="caffeine"].psc-opt-selected')?.dataset.val;
-    //     const timeSinceWaking = document.querySelector('.psc-opt[data-group="wake"].psc-opt-selected')?.dataset.val;
-    //     const physicalActivity = document.querySelector('.psc-opt[data-group="activity"].psc-opt-selected')?.dataset.val;
-    //     const currentNoise = document.querySelector('.psc-opt[data-group="noise"].psc-opt-selected')?.dataset.val;
-    //     const studyMethod = document.querySelector('.psc-opt[data-group="method"].psc-opt-selected')?.dataset.val;
-    //     const currentLocation = document.querySelector('.psc-opt[data-group="location"].psc-opt-selected')?.dataset.val;
-
-    //     return {
-    //         session_name: sessionName,
-    //         subject_task: subjectTask,
-    //         task_difficulty: parseInt(taskDifficulty) || 5,
-    //         estimated_length: estimatedLength,
-    //         assignment_deadline: assignmentDeadline || null,
-    //         session_goal: sessionGoal,
-    //         energy_level: parseInt(energyLevel) || 5,
-    //         mood_emoji: moodEmoji,
-    //         stress_level: parseInt(stressLevel) || 5,
-    //         time_since_meal: timeSinceMeal,
-    //         caffeine_intake: caffeineIntake,
-    //         time_since_waking: timeSinceWaking,
-    //         physical_activity: physicalActivity,
-    //         current_noise: currentNoise,
-    //         lighting_conditions: '',
-    //         study_method: studyMethod,
-    //         current_location: currentLocation
-    //     };
-    // }
-
     async function confirmPreSessionAndStart() {
         console.log("BOTTOM BUTTON: confirmPreSessionAndStart fired");
         preSessionData = collectPreSessionData();
         console.log("Collected data:", JSON.stringify(preSessionData, null, 2));
+        
+        // Get current duration from input (prioritizes manual input)
+        const currentDuration = getCurrentDuration();
+        console.log("Using duration:", currentDuration, "minutes");
         
         // Send pre-session data to backend
         try {
@@ -282,7 +277,7 @@
                 preSessionData.session_id = data.session_id;
                 // Store session data to trigger timer on dashboard
                 sessionStorage.setItem('session_name', preSessionData.session_name);
-                sessionStorage.setItem('session_duration', selectedDuration);
+                sessionStorage.setItem('session_duration', currentDuration);
                 sessionStorage.setItem('start_timer', 'true');
                 sessionStorage.setItem('session_id', data.session_id);  // Store session_id for EEG session linking
                 // Redirect to dashboard to use dashboard's timer and brainwave logic
@@ -347,16 +342,26 @@
     async function startEEGsession() {
         console.log("starting EEG session");
         showActiveSession();
-        startTimer(Number(selectedDuration));
+        
+        // Get current duration from input (prioritizes manual input)
+        const currentDuration = getCurrentDuration();
+        startTimer(currentDuration);
 
         try {
+            // Get session_id from sessionStorage (stored during pre-session check-in)
+            const sessionId = sessionStorage.getItem('session_id');
+            console.log("Starting EEG session with session_id:", sessionId);
+            
             var res = await fetch('/start_realtime_eeg/', {
                 method: "POST",
                 headers: { 
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                  },
-                body: JSON.stringify({ duration_minutes: Number(selectedDuration) })
+                body: JSON.stringify({ 
+                    duration_minutes: currentDuration,
+                    session_id: sessionId  // Send session_id to link with pre-session data
+                })
             });
 
             var data = await res.json();
