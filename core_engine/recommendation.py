@@ -37,9 +37,57 @@ from secondBrain_App.models import (
     UserFeedback
 )
 from django.db import models
-from google import genai
+import google.generativeai as genai
 
 API_KEY = os.getenv("GEMINI_API_KEY")
+
+
+# ============================================================
+# CHOICE MAPPINGS
+# ============================================================
+def get_sound_environment(value):
+    mapping = {
+        '1': 'Silent',
+        '2': 'White Noise', 
+        '3': 'Nature Sounds',
+        '4': 'Music',
+        '5': 'Cafe/Background',
+        '6': 'Other'
+    }
+    return mapping.get(str(value), value)
+
+def get_main_goals(value):
+    mapping = {
+        '1': 'Improve grades',
+        '2': 'Learn new skill',
+        '3': 'Career advancement',
+        '4': 'Personal interest',
+        '5': 'Other'
+    }
+    return mapping.get(str(value), value)
+
+def get_sleep_quality(value):
+    mapping = {
+        '1': 'Poor',
+        '2': 'Fair',
+        '3': 'Good',
+        '4': 'Excellent',
+        '5': 'Perfect',
+        '6': 'None',
+        '7': 'Other'
+    }
+    return mapping.get(str(value), value)
+
+def get_learning_style(value):
+    mapping = {
+        '1': 'Visual',
+        '2': 'Auditory',
+        '3': 'Kinesthetic',
+        '4': 'Reading/Writing',
+        '5': 'Mixed',
+        '6': 'Other'
+    }
+    return mapping.get(str(value), value)
 
 
 # ============================================================
@@ -70,6 +118,9 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
     Returns:
         recommendation_text (str) from Gemini API
     """
+    # ── Get subject from pre-session check-in ─────────────────
+    subject = 'General'
+        
     try:
         print(f"[REC] Generating recommendation for {user_email}, session {session_id}")
 
@@ -79,6 +130,17 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
         except UserProfile.DoesNotExist:
             print(f"[REC] UserProfile not found for {user_email}")
             return _fallback_recommendation(final_summary)
+        
+        try:
+            from secondBrain_App.models import PreSessionCheckIn
+            checkin = PreSessionCheckIn.objects.filter(
+                user=user_profile,
+                session_id=session_id
+            ).order_by('-created_at').first()
+            if checkin:
+                subject = checkin.subject_task or 'General'
+        except Exception as e:
+            print(f"[REC] Could not fetch pre-session checkin subject: {e}")
 
         # ── Get session ───────────────────────────────────────
         import time
@@ -129,12 +191,12 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
 
         # ── Route to Phase 1 or Phase 2 ──────────────────────
         if total_sessions <= 5:
-            return _phase1_llm(user_profile, session, final_summary)
+            return _phase1_llm(user_profile, session, final_summary, subject)
         else:
             return _phase2_llm(
                 user_profile, session,
                 user_summary_data, user_email,
-                final_summary
+                final_summary, subject
             )
 
     except Exception as e:
@@ -145,9 +207,10 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
 # ============================================================
 # PHASE 1 — Sessions 1-5
 # ============================================================
-def _phase1_llm(user_profile, session, final_summary):
+def _phase1_llm(user_profile, session, final_summary, subject='General'):
     """Phase 1 LLM recommendation using profile and session data only."""
-    client = genai.Client(api_key=API_KEY)
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel(model_name="gemini-3-flash-preview")
 
     avg_focus             = final_summary.get('average_focus_score', 0)
     concentrating_seconds = final_summary.get('concentrating_seconds', 0)
@@ -164,10 +227,10 @@ def _phase1_llm(user_profile, session, final_summary):
     theta_avg         = final_summary.get('theta_avg', 0)
 
     # Map UserProfile fields to readable values
-    sound_env     = user_profile.sound_environment or 'unknown'
-    study_goals   = user_profile.main_goals        or 'study improvement'
-    sleep_quality = user_profile.sleep_quality     or 'unknown'
-    learning_style= user_profile.learning_style    or 'unknown'
+    sound_env     = get_sound_environment(user_profile.sound_environment) or 'unknown'
+    study_goals   = get_main_goals(user_profile.main_goals) or 'study improvement'
+    sleep_quality = get_sleep_quality(user_profile.sleep_quality) or 'unknown'
+    learning_style= get_learning_style(user_profile.learning_style) or 'unknown'
 
     contents = """You are an AI-powered Study Optimization Advisor analyzing EEG brainwave data.
 
@@ -176,6 +239,7 @@ USER PROFILE:
 - Sleep quality      : {sleep}
 - Learning style     : {style}
 - Study goals        : {goals}
+- Subject studying   : {subject}
 
 EEG SESSION RESULTS:
 - Avg focus score    : {avg_focus:.2f} (0=no focus, 1=full focus)
@@ -198,6 +262,7 @@ RESPOND WITH:
 1. 1-2 line fun personalized recommendation based on their EEG session results
 2. Recommended Study Methods (3-4 bullet points)
 3. Optimal study environment for this user
+4. Tailor study methods specifically for {subject}
 """.format(
         sound        = sound_env,
         sleep        = sleep_quality,
@@ -215,11 +280,11 @@ RESPOND WITH:
         beta_avg     = beta_avg,
         gamma_avg    = gamma_avg,
         alpha_avg    = alpha_avg,
-        theta_avg    = theta_avg
+        theta_avg    = theta_avg,
+        subject      = subject
     )
 
-    response = client.models.generate_content(
-        model    = "gemini-2.5-flash",
+    response = model.generate_content(
         contents = contents
     )
     return response.text
@@ -228,9 +293,10 @@ RESPOND WITH:
 # ============================================================
 # PHASE 2 — Sessions 6+
 # ============================================================
-def _phase2_llm(user_profile, session, user_summary_data, user_email, final_summary):
+def _phase2_llm(user_profile, session, user_summary_data, user_email, final_summary, subject='General'):
     """Phase 2 LLM recommendation using full history and feedback."""
-    client = genai.Client(api_key=API_KEY)
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel(model_name="gemini-3-flash-preview") 
 
     avg_focus             = final_summary.get('average_focus_score', 0)
     concentrating_seconds = final_summary.get('concentrating_seconds', 0)
@@ -246,10 +312,10 @@ def _phase2_llm(user_profile, session, user_summary_data, user_email, final_summ
     alpha_avg         = final_summary.get('alpha_avg', 0)
     theta_avg         = final_summary.get('theta_avg', 0)
 
-    sound_env     = user_profile.sound_environment or 'unknown'
-    study_goals   = user_profile.main_goals        or 'study improvement'
-    sleep_quality = user_profile.sleep_quality     or 'unknown'
-    learning_style= user_profile.learning_style    or 'unknown'
+    sound_env     = get_sound_environment(user_profile.sound_environment) or 'unknown'
+    study_goals   = get_main_goals(user_profile.main_goals) or 'study improvement'
+    sleep_quality = get_sleep_quality(user_profile.sleep_quality) or 'unknown'
+    learning_style= get_learning_style(user_profile.learning_style) or 'unknown'
 
     # ── Get last feedback ─────────────────────────────────────
     try:
@@ -269,6 +335,7 @@ USER PROFILE:
 - Sleep quality      : {sleep}
 - Learning style     : {style}
 - Study goals        : {goals}
+- Subject studying   : {subject}
 
 EEG SESSION RESULTS:
 - Avg focus score    : {avg_focus:.2f}
@@ -302,6 +369,7 @@ RULES:
 - PRIORITIZE {best_stim}
 - If last rating <= 2, try something completely different
 - If sentiment score < 0.3, be more creative and suggest new approaches
+- Tailor study methods specifically for {subject}
 
 RESPOND WITH:
 1. 1-2 line fun personalized recommendation referencing their EEG results and history
@@ -335,15 +403,53 @@ RESPOND WITH:
         avg_rating   = user_summary_data['average_feedback_rating'],
         sentiment    = user_summary_data['overall_sentiment_score'],
         last_rating  = last_overall_rating,
-        last_sent    = last_sentiment
+        last_sent    = last_sentiment,
+        subject      = subject
     )
 
-    response = client.models.generate_content(
-        model    = "gemini-2.5-flash",
+    response = model.generate_content(
         contents = contents
     )
     return response.text
 
+def parse_recommendation_sections(text):
+    """Extract numbered sections from LLM recommendation text"""
+    import re
+    sections = {
+        'personalized_recommendation': '',
+        'recommended_study_methods': '',
+        'optimal_study_environment': '',
+        'what_to_avoid': ''
+    }
+    
+    # Map section titles to field names
+    section_map = {
+        'personalized recommendation': 'personalized_recommendation',
+        'recommended study methods': 'recommended_study_methods',
+        'optimal study environment': 'optimal_study_environment',
+        'what to avoid': 'what_to_avoid'
+    }
+    
+    # Split by numbered sections
+    parts = re.split(r'(?=\d+\.\s)', text)
+    
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        # Extract title
+        title_match = re.match(r'^\d+\.\s+\*?\*?([^*\n:]+):?\*?\*?', part)
+        if title_match:
+            title = title_match.group(1).replace('**', '').strip().lower()
+            body = part[title_match.end():].strip()
+            body = body.replace('**', '').strip()
+            # Match to field
+            for key, field in section_map.items():
+                if key in title:
+                    sections[field] = body
+                    break
+    
+    return sections
 
 # ============================================================
 # FALLBACK
@@ -363,32 +469,41 @@ def _fallback_recommendation(final_summary):
 # SAVE RECOMMENDATION
 # ============================================================
 def save_recommendation(user_email, session_id, inference_id,
-                        category, stimulus, trigger, message):
-    """
-    Save recommendation to database using Django models.
-    Replaces the SQLAlchemy-based save_recommendation from the subdirectory.
-    """
+                        category, stimulus, trigger, message, subject=''):
     from django.utils import timezone
     import uuid
-    
+
     try:
         user_profile = UserProfile.objects.get(email=user_email)
         
+        try:
+            session = SessionSummary.objects.get(session_id=session_id)
+        except SessionSummary.DoesNotExist:
+            session = None
+
+        # Parse sections from message
+        sections = parse_recommendation_sections(message)
+
         recommendation = Recommendation.objects.create(
             recommendation_id=str(uuid.uuid4()),
             user=user_profile,
-            session_id=session_id,
+            session=session,
             inference_id=inference_id,
             recommendation_category=category,
             stimulus_name=stimulus,
             trigger_reason=trigger,
             action_started_at=timezone.now(),
-            message=message
+            message=message,
+            subject=subject,                                                    # ← new
+            personalized_recommendation=sections['personalized_recommendation'], # ← new
+            recommended_study_methods=sections['recommended_study_methods'],     # ← new
+            optimal_study_environment=sections['optimal_study_environment'],     # ← new
+            what_to_avoid=sections['what_to_avoid']                             # ← new
         )
-        
-        print(f"[SAVED] Recommendation: {stimulus} ({category}) for user {user_email}")
+
+        print(f"[SAVED] Recommendation with sections for {user_email}")
         return recommendation.recommendation_id
-        
+
     except UserProfile.DoesNotExist:
         print(f"[ERROR] UserProfile not found for {user_email}")
         return None
