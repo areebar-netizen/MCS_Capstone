@@ -269,17 +269,38 @@
 
                                     <!-- Feedback Widget -->
                                     <div class="rec-feedback"
-                                         data-rec-id="{{ rec.recommendation_id }}"
-                                         data-session-id="{{ session.session_id }}">
-                                        <span class="feedback-label">How useful was this recommendation?</span>
+                                        data-rec-id="{{ rec.recommendation_id }}"
+                                        data-session-id="{{ session.session_id }}"
+                                        {% if rec.feedback_given %}data-submitted="true"{% endif %}>
+                                        
+                                        <span class="feedback-label">
+                                            {% if rec.feedback_given %}Your rating{% else %}How useful was this recommendation?{% endif %}
+                                        </span>
+                                        
                                         <div class="star-rating">
-                                            <span class="star" data-value="1" onclick="rateFeedback('{{ rec.recommendation_id }}', 1)">☆</span>
-                                            <span class="star" data-value="2" onclick="rateFeedback('{{ rec.recommendation_id }}', 2)">☆</span>
-                                            <span class="star" data-value="3" onclick="rateFeedback('{{ rec.recommendation_id }}', 3)">☆</span>
-                                            <span class="star" data-value="4" onclick="rateFeedback('{{ rec.recommendation_id }}', 4)">☆</span>
-                                            <span class="star" data-value="5" onclick="rateFeedback('{{ rec.recommendation_id }}', 5)">☆</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 1 %}active{% endif %}" 
+                                                data-value="1" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 1){% endif %}">
+                                                {% if rec.helpfulness_rating >= 1 %}★{% else %}☆{% endif %}</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 2 %}active{% endif %}" 
+                                                data-value="2" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 2){% endif %}">
+                                                {% if rec.helpfulness_rating >= 2 %}★{% else %}☆{% endif %}</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 3 %}active{% endif %}" 
+                                                data-value="3" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 3){% endif %}">
+                                                {% if rec.helpfulness_rating >= 3 %}★{% else %}☆{% endif %}</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 4 %}active{% endif %}" 
+                                                data-value="4" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 4){% endif %}">
+                                                {% if rec.helpfulness_rating >= 4 %}★{% else %}☆{% endif %}</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 5 %}active{% endif %}" 
+                                                data-value="5" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 5){% endif %}">
+                                                {% if rec.helpfulness_rating >= 5 %}★{% else %}☆{% endif %}</span>
                                         </div>
-                                        <div class="feedback-reason" id="reason-{{ rec.recommendation_id }}">
+
+                                        <div class="feedback-reason" id="reason-{{ rec.recommendation_id }}" style="display:none;flex-direction:column;gap:6px;">
                                             <textarea
                                                 class="feedback-textarea"
                                                 id="reason-text-{{ rec.recommendation_id }}"
@@ -289,7 +310,11 @@
                                                 Submit Feedback
                                             </button>
                                         </div>
-                                        <span class="feedback-thanks" id="thanks-{{ rec.recommendation_id }}">Thanks for your feedback! ✓</span>
+                                        
+                                        <span class="feedback-thanks" id="thanks-{{ rec.recommendation_id }}" 
+                                            style="display:{% if rec.feedback_given %}block{% else %}none{% endif %};">
+                                            Thanks for your feedback! ✓
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -452,6 +477,28 @@ document.addEventListener('DOMContentLoaded', function() {
         text = text.replace(/^(<br>)+/, '');
         el.innerHTML = text;
     });
+
+    // Restore existing feedback ratings on page load  
+    document.querySelectorAll('.rec-feedback').forEach(widget => {
+        const submitted = widget.dataset.submitted === 'true';
+        const rating = parseInt(widget.dataset.rating);
+        const recId = widget.dataset.recId;
+
+        if (submitted && rating) {
+            widget.querySelectorAll('.star').forEach((star, idx) => {
+                star.textContent = idx < rating ? '★' : '☆';
+                star.classList.toggle('active', idx < rating);
+                star.style.pointerEvents = 'none';
+                star.style.cursor = 'default';
+            });
+
+            const label = widget.querySelector('.feedback-label');
+            if (label) label.textContent = 'Your rating';
+
+            const thanks = document.getElementById(`thanks-${recId}`);
+            if (thanks) thanks.style.display = 'block';
+        }
+    });                                                 
 });
 
 // Filter functionality

@@ -43,6 +43,54 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 
 
 # ============================================================
+# CHOICE MAPPINGS
+# ============================================================
+def get_sound_environment(value):
+    mapping = {
+        '1': 'Silent',
+        '2': 'White Noise', 
+        '3': 'Nature Sounds',
+        '4': 'Music',
+        '5': 'Cafe/Background',
+        '6': 'Other'
+    }
+    return mapping.get(str(value), value)
+
+def get_main_goals(value):
+    mapping = {
+        '1': 'Improve grades',
+        '2': 'Learn new skill',
+        '3': 'Career advancement',
+        '4': 'Personal interest',
+        '5': 'Other'
+    }
+    return mapping.get(str(value), value)
+
+def get_sleep_quality(value):
+    mapping = {
+        '1': 'Poor',
+        '2': 'Fair',
+        '3': 'Good',
+        '4': 'Excellent',
+        '5': 'Perfect',
+        '6': 'None',
+        '7': 'Other'
+    }
+    return mapping.get(str(value), value)
+
+def get_learning_style(value):
+    mapping = {
+        '1': 'Visual',
+        '2': 'Auditory',
+        '3': 'Kinesthetic',
+        '4': 'Reading/Writing',
+        '5': 'Mixed',
+        '6': 'Other'
+    }
+    return mapping.get(str(value), value)
+
+
+# ============================================================
 # HELPER
 # ============================================================
 def get_time_of_day():
@@ -179,10 +227,10 @@ def _phase1_llm(user_profile, session, final_summary, subject='General'):
     theta_avg         = final_summary.get('theta_avg', 0)
 
     # Map UserProfile fields to readable values
-    sound_env     = user_profile.sound_environment or 'unknown'
-    study_goals   = user_profile.main_goals        or 'study improvement'
-    sleep_quality = user_profile.sleep_quality     or 'unknown'
-    learning_style= user_profile.learning_style    or 'unknown'
+    sound_env     = get_sound_environment(user_profile.sound_environment) or 'unknown'
+    study_goals   = get_main_goals(user_profile.main_goals) or 'study improvement'
+    sleep_quality = get_sleep_quality(user_profile.sleep_quality) or 'unknown'
+    learning_style= get_learning_style(user_profile.learning_style) or 'unknown'
 
     contents = """You are an AI-powered Study Optimization Advisor analyzing EEG brainwave data.
 
@@ -264,10 +312,10 @@ def _phase2_llm(user_profile, session, user_summary_data, user_email, final_summ
     alpha_avg         = final_summary.get('alpha_avg', 0)
     theta_avg         = final_summary.get('theta_avg', 0)
 
-    sound_env     = user_profile.sound_environment or 'unknown'
-    study_goals   = user_profile.main_goals        or 'study improvement'
-    sleep_quality = user_profile.sleep_quality     or 'unknown'
-    learning_style= user_profile.learning_style    or 'unknown'
+    sound_env     = get_sound_environment(user_profile.sound_environment) or 'unknown'
+    study_goals   = get_main_goals(user_profile.main_goals) or 'study improvement'
+    sleep_quality = get_sleep_quality(user_profile.sleep_quality) or 'unknown'
+    learning_style= get_learning_style(user_profile.learning_style) or 'unknown'
 
     # ── Get last feedback ─────────────────────────────────────
     try:

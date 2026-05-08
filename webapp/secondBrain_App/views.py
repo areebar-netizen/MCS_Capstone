@@ -2281,3 +2281,42 @@ def recommendation_feedback_view(request):
     
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+def get_last_checkin_view(request):
+    if not request.session.get('user_email'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        from .models import PreSessionCheckIn, UserProfile
+        user_profile = UserProfile.objects.get(email=request.session['user_email'])
+        last = PreSessionCheckIn.objects.filter(
+            user=user_profile
+        ).order_by('-created_at').first()
+        
+        if not last:
+            return JsonResponse({'ok': False, 'message': 'No previous session found'})
+        
+        return JsonResponse({
+            'ok': True,
+            'data': {
+                'subject': last.subject_task,
+                'difficulty': last.task_difficulty,
+                'tasklength': last.estimated_length,
+                'energy': last.energy_level,
+                'mood': last.mood_emoji,
+                'stress': last.stress_level,
+                'meal': last.time_since_meal,
+                'caffeine': last.caffeine_intake,
+                'wake': last.time_since_waking,
+                'activity': last.physical_activity,
+                'noise': last.current_noise or '',
+                'lighting': last.lighting_conditions or '',
+                'method': last.study_method or '',
+                'location': last.current_location or '',
+                'goal': last.session_goal or '',
+                'session_name': last.session_name or '',
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
