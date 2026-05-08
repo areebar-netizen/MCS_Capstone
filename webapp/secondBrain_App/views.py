@@ -2142,8 +2142,20 @@ def presession_checkin_view(request):
                     assignment_deadline = assignment_deadline.replace(hour=23, minute=59, second=59)
                 elif deadline_val == 'this_week':
                     assignment_deadline = now + timezone.timedelta(days=7)
+                    assignment_deadline = assignment_deadline.replace(hour=23, minute=59, second=59)
                 elif deadline_val == 'next_week':
                     assignment_deadline = now + timezone.timedelta(days=14)
+                    assignment_deadline = assignment_deadline.replace(hour=23, minute=59, second=59)
+            
+            # Debug logging to identify the issue
+            print(f"DEBUG: Assignment deadline processing:")
+            print(f"  deadline_val from frontend: {deadline_val}")
+            print(f"  processed assignment_deadline: {assignment_deadline}")
+            print(f"  deadline_val type: {type(deadline_val)}")
+            print(f"  deadline_val is empty: {deadline_val == ''}")
+            print(f"  deadline_val is truthy: {bool(deadline_val)}")
+            
+            # Map time since meal to model choice
             
             # Map mood emoji to model choice
             mood_mapping = {
