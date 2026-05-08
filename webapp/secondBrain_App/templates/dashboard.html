@@ -672,6 +672,31 @@ function pollForRecommendation() {
     }, 3000);
 }
 
+// Check if we should poll for recommendations on page load
+function checkForPendingRecommendations() {
+    console.log('[EEG] Checking for pending recommendations...');
+    
+    // Check if there's a session that was just stopped
+    const sessionStartTimer = sessionStorage.getItem('start_timer');
+    const sessionActive = sessionStorage.getItem('realtime_session_active');
+    
+    // If we just came from a stopped session, start polling for recommendations
+    if (sessionStartTimer === 'true' && sessionActive === 'false') {
+        console.log('[EEG] Session was stopped, starting recommendation polling...');
+        pollForRecommendation();
+        
+        // Clear the session markers
+        sessionStorage.removeItem('start_timer');
+        sessionStorage.removeItem('realtime_session_active');
+    }
+}
+
+// Initialize dashboard and check for pending recommendations
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[EEG] Dashboard loaded, checking for pending recommendations...');
+    checkForPendingRecommendations();
+});
+
 // Helper function to refresh the focus track history to show new recommendations
 async function refreshFocusHistory() {
     try {

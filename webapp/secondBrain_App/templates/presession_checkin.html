@@ -202,7 +202,9 @@
 .psc-slider { width:100%; accent-color:#e05a2b; margin:6px 0 2px; }
 .psc-slider-val { text-align:center; font-size:1.3rem; font-weight:600; color:#222; }
 .psc-slider-labels { display:flex; justify-content:space-between; font-size:0.72rem; color:#aaa; margin-top:2px; }
-.psc-select { width:100%; padding:8px 11px; border:1px solid #ddd; border-radius:8px; font-size:0.88rem; background:#fafafa; }
+.psc-select { width:100%; padding:14px 18px; border:2px solid #e05a2b; border-radius:10px; font-size:0.92rem; background:#fff; color:#333; font-weight:500; cursor:pointer; transition:all 0.3s ease; box-shadow:0 2px 4px rgba(224,90,43,0.1); }
+.psc-select:hover { border-color:#d64420; box-shadow:0 4px 8px rgba(224,90,43,0.2); transform:translateY(-1px); }
+.psc-select:focus { outline:none; border-color:#d64420; box-shadow:0 0 0 3px rgba(224,90,43,0.2); }
 .psc-textarea { width:100%; padding:9px 11px; border:1px solid #ddd; border-radius:8px; font-size:0.88rem; resize:vertical; min-height:65px; background:#fafafa; box-sizing:border-box; }
 .psc-footer { display:flex; gap:10px; margin-top:22px; }
 .psc-back-btn { flex:1; padding:11px; border:2px solid #e05a2b; background:#fff; color:#e05a2b; border-radius:8px; font-size:0.92rem; cursor:pointer; font-weight:500; }
@@ -339,7 +341,6 @@ async function togglePrevSession(checked) {
                 if (btn.dataset.val === val) btn.classList.add('psc-opt-selected');
             });
         };
-
         selectBtn('subject', subjectMap[d.subject] || d.subject);
         selectBtn('tasklength', lengthMap[d.tasklength] || d.tasklength);
         selectBtn('mood', d.mood);
@@ -350,9 +351,10 @@ async function togglePrevSession(checked) {
         selectBtn('noise', d.noise);
         selectBtn('method', d.method);
         selectBtn('location', d.location);
+        selectBtn('lighting', d.lighting);
 
         // If any additional fields loaded, show extra section
-        if (d.wake || d.activity || d.noise || d.method || d.location || d.goal) {
+        if (d.wake || d.activity || d.noise || d.method || d.location || d.lighting || d.goal) {
             document.getElementById('psc-extra-section').style.display = 'block';
             document.getElementById('psc-extra-yes').classList.add('psc-yn-selected');
             document.getElementById('psc-extra-no').classList.remove('psc-yn-selected');

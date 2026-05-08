@@ -254,6 +254,14 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1, session_i
         initial_cache_set = False
         
         while timezone.now() < end_time:
+            # Check for stop signal from session
+            try:
+                stop_signal = cache.get(f"stop_eeg_task_{self.request.id}")
+                if stop_signal:
+                    print(f"[STOP] Stop signal received for task {self.request.id}")
+                    break
+            except Exception as e:
+                print(f"[ERROR] Failed to check stop signal: {e}")
             
             try:
                 # Get buffer data
@@ -594,6 +602,10 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1, session_i
 
 def save_session_summary(summary_data):
     """Save session summary to database"""
+    print(f"[DEBUG] save_session_summary called for session: {summary_data['session_id']}")
+    print(f"[DEBUG] User: {summary_data['user_email']}")
+    print(f"[DEBUG] Duration: {summary_data['total_duration_seconds']} seconds")
+    
     from secondBrain_App.models import UserProfile, SessionSummary
     try:
         user_profile = UserProfile.objects.get(email=summary_data['user_email'])
@@ -676,6 +688,7 @@ def save_session_summary(summary_data):
         summary_data['signal_integrity'] = inferences['signal_integrity']
         summary_data['focus_depth'] = inferences['focus_depth']
 
+        print(f"[DEBUG] Creating SessionSummary for session: {summary_data['session_id']}")
         session_summary = SessionSummary.objects.create(
             session_id              = summary_data['session_id'],
             user                    = user_profile,
@@ -704,6 +717,7 @@ def save_session_summary(summary_data):
             signal_integrity        = summary_data.get('signal_integrity', 'Unknown'),
             focus_depth             = summary_data.get('focus_depth', 'Unknown')
         )
+        print(f"[DEBUG] SessionSummary created successfully with ID: {session_summary.id}")
         
         # Update user summary (if table exists)
         # try:
@@ -751,12 +765,20 @@ def save_session_summary(summary_data):
             subject = 'General'
             try:
                 from secondBrain_App.models import PreSessionCheckIn
+                print(f"[RECOMMENDATION DEBUG] Looking for PreSessionCheckIn with session_id: {summary_data['session_id']}")
+                print(f"[RECOMMENDATION DEBUG] User: {summary_data['user_email']}")
+                
                 checkin = PreSessionCheckIn.objects.filter(
                     user=user_profile,
                     session_id=summary_data['session_id']
                 ).order_by('-created_at').first()
+                
+                print(f"[RECOMMENDATION DEBUG] Found PreSessionCheckIn: {checkin is not None}")
                 if checkin:
                     subject = checkin.subject_task or 'General'
+                    print(f"[RECOMMENDATION DEBUG] Subject from PreSessionCheckIn: {subject}")
+                else:
+                    print(f"[RECOMMENDATION DEBUG] No PreSessionCheckIn found for session {summary_data['session_id']}")
             except Exception as e:
                 print(f"[RECOMMENDATION] Could not fetch subject: {e}")
 

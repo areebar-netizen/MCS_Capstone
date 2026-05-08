@@ -256,7 +256,7 @@
         data.difficulty = document.getElementById('psc-difficulty').value;
         data.energy = document.getElementById('psc-energy').value;
         data.stress = document.getElementById('psc-stress').value;
-        data.deadline = document.getElementById('psc-deadline').value;
+        data.assignment_deadline = document.getElementById('psc-deadline').value;
         data.goal = document.getElementById('psc-goal').value;
         data.session_name = document.getElementById('sessionNameInput').value;
         console.log("Collected pre-session data:", JSON.stringify(data, null, 2));
@@ -296,6 +296,13 @@
                 sessionStorage.setItem('session_duration', currentDuration);
                 sessionStorage.setItem('start_timer', 'true');
                 sessionStorage.setItem('session_id', data.session_id);  // Store session_id for EEG session linking
+                
+                // Reset Assignment Deadline to normal (empty) after saving
+                const deadlineSelect = document.getElementById('psc-deadline');
+                if (deadlineSelect) {
+                    deadlineSelect.value = '';  // Reset to normal default
+                }
+                
                 // Redirect to dashboard to use dashboard's timer and brainwave logic
                 window.location.href = '/dashboard/';
             } else {
@@ -435,8 +442,19 @@
     //     }
     // }
 
+    let stopRetryCount = 0;
+    const MAX_STOP_RETRIES = 3;
+
     async function stopEEGsession() {
         console.log("Ending EEG session");
+        
+        // Prevent infinite retries
+        if (stopRetryCount >= MAX_STOP_RETRIES) {
+            console.log("Max stop retries reached, stopping attempts");
+            const sessionOutput = document.getElementById('sessionOutput');
+            window.location.href = '/dashboard/';
+            return;
+        }
 
         if (timerInterval) {
             clearInterval(timerInterval);
@@ -447,6 +465,8 @@
         //     histogramPolling = null;
         // }
 
+        stopRetryCount++;
+        
         try {
             var res = await fetch('/stop_realtime_eeg/', {
                 method: "POST",
@@ -461,14 +481,34 @@
             document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
 
             
-            if (data.status === 'completed' || data.status === "SUCCESS") {
-                console.log("will recommend")
+            if (data.status === 'completed' || data.status === "SUCCESS" || data.ok === true) {
+                console.log("Session completed, redirecting to dashboard");
+                
+                // Stop any remaining polling
+                if (typeof stopLiveStatePolling === 'function') {
+                    stopLiveStatePolling();
+                }
+                
+                // Set session as inactive before redirecting
+                sessionStorage.setItem('realtime_session_active', 'false');
+                
+                // Redirect directly to dashboard
                 window.location.href = '/dashboard/';
+                
             } else if (data.status === 'processing' ||
                 data.status === 'PENDING' ||
                 data.status === 'running' ||
                 data.status === 'STARTED') {
                 setTimeout(stopEEGsession, 3000);
+            } else {
+                // Handle other statuses (errors, etc) - don't retry
+                console.log("Stop request completed with status:", data.status);
+                
+                // Set session as inactive before redirecting
+                sessionStorage.setItem('realtime_session_active', 'false');
+                
+                // Redirect directly to dashboard
+                window.location.href = '/dashboard/';
             } 
         } catch (err) {
             console.error(err);

@@ -140,7 +140,23 @@ class FocusDataService:
                 'peak_focus': session.peak_focus_score,
                 'focus_streak': session.longest_focus_streak,
                 'created_at': session.created_at,
-                'recommendations': rec_list
+                'recommendations': rec_list,
+                'session_goal': session_goal,
+                'subject': subject,
+                'difficulty': difficulty,
+                'energy_level': energy_level,
+                'stress_level': stress_level,
+                'caffeine_intake': caffeine_intake,
+                'time_since_meal': time_since_meal,
+                'physical_activity': physical_activity,
+                'current_location': current_location,
+                'estimated_length': estimated_length,
+                'assignment_deadline': assignment_deadline,
+                'mood_emoji': mood_emoji,
+                'time_since_waking': time_since_waking,
+                'current_noise': current_noise,
+                'lighting_conditions': lighting_conditions,
+                'study_method': study_method,
             })
         
         return formatted_sessions
