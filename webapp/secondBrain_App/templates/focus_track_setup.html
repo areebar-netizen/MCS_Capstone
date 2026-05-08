@@ -17,6 +17,7 @@
                     class="focus-text-input"
                     placeholder="e.g. Deep Work, Study Session, Creative Flow"
                     maxlength="80"
+                    required
                 >
 
                 <div class="duration-section">
@@ -115,6 +116,8 @@
     let elapsedSeconds = 0;
     let preSessionData = {};
 
+   
+
     // ---- View switching ----
     function showSetup() {
         document.getElementById('setupView').style.display = 'block';
@@ -125,6 +128,13 @@
     }
 
     function showCheckin() {
+        const sessionName = document.getElementById('sessionNameInput').value.trim();
+        console.log("Initial session name:", sessionName);
+        
+        if (!sessionName) {
+            alert("Please enter a session name to continue.");
+            return;
+        }
         document.getElementById('setupView').style.display = 'none';
         document.getElementById('checkinView').style.display = 'block';
         document.getElementById('activeSession').style.display = 'none';
@@ -378,6 +388,8 @@
             document.getElementById('sessionOutput').textContent = "Start error: " + err;
         }
     }
+
+    
 
     // function startHistogramPolling() {
     //     // Reset data
