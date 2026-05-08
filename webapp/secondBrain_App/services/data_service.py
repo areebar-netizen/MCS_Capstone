@@ -75,8 +75,8 @@ class FocusDataService:
                 # Use session_name if available, otherwise fall back to task_id
                 if presession and presession.session_name:
                     session_name = presession.session_name
-                elif session.task_id:
-                    session_name = f"Task {session.task_id[:8]}"
+                elif presession.subject_task:
+                    session_name = f"New Task {presession.subject_task}"
                 else:
                     session_name = session.session_id.replace('_', ' ').title()
                 session_goal = presession.session_goal if presession and presession.session_goal else ''
