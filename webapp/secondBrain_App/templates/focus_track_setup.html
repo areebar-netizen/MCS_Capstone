@@ -96,6 +96,7 @@
     </div>
 </div>
 
+
 <script>
     // function getCookie(name) {
     //     let cookieValue = null;
@@ -109,6 +110,11 @@
     //     }
     //     return cookieValue;
     // }
+    function pscToggleExtra(show) {
+        document.getElementById('psc-extra-section').style.display = show ? 'block' : 'none';
+        document.getElementById('psc-extra-yes').classList.toggle('psc-yn-selected', show);
+        document.getElementById('psc-extra-no').classList.toggle('psc-yn-selected', !show);
+    }
 
     let selectedDuration = 25;
     let timerInterval = null;

@@ -1087,8 +1087,10 @@ document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el
     let html = '';
     sections.forEach(function(section) {
         section = section.trim();
+        
         if (!section || section === '**' || section.trim() === '') return;
-
+        const stripped = section.replace(/#+/g, '').replace(/\*/g, '').trim();
+        if (!stripped || stripped.length < 20) return;
         const titleMatch = section.match(/^(\d+)\.\s+\*?\*?([^*\n:]+):?\*?\*?/);
         if (titleMatch) {
             const title = titleMatch[2].replace(/\*/g, '').trim();
@@ -1098,6 +1100,7 @@ document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el
             body = body.replace(/\n\*\s+/g, '\n• ');
             body = body.replace(/\*\*/g, ''); // strip leftover **
             body = body.replace(/\n/g, '<br>');
+            body = body.replace(/###/g, '').replace(/##/g, '').replace(/#/g, '').trim();
             body = body.trim();
             if (!body) return;
             const emojiMap = {

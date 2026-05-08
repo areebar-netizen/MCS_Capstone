@@ -104,11 +104,23 @@ class FocusDataService:
                     session_name = session.session_id.replace('_', ' ').title()
             
             # Get recommendations for this session
-            from secondBrain_App.models import Recommendation
+            from secondBrain_App.models import Recommendation, UserFeedback
             recommendations = Recommendation.objects.filter(
                 user__email=self.user_email,
                 session=session
             ).order_by('-created_at')
+
+            rec_list = []
+            for rec in recommendations:
+                existing_feedback = UserFeedback.objects.filter(
+                    recommendation=rec
+                ).first()
+                rec_list.append({
+                    'recommendation_id': rec.recommendation_id,
+                    'message': rec.message,
+                    'helpfulness_rating': existing_feedback.helpfulness_rating if existing_feedback else None,
+                    'feedback_given': existing_feedback is not None,
+                })
             
             formatted_sessions.append({
                 'id': session.id,  # Database ID for template compatibility
@@ -128,23 +140,7 @@ class FocusDataService:
                 'peak_focus': session.peak_focus_score,
                 'focus_streak': session.longest_focus_streak,
                 'created_at': session.created_at,
-                'recommendations': recommendations,
-                'session_goal': session_goal,
-                'subject': subject,
-                'difficulty': difficulty,
-                'energy_level': energy_level,
-                'stress_level': stress_level,
-                'caffeine_intake': caffeine_intake,
-                'time_since_meal': time_since_meal,
-                'physical_activity': physical_activity,
-                'current_location': current_location,
-                'estimated_length': estimated_length,
-                'assignment_deadline': assignment_deadline,
-                'mood_emoji': mood_emoji,
-                'time_since_waking': time_since_waking,
-                'current_noise': current_noise,
-                'lighting_conditions': lighting_conditions,
-                'study_method': study_method,
+                'recommendations': rec_list
             })
         
         return formatted_sessions
