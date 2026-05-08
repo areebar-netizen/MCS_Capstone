@@ -71,11 +71,23 @@ class FocusDataService:
                 session_name = f"Task {session.task_id[:8]}"
             
             # Get recommendations for this session
-            from secondBrain_App.models import Recommendation
+            from secondBrain_App.models import Recommendation, UserFeedback
             recommendations = Recommendation.objects.filter(
                 user__email=self.user_email,
                 session=session
             ).order_by('-created_at')
+
+            rec_list = []
+            for rec in recommendations:
+                existing_feedback = UserFeedback.objects.filter(
+                    recommendation=rec
+                ).first()
+                rec_list.append({
+                    'recommendation_id': rec.recommendation_id,
+                    'message': rec.message,
+                    'helpfulness_rating': existing_feedback.helpfulness_rating if existing_feedback else None,
+                    'feedback_given': existing_feedback is not None,
+                })
             
             formatted_sessions.append({
                 'id': session.id,  # Database ID for template compatibility
@@ -95,7 +107,7 @@ class FocusDataService:
                 'peak_focus': session.peak_focus_score,
                 'focus_streak': session.longest_focus_streak,
                 'created_at': session.created_at,
-                'recommendations': recommendations
+                'recommendations': rec_list
             })
         
         return formatted_sessions

@@ -95,18 +95,24 @@
     </div>
 </div>
 
+
 <script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            document.cookie.split(';').forEach(cookie => {
-                cookie = cookie.trim();
-                if (cookie.startsWith(name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                }
-            });
-        }
-        return cookieValue;
+    // function getCookie(name) {
+    //     let cookieValue = null;
+    //     if (document.cookie && document.cookie !== '') {
+    //         document.cookie.split(';').forEach(cookie => {
+    //             cookie = cookie.trim();
+    //             if (cookie.startsWith(name + '=')) {
+    //                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+    //             }
+    //         });
+    //     }
+    //     return cookieValue;
+    // }
+    function pscToggleExtra(show) {
+        document.getElementById('psc-extra-section').style.display = show ? 'block' : 'none';
+        document.getElementById('psc-extra-yes').classList.toggle('psc-yn-selected', show);
+        document.getElementById('psc-extra-no').classList.toggle('psc-yn-selected', !show);
     }
 
     let selectedDuration = 25;
