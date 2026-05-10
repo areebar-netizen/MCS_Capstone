@@ -221,7 +221,7 @@
     });
 
     // ---- Slider live update ----
-    ['psc-difficulty', 'psc-energy', 'psc-stress'].forEach(function(id) {
+    ['psc-difficulty', 'psc-energy', 'psc-stress', 'caffeine-slider'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', function() {
@@ -243,7 +243,7 @@
             console.log("moodEmoji element:", document.querySelector('.psc-opt[data-group="mood"].psc-opt-selected'));
             console.log("stressLevel element:", document.getElementById('psc-stress'));
             console.log("timeSinceMeal element:", document.querySelector('.psc-opt[data-group="meal"].psc-opt-selected'));
-            console.log("caffeineIntake element:", document.querySelector('.psc-opt[data-group="caffeine"].psc-opt-selected'));
+            console.log("caffeineIntake element:", document.getElementById('caffeine-val'));
             console.log("timeSinceWaking element:", document.querySelector('.psc-opt[data-group="wake"].psc-opt-selected'));
             console.log("physicalActivity element:", document.querySelector('.psc-opt[data-group="activity"].psc-opt-selected'));
             console.log("currentNoise element:", document.querySelector('.psc-opt[data-group="noise"].psc-opt-selected'));
@@ -259,6 +259,7 @@
         data.assignment_deadline = document.getElementById('psc-deadline').value;
         data.goal = document.getElementById('psc-goal').value;
         data.session_name = document.getElementById('sessionNameInput').value;
+        data.caffeine = document.getElementById('caffeine-slider').value;
         console.log("Collected pre-session data:", JSON.stringify(data, null, 2));
         return data;
     }

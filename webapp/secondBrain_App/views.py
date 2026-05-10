@@ -1243,8 +1243,8 @@ def onboarding_view(request):
             'questions': [
                 {'id': 'name', 'type': 'text', 'label': "What's your name?", 'placeholder': 'Enter your name'},
                 {'id': 'age', 'type': 'number', 'label': 'How old are you?', 'placeholder': 'Enter your age', 'min': 13, 'max': 99},
-                {'id': 'academic_level', 'type': 'radio', 'label': 'What\'s your academic level?', 
-                 'options': ['High School', 'Undergraduate', 'Graduate/Masters', 'PhD/Doctoral', 'Professional/Continuing Education', 'Other']}
+                {'id': 'academic_level', 'type': 'radio', 'label': 'What\'s your academic/professional level?', 
+                 'options': ['High School', 'Undergraduate', 'Graduate/Masters', 'PhD/Doctoral', 'Professional', 'Other']}
             ]
         },
         2: {
@@ -1277,9 +1277,9 @@ def onboarding_view(request):
                 {'id': 'learning_style', 'type': 'radio', 'label': 'How do you learn best?',
                  'options': ['Visual (diagrams, charts, videos, reading)', 'Auditory (listening to lectures, discussions, audio)', 
                           'Kinesthetic (hands-on practice, movement, doing)', 'Reading/Writing (taking notes, writing summaries)', 'Not sure']},
-                {'id': 'study_subjects', 'type': 'checkbox', 'label': 'What subjects/topics do you typically study?',
-                 'options': ['Math/Statistics/Calculus', 'Sciences (Biology, Chemistry, Physics)', 'Reading/Literature/Humanities', 
-                          'Writing/Essays/Creative Work', 'Languages', 'Programming/Computer Science', 'Memorization-heavy subjects', 'Other']}
+                {'id': 'study_subjects', 'type': 'checkbox', 'label': 'What subjects/topics do you typically work on?',
+                 'options': ['Math/Statistics/Calculus', 'Sciences (Biology, Chemistry, Physics)', 'Reading/Literature/Humanities', 'Data Entry', 
+                          'Writing/Essays/Reports/Creative Work', 'Languages', 'Programming/Computer Science', 'Memorization-heavy subjects', 'Other']}
             ]
         },
         5: {

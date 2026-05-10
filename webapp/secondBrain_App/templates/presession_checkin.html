@@ -91,11 +91,11 @@
 
             <div class="psc-section">
                 <label class="psc-label">&#9749; Caffeinated drinks today</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt psc-opt-selected" data-group="caffeine" data-val="None">None</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="1 cup">1 cup</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="2 cups">2 cups</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="3-5 cups">3-5 cups</button>
+                <input type="range" min="0" max="10" value="5" id="caffeine-slider" class="psc-slider" >
+                <div class="psc-slider-val" id="caffeine-val" data-group="caffeine" data-val="5">5/10</div>
+                <div class="psc-slider-labels">
+                    <span>No Caffeine</span>
+                    <span>Very Caffeinated</span>
                 </div>
             </div>
 
@@ -245,6 +245,9 @@
 </style>
 
 <script>
+
+
+
 async function togglePrevSession(checked) {
     if (!checked) {
         document.getElementById('psc-prev-status').style.display = 'none';
