@@ -1,5 +1,5 @@
-﻿<!-- Focus Track Setup Component -->
 <div class="card focus-track-setup">
+    <!-- Focus Track Setup Component -->
     <div class="card-header">
         <h2 class="card-title" id="cardTitle">Start Focus Track</h2>
         <p class="card-subtitle" id="cardSubtitle"></p>
@@ -390,8 +390,7 @@
 
             var data = await res.json();
             console.log(data);
-            document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
-
+            document.getElementById('sessionOutput').innerHTML = JSON.stringify(data, null, 2);
             if (res.ok) {
                 console.log("EEG session started successfully");
                 // Redirect to dashboard where brainwave box and recommendations exist
