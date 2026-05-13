@@ -1,22 +1,308 @@
 {% load static %}
-    <!-- Focus Track History Title Card -->
-    <div class="card">
-        <div class="history-header">
-            <h1 class="history-title">Focus Track History</h1>
-            <div class="filter-dropdown">
-                <select class="filter-select" id="sessionFilter">
-                    <option value="5" {% if current_filter == '5' %}selected{% endif %}>Top 5 Sessions</option>
-                    <option value="7" {% if current_filter == '7' %}selected{% endif %}>Last 7 Days</option>
-                    <option value="30" {% if current_filter == '30' %}selected{% endif %}>Last 30 Days</option>
-                </select>
-            </div>
-        </div>
+
+<style>
+.rec-message {
+    line-height: 1.7;
+    font-size: 0.9rem;
+}
+
+.rec-message strong {
+    color: #ff9068;
+}
+
+/* High-End Analytics Dashboard Styles */
+.overview-title {
+    margin: 0 0 16px 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #111827;
+    text-align: center;
+}
+
+.overview-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+}
+
+@media (max-width: 768px) {
+    .overview-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.focus-states-card, .timeline-card, .presession-card {
+    background: var(--bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.focus-states-card h4, .timeline-card h4, .presession-card h4 {
+    margin: 0 0 16px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* Focus States Distribution */
+.progress-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.progress-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.progress-label {
+    min-width: 80px;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.concentrated-bar { background: #10b981; }
+.neutral-bar { background: #3b82f6; }
+.relaxed-bar { background: #8b5cf6; }
+
+.progress-value {
+    min-width: 40px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.85rem;
+    text-align: right;
+}
+
+/* Session Timeline */
+.timeline-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.timeline-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.timeline-item:last-child {
+    border-bottom: none;
+}
+
+.timeline-label {
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.timeline-value {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+/* Pre-Session Check-in - 4-Column Grid */
+.presession-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.presession-item {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.presession-item:hover {
+    background: var(--bg-hover);
+    transform: translateY(-1px);
+}
+
+.presession-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+}
+
+.presession-value {
+    font-weight: 700;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.icon {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .presession-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
     
+    .overview-container {
+        gap: 12px;
+    }
+    
+    .focus-states-card, .timeline-card, .presession-card {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .presession-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .overview-title {
+        font-size: 1.2rem;
+    }
+}
+
+/* Feedback Widget */
+.rec-feedback {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.feedback-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.star-rating {
+    display: flex;
+    gap: 4px;
+}
+
+.star {
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #d1d5db;
+    transition: color 0.15s, transform 0.1s;
+    user-select: none;
+}
+
+.star:hover,
+.star.active {
+    color: #FF9168;
+}
+
+.star:hover {
+    transform: scale(1.15);
+}
+
+.feedback-reason {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.feedback-textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    font-size: 0.85rem;
+    resize: vertical;
+    min-height: 70px;
+    font-family: inherit;
+    color: #374151;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.feedback-textarea:focus {
+    border-color: #FF9168;
+}
+
+.feedback-submit-btn {
+    align-self: flex-start;
+    padding: 6px 18px;
+    background: #FF9168;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.feedback-submit-btn:hover {
+    background: #e8784f;
+}
+
+.feedback-thanks {
+    display: none;
+    font-size: 0.82rem;
+    color: #22c55e;
+    font-weight: 500;
+}
+</style>
+
+<!-- Focus Track History Title Card -->
+<div class="card">
+    <div class="history-header">
+        <h1 class="history-title">Focus Track History</h1>
+        <div class="filter-dropdown">
+            <select class="filter-select" id="sessionFilter">
+                <option value="5" {% if current_filter == '5' %}selected{% endif %}>Top 5 Sessions</option>
+                <option value="7" {% if current_filter == '7' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30" {% if current_filter == '30' %}selected{% endif %}>Last 30 Days</option>
+            </select>
+        </div>
+    </div>
+
     <!-- Focus Track History Content -->
     <div class="focus-track-history">
-        
+
         <!-- Aggregate Statistics -->
-        <div class="aggregate-stats" >
+        <div class="aggregate-stats">
             <div class="card profile-stat">
                 <div class="stat-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
@@ -29,7 +315,7 @@
                     <div class="stat-label">Total Time</div>
                 </div>
             </div>
-            
+
             <div class="card profile-stat">
                 <div class="stat-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
@@ -43,7 +329,7 @@
                     <div class="stat-label">Avg Focus</div>
                 </div>
             </div>
-            
+
             <div class="card profile-stat">
                 <div class="stat-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
@@ -56,58 +342,62 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Sessions Container -->
         <div class="sessions-container">
         {% for session in recent_sessions %}
+
         <div class="card session-item" id="session-{{ session.id }}">
-        <!-- Card Header -->
-        <div class="session-header" onclick="toggleSessionDetail('{{ session.id }}')">
-            <div class="session-info">
-                <h3 class="session-name">{{ session.name }}</h3>
-                <div class="session-meta">
-                    <span class="session-date">{{ session.date|date:"M d, Y" }}</span>
-                    <span class="session-time">{{ session.time }}</span>
-                    <span class="session-duration">{{ session.duration }} min</span>
-                    <span class="session-focus">Focus: {{ session.focus_score|floatformat:1 }}/10</span>
+            <!-- Card Header -->
+            <div class="session-header" onclick="toggleSessionDetail('{{ session.id }}')">
+                <div class="session-info">
+                    <h3 class="session-name">{{ session.name }}</h3>
+                    <div class="session-meta">
+                        <span class="session-date">{{ session.date|date:"M d, Y" }}</span>
+                        <span class="session-time">{{ session.time }}</span>
+                        <span class="session-duration">{{ session.duration }} min</span>
+                        <span class="session-focus">Focus: {{ session.focus_score|floatformat:1 }}/10</span>
+                    </div>
                 </div>
-            </div>
-            <div class="session-states">
-                <div class="state-item">
-                    <span class="state-value concentrated">{{ session.states.concentrated }}%</span>
-                    <span class="state-label">Concentrated</span>
+                <div class="session-states">
+                    <div class="state-item">
+                        <span class="state-value concentrated">{{ session.states.concentrated }}%</span>
+                        <span class="state-label">Concentrated</span>
+                    </div>
+                    <div class="state-item">
+                        <span class="state-value neutral">{{ session.states.neutral }}%</span>
+                        <span class="state-label">Neutral</span>
+                    </div>
+                    <div class="state-item">
+                        <span class="state-value relaxed">{{ session.states.relaxed }}%</span>
+                        <span class="state-label">Relaxed</span>
+                    </div>
                 </div>
-                <div class="state-item">
-                    <span class="state-value neutral">{{ session.states.neutral }}%</span>
-                    <span class="state-label">Neutral</span>
+                <div class="expand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
                 </div>
-                <div class="state-item">
-                    <span class="state-value relaxed">{{ session.states.relaxed }}%</span>
-                    <span class="state-label">Relaxed</span>
-                </div>
-            </div>
-            <div class="expand-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
             </div>
         </div>
-    </div>
-        
-    <!-- Expandable Detail - Full Width Below -->
-    <div class="card session-detail" id="detail-{{ session.id }}" style="display: none;">
+
+        <!-- Expandable Detail - Full Width Below -->
+        <div class="card session-detail" id="detail-{{ session.id }}" style="display: none;">
             <!-- Tab Navigation -->
             <div class="detail-tabs">
                 <button class="detail-tab-btn active" onclick="switchDetailTab('{{ session.id }}', 'overview')">Overview</button>
                 <button class="detail-tab-btn" onclick="switchDetailTab('{{ session.id }}', 'recommendations')">Recommendations</button>
             </div>
-            
+
             <!-- Tab Content -->
             <div class="detail-content">
                 <!-- Overview Tab -->
                 <div class="detail-tab-panel active" id="overview-{{ session.id }}">
-                    <div class="overview-grid">
-                        <div class="focus-states-distribution">
+                    <!-- <h3 class="overview-title">{{ session.name }}</h3> -->
+                    
+                    <div class="overview-container">
+                        <!-- Focus States Distribution -->
+                        <div class="focus-states-card">
                             <h4>Focus States Distribution</h4>
                             <div class="progress-bars">
                                 <div class="progress-item">
@@ -133,8 +423,9 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="session-timeline">
+
+                        <!-- Session Timeline -->
+                        <div class="timeline-card">
                             <h4>Session Timeline</h4>
                             <div class="timeline-items">
                                 <div class="timeline-item">
@@ -142,25 +433,177 @@
                                     <span class="timeline-value">{{ session.start_time|date:"g:i A" }}</span>
                                 </div>
                                 <div class="timeline-item">
-                                    <span class="timeline-label">Target Duration</span>
+                                    <span class="timeline-label">Duration</span>
                                     <span class="timeline-value">{{ session.duration }} min</span>
                                 </div>
-                                <!-- <div class="timeline-item">
-                                    <span class="timeline-label">Focus Streak</span>
-                                    <span class="timeline-value">{{ session.focus_streak|floatformat:0 }}s</span>
-                                </div> -->
+                                <div class="timeline-item">
+                                    <span class="timeline-label">Focus Score</span>
+                                    <span class="timeline-value">{{ session.focus_score|floatformat:2 }}/10</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pre-Session Check-in Data -->
+                        <div class="presession-card" style="grid-column: 1 / -1;">
+                            <h4>Session Details</h4>
+                            <!-- Debug: {{ session.presession|default:"None" }} -->
+                            <div class="presession-grid">
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">📚</span>
+                                        Subject
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.subject|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">📊</span>
+                                        Difficulty
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.difficulty|default:"—" }}/10
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">⚡</span>
+                                        Energy Level
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.energy_level|default:"—" }}/10
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">😰</span>
+                                        Stress Level
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.stress_level|default:"—" }}/10
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">☕</span>
+                                        Caffeine Intake
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.caffeine_intake|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">🍽</span>
+                                        Time Since Meal
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.time_since_meal|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">🏃</span>
+                                        Physical Activity
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.physical_activity|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">📍</span>
+                                        Current Location
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.current_location|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">🎯</span>
+                                        Session Goal
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.session_goal|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">⏱</span>
+                                        Estimated Length
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.estimated_length|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">📅</span>
+                                        Assignment Deadline
+                                    </div>
+                                    <div class="presession-value">
+                                        {% if session.assignment_deadline %}{{ session.assignment_deadline|date:"M d, Y" }}{% else %}No Specific{% endif %}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">😊</span>
+                                        Current Mood
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.mood_emoji|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">🕐</span>
+                                        Time Since Waking
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.time_since_waking|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">🔊</span>
+                                        Current Noise
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.current_noise|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">💡</span>
+                                        Lighting Conditions
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.lighting_conditions|default:"—" }}
+                                    </div>
+                                </div>
+                                <div class="presession-item">
+                                    <div class="presession-label">
+                                        <span class="icon">📚</span>
+                                        Study Method
+                                    </div>
+                                    <div class="presession-value">
+                                        {{ session.study_method|default:"—" }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Recommendations Tab -->
                 <div class="detail-tab-panel" id="recommendations-{{ session.id }}">
                     <div class="session-recommendations">
                         <h4>AI Recommendations</h4>
                         <div class="recommendation-list">
                             {% for rec in session.recommendations %}
-                            <div class="recommendation-item">
+                            <div class="recommendation-item" id="rec-{{ rec.recommendation_id }}">
                                 <div class="rec-icon">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9168" stroke-width="2">
                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -168,8 +611,58 @@
                                     </svg>
                                 </div>
                                 <div class="rec-content">
-                                    <p class="rec-message">{{ rec.message }}</p>
+                                    <p class="rec-message" data-raw="{{ rec.message }}"></p>
                                     <span class="rec-meta">Session {{ session.session_id }}</span>
+
+                                    <!-- Feedback Widget -->
+                                    <div class="rec-feedback"
+                                        data-rec-id="{{ rec.recommendation_id }}"
+                                        data-session-id="{{ session.session_id }}"
+                                        {% if rec.feedback_given %}data-submitted="true"{% endif %}>
+                                        
+                                        <span class="feedback-label">
+                                            {% if rec.feedback_given %}Your rating{% else %}How useful was this recommendation?{% endif %}
+                                        </span>
+                                        
+                                        <div class="star-rating">
+                                            <span class="star {% if rec.helpfulness_rating >= 1 %}active{% endif %}" 
+                                                data-value="1" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 1){% endif %}">
+                                                {% if rec.helpfulness_rating >= 1 %}★{% else %}☆{% endif %}</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 2 %}active{% endif %}" 
+                                                data-value="2" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 2){% endif %}">
+                                                {% if rec.helpfulness_rating >= 2 %}★{% else %}☆{% endif %}</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 3 %}active{% endif %}" 
+                                                data-value="3" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 3){% endif %}">
+                                                {% if rec.helpfulness_rating >= 3 %}★{% else %}☆{% endif %}</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 4 %}active{% endif %}" 
+                                                data-value="4" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 4){% endif %}">
+                                                {% if rec.helpfulness_rating >= 4 %}★{% else %}☆{% endif %}</span>
+                                            <span class="star {% if rec.helpfulness_rating >= 5 %}active{% endif %}" 
+                                                data-value="5" 
+                                                onclick="{% if not rec.feedback_given %}rateFeedback('{{ rec.recommendation_id }}', 5){% endif %}">
+                                                {% if rec.helpfulness_rating >= 5 %}★{% else %}☆{% endif %}</span>
+                                        </div>
+
+                                        <div class="feedback-reason" id="reason-{{ rec.recommendation_id }}" style="display:none;flex-direction:column;gap:6px;">
+                                            <textarea
+                                                class="feedback-textarea"
+                                                id="reason-text-{{ rec.recommendation_id }}"
+                                                placeholder="What didn't work for you? (optional)"></textarea>
+                                            <button class="feedback-submit-btn"
+                                                    onclick="submitFeedback('{{ rec.recommendation_id }}')">
+                                                Submit Feedback
+                                            </button>
+                                        </div>
+                                        
+                                        <span class="feedback-thanks" id="thanks-{{ rec.recommendation_id }}" 
+                                            style="display:{% if rec.feedback_given %}block{% else %}none{% endif %};">
+                                            Thanks for your feedback! ✓
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             {% empty %}
@@ -181,7 +674,8 @@
                     </div>
                 </div>
             </div>
-    </div>
+        </div>
+
         {% empty %}
         <div class="no-sessions">
             <div class="no-sessions-icon">
@@ -196,9 +690,7 @@
         {% endfor %}
         </div>
     </div>
-
-        </div>
-
+</div>
 
 
 <script>
@@ -206,7 +698,7 @@
 function toggleSessionDetail(sessionId) {
     const detail = document.getElementById(`detail-${sessionId}`);
     const card = document.getElementById(`session-${sessionId}`);
-    
+
     if (detail.style.display === 'none') {
         detail.style.display = 'block';
         card.classList.add('expanded');
@@ -217,51 +709,149 @@ function toggleSessionDetail(sessionId) {
 }
 
 function switchDetailTab(sessionId, tabName) {
-    // Remove active class from all tabs in this session
     const sessionDetail = document.getElementById(`detail-${sessionId}`);
     const tabButtons = sessionDetail.querySelectorAll('.detail-tab-btn');
     const tabPanels = sessionDetail.querySelectorAll('.detail-tab-panel');
-    
+
     tabButtons.forEach(btn => btn.classList.remove('active'));
     tabPanels.forEach(panel => panel.classList.remove('active'));
-    
-    // Add active class to selected tab
+
     const selectedTab = sessionDetail.querySelector(`[onclick="switchDetailTab('${sessionId}', '${tabName}')"]`);
     const selectedPanel = document.getElementById(`${tabName}-${sessionId}`);
-    
+
     if (selectedTab) selectedTab.classList.add('active');
     if (selectedPanel) selectedPanel.classList.add('active');
+}
+
+// Feedback functions
+function rateFeedback(recId, rating) {
+    const widget = document.querySelector(`.rec-feedback[data-rec-id="${recId}"]`);
+    if (!widget) return;
+
+    // Store rating
+    widget.dataset.rating = rating;
+
+    // Update star display
+    const stars = widget.querySelectorAll('.star');
+    stars.forEach((star, idx) => {
+        star.textContent = idx < rating ? '★' : '☆';
+        star.classList.toggle('active', idx < rating);
+    });
+
+    const reasonBox = document.getElementById(`reason-${recId}`);
+
+    if (rating < 5) {
+        // Show text box for lower ratings
+        reasonBox.style.display = 'flex';
+    } else {
+        // Submit immediately for 5 stars
+        reasonBox.style.display = 'none';
+        submitFeedback(recId);
+    }
+}
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(cookie => {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        });
+    }
+    return cookieValue;
+}
+
+function submitFeedback(recId) {
+    const widget = document.querySelector(`.rec-feedback[data-rec-id="${recId}"]`);
+    if (!widget) return;
+
+    const rating = parseInt(widget.dataset.rating);
+    const sessionId = widget.dataset.sessionId;
+    const reasonText = document.getElementById(`reason-text-${recId}`);
+    const reason = reasonText ? reasonText.value.trim() : '';
+
+    if (!rating) return;
+
+    fetch('/api/recommendation-feedback/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')  // ← add this
+        },
+        body: JSON.stringify({
+            recommendation_id: recId,
+            session_id: sessionId,
+            helpfulness_rating: rating,
+            feedback_type: reason
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            const reasonBox = document.getElementById(`reason-${recId}`);
+            const thanks = document.getElementById(`thanks-${recId}`);
+            if (reasonBox) reasonBox.style.display = 'none';
+            if (thanks) thanks.style.display = 'block';
+            widget.querySelectorAll('.star').forEach(star => {
+                star.style.pointerEvents = 'none';
+            });
+        }
+    })
+    .catch(err => console.error('Feedback error:', err));
 }
 
 // Initialize page functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Set progress bar widths from data attributes
-    const progressBars = document.querySelectorAll('.progress-bar');
-    progressBars.forEach(bar => {
+    document.querySelectorAll('.progress-bar').forEach(bar => {
         const width = bar.getAttribute('data-width');
-        if (width) {
-            bar.style.width = width + '%';
-        }
+        if (width) bar.style.width = width + '%';
     });
-    
+
     // Set current filter value on page load
     const urlParams = new URLSearchParams(window.location.search);
     const currentFilter = urlParams.get('filter') || '5';
     const filterSelect = document.getElementById('sessionFilter');
-    if (filterSelect) {
-        filterSelect.value = currentFilter;
-    }
+    if (filterSelect) filterSelect.value = currentFilter;
+
+    // Render markdown in recommendation messages
+    document.querySelectorAll('.rec-message[data-raw]').forEach(el => {
+        let text = el.getAttribute('data-raw');
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/(\d+)\.\s+/g, '<br><br><strong>$1.</strong> ');
+        text = text.replace(/\*\s+/g, '<br>• ');
+        text = text.replace(/^(<br>)+/, '');
+        el.innerHTML = text;
+    });
+
+    // Restore existing feedback ratings on page load  
+    document.querySelectorAll('.rec-feedback').forEach(widget => {
+        const submitted = widget.dataset.submitted === 'true';
+        const rating = parseInt(widget.dataset.rating);
+        const recId = widget.dataset.recId;
+
+        if (submitted && rating) {
+            widget.querySelectorAll('.star').forEach((star, idx) => {
+                star.textContent = idx < rating ? '★' : '☆';
+                star.classList.toggle('active', idx < rating);
+                star.style.pointerEvents = 'none';
+                star.style.cursor = 'default';
+            });
+
+            const label = widget.querySelector('.feedback-label');
+            if (label) label.textContent = 'Your rating';
+
+            const thanks = document.getElementById(`thanks-${recId}`);
+            if (thanks) thanks.style.display = 'block';
+        }
+    });                                                 
 });
 
-// Filter functionality - reload page with filter parameter
+// Filter functionality
 document.getElementById('sessionFilter')?.addEventListener('change', function(e) {
-    const filterValue = e.target.value;
-    
-    // Get current URL and update/add filter parameter
     const url = new URL(window.location);
-    url.searchParams.set('filter', filterValue);
-    
-    // Reload page with new filter
+    url.searchParams.set('filter', e.target.value);
     window.location.href = url.toString();
 });
 </script>

@@ -1,5 +1,5 @@
-﻿<!-- Focus Track Setup Component -->
 <div class="card focus-track-setup">
+    <!-- Focus Track Setup Component -->
     <div class="card-header">
         <h2 class="card-title" id="cardTitle">Start Focus Track</h2>
         <p class="card-subtitle" id="cardSubtitle"></p>
@@ -17,6 +17,7 @@
                     class="focus-text-input"
                     placeholder="e.g. Deep Work, Study Session, Creative Flow"
                     maxlength="80"
+                    required
                 >
 
                 <div class="duration-section">
@@ -95,12 +96,33 @@
     </div>
 </div>
 
+
 <script>
+    // function getCookie(name) {
+    //     let cookieValue = null;
+    //     if (document.cookie && document.cookie !== '') {
+    //         document.cookie.split(';').forEach(cookie => {
+    //             cookie = cookie.trim();
+    //             if (cookie.startsWith(name + '=')) {
+    //                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+    //             }
+    //         });
+    //     }
+    //     return cookieValue;
+    // }
+    function pscToggleExtra(show) {
+        document.getElementById('psc-extra-section').style.display = show ? 'block' : 'none';
+        document.getElementById('psc-extra-yes').classList.toggle('psc-yn-selected', show);
+        document.getElementById('psc-extra-no').classList.toggle('psc-yn-selected', !show);
+    }
+
     let selectedDuration = 25;
     let timerInterval = null;
     let remainingSeconds = 0;
     let elapsedSeconds = 0;
     let preSessionData = {};
+
+   
 
     // ---- View switching ----
     function showSetup() {
@@ -112,6 +134,13 @@
     }
 
     function showCheckin() {
+        const sessionName = document.getElementById('sessionNameInput').value.trim();
+        console.log("Initial session name:", sessionName);
+        
+        if (!sessionName) {
+            alert("Please enter a session name to continue.");
+            return;
+        }
         document.getElementById('setupView').style.display = 'none';
         document.getElementById('checkinView').style.display = 'block';
         document.getElementById('activeSession').style.display = 'none';
@@ -150,6 +179,20 @@
         console.log("Selected:", selectedDuration);
     }
 
+    // ---- Get current duration from input ----
+    function getCurrentDuration() {
+        const customInput = document.getElementById('customDurationInput');
+        const inputValue = Number(customInput.value);
+        
+        // Validate that input is a valid number between 1 and 360
+        if (Number.isFinite(inputValue) && inputValue >= 1 && inputValue <= 360) {
+            return inputValue;
+        }
+        
+        // Fallback to selectedDuration if input is invalid
+        return selectedDuration;
+    }
+
     document.querySelectorAll('#setupView .duration-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             setSelectedDuration(Number(btn.dataset.duration), false);
@@ -178,7 +221,7 @@
     });
 
     // ---- Slider live update ----
-    ['psc-difficulty', 'psc-energy', 'psc-stress'].forEach(function(id) {
+    ['psc-difficulty', 'psc-energy', 'psc-stress', 'caffeine-slider'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', function() {
@@ -191,15 +234,33 @@
         var groups = ['subject','tasklength','mood','meal','caffeine','wake','activity','noise','lighting','method','location'];
         var data = {};
         groups.forEach(function(g) {
-            var sel = document.querySelector('#checkinView .psc-opt-selected[data-group="' + g + '"]');
-            data[g] = sel ? sel.dataset.val : null;
+            console.log("subjectTask element:", document.querySelector('.psc-opt[data-group="subject"].psc-opt-selected'));
+            console.log("taskDifficulty element:", document.getElementById('psc-difficulty'));
+            console.log("estimatedLength element:", document.querySelector('.psc-opt[data-group="tasklength"].psc-opt-selected'));
+            console.log("assignmentDeadline element:", document.getElementById('psc-deadline'));
+            console.log("sessionGoal element:", document.getElementById('psc-goal'));
+            console.log("energyLevel element:", document.getElementById('psc-energy'));
+            console.log("moodEmoji element:", document.querySelector('.psc-opt[data-group="mood"].psc-opt-selected'));
+            console.log("stressLevel element:", document.getElementById('psc-stress'));
+            console.log("timeSinceMeal element:", document.querySelector('.psc-opt[data-group="meal"].psc-opt-selected'));
+            console.log("caffeineIntake element:", document.getElementById('caffeine-val'));
+            console.log("timeSinceWaking element:", document.querySelector('.psc-opt[data-group="wake"].psc-opt-selected'));
+            console.log("physicalActivity element:", document.querySelector('.psc-opt[data-group="activity"].psc-opt-selected'));
+            console.log("currentNoise element:", document.querySelector('.psc-opt[data-group="noise"].psc-opt-selected'));
+            console.log("studyMethod element:", document.querySelector('.psc-opt[data-group="method"].psc-opt-selected'));
+            console.log("currentLocation element:", document.querySelector('.psc-opt[data-group="location"].psc-opt-selected'));
+            var sel = document.querySelector('.psc-opt-selected[data-group="' + g + '"]');
+            data[g] = sel ? sel.dataset.val : '';
+            console.log("Group:", g, "Selected:", sel ? sel.dataset.val : 'None');
         });
         data.difficulty = document.getElementById('psc-difficulty').value;
         data.energy = document.getElementById('psc-energy').value;
         data.stress = document.getElementById('psc-stress').value;
-        data.deadline = document.getElementById('psc-deadline').value;
+        data.assignment_deadline = document.getElementById('psc-deadline').value;
         data.goal = document.getElementById('psc-goal').value;
         data.session_name = document.getElementById('sessionNameInput').value;
+        data.caffeine = document.getElementById('caffeine-slider').value;
+        console.log("Collected pre-session data:", JSON.stringify(data, null, 2));
         return data;
     }
 
@@ -208,56 +269,23 @@
     const activeSession = document.getElementById('activeSession');
     const setupSection = document.querySelector('.duration-section');
     
-    // ---- Pre-session data collection ----
-    function collectPreSessionData() {
-        const sessionName = document.getElementById('sessionNameInput').value;
-        const subjectTask = document.querySelector('.psc-opt[data-group="subject"].psc-opt-selected')?.dataset.val;
-        const taskDifficulty = document.getElementById('psc-difficulty')?.value;
-        const estimatedLength = document.querySelector('.psc-opt[data-group="tasklength"].psc-opt-selected')?.dataset.val;
-        const assignmentDeadline = document.getElementById('psc-deadline')?.value;
-        const sessionGoal = document.getElementById('psc-goal')?.value;
-        const energyLevel = document.getElementById('psc-energy')?.value;
-        const moodEmoji = document.querySelector('.psc-opt[data-group="mood"].psc-opt-selected')?.dataset.val;
-        const stressLevel = document.getElementById('psc-stress')?.value;
-        const timeSinceMeal = document.querySelector('.psc-opt[data-group="meal"].psc-opt-selected')?.dataset.val;
-        const caffeineIntake = document.querySelector('.psc-opt[data-group="caffeine"].psc-opt-selected')?.dataset.val;
-        const timeSinceWaking = document.querySelector('.psc-opt[data-group="wake"].psc-opt-selected')?.dataset.val;
-        const physicalActivity = document.querySelector('.psc-opt[data-group="activity"].psc-opt-selected')?.dataset.val;
-        const currentNoise = document.querySelector('.psc-opt[data-group="noise"].psc-opt-selected')?.dataset.val;
-        const studyMethod = document.querySelector('.psc-opt[data-group="method"].psc-opt-selected')?.dataset.val;
-        const currentLocation = document.querySelector('.psc-opt[data-group="location"].psc-opt-selected')?.dataset.val;
-
-        return {
-            session_name: sessionName,
-            subject_task: subjectTask,
-            task_difficulty: parseInt(taskDifficulty) || 5,
-            estimated_length: estimatedLength,
-            assignment_deadline: assignmentDeadline || null,
-            session_goal: sessionGoal,
-            energy_level: parseInt(energyLevel) || 5,
-            mood_emoji: moodEmoji,
-            stress_level: parseInt(stressLevel) || 5,
-            time_since_meal: timeSinceMeal,
-            caffeine_intake: caffeineIntake,
-            time_since_waking: timeSinceWaking,
-            physical_activity: physicalActivity,
-            current_noise: currentNoise,
-            lighting_conditions: '',
-            study_method: studyMethod,
-            current_location: currentLocation
-        };
-    }
-
     async function confirmPreSessionAndStart() {
         console.log("BOTTOM BUTTON: confirmPreSessionAndStart fired");
         preSessionData = collectPreSessionData();
-        console.log("Collected data:", preSessionData);
+        console.log("Collected data:", JSON.stringify(preSessionData, null, 2));
+        
+        // Get current duration from input (prioritizes manual input)
+        const currentDuration = getCurrentDuration();
+        console.log("Using duration:", currentDuration, "minutes");
         
         // Send pre-session data to backend
         try {
             const res = await fetch('/api/presession-checkin/', {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                 },
                 body: JSON.stringify(preSessionData)
             });
             const data = await res.json();
@@ -266,9 +294,16 @@
                 preSessionData.session_id = data.session_id;
                 // Store session data to trigger timer on dashboard
                 sessionStorage.setItem('session_name', preSessionData.session_name);
-                sessionStorage.setItem('session_duration', selectedDuration);
+                sessionStorage.setItem('session_duration', currentDuration);
                 sessionStorage.setItem('start_timer', 'true');
                 sessionStorage.setItem('session_id', data.session_id);  // Store session_id for EEG session linking
+                
+                // Reset Assignment Deadline to normal (empty) after saving
+                const deadlineSelect = document.getElementById('psc-deadline');
+                if (deadlineSelect) {
+                    deadlineSelect.value = '';  // Reset to normal default
+                }
+                
                 // Redirect to dashboard to use dashboard's timer and brainwave logic
                 window.location.href = '/dashboard/';
             } else {
@@ -331,19 +366,31 @@
     async function startEEGsession() {
         console.log("starting EEG session");
         showActiveSession();
-        startTimer(Number(selectedDuration));
+        
+        // Get current duration from input (prioritizes manual input)
+        const currentDuration = getCurrentDuration();
+        startTimer(currentDuration);
 
         try {
+            // Get session_id from sessionStorage (stored during pre-session check-in)
+            const sessionId = sessionStorage.getItem('session_id');
+            console.log("Starting EEG session with session_id:", sessionId);
+            
             var res = await fetch('/start_realtime_eeg/', {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ duration_minutes: Number(selectedDuration) })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                 },
+                body: JSON.stringify({ 
+                    duration_minutes: currentDuration,
+                    session_id: sessionId  // Send session_id to link with pre-session data
+                })
             });
 
             var data = await res.json();
             console.log(data);
-            document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
-
+            document.getElementById('sessionOutput').innerHTML = JSON.stringify(data, null, 2);
             if (res.ok) {
                 console.log("EEG session started successfully");
                 // Redirect to dashboard where brainwave box and recommendations exist
@@ -355,60 +402,78 @@
         }
     }
 
-    function startHistogramPolling() {
-        // Reset data
-        focusHistogramData = [];
-        focusHistogramLabels = [];
-        if (focusHistogramChart) {
-            focusHistogramChart.data.labels = [];
-            focusHistogramChart.data.datasets[0].data = [];
-            focusHistogramChart.update();
-        }
-        if (histogramPolling) clearInterval(histogramPolling);
-        histogramPolling = setInterval(fetchHistogramData, 1000);
-    }
+    
 
-    async function fetchHistogramData() {
-        // Example: fetch from a new endpoint that returns real-time focus data array
-        try {
-            const res = await fetch('/realtime_eeg_status/', { method: 'GET' });
-            const status = await res.json();
-            if (status.ok && status.result && status.result.data_points) {
-                // data_points: [{timestamp, focus_score, ...}]
-                focusHistogramLabels = status.result.data_points.map(p => p.timestamp);
-                focusHistogramData = status.result.data_points.map(p => p.focus_score);
-                if (focusHistogramChart) {
-                    focusHistogramChart.data.labels = focusHistogramLabels;
-                    focusHistogramChart.data.datasets[0].data = focusHistogramData;
-                    focusHistogramChart.update();
-                }
-                // Show info below
-                if (focusHistogramInfo && status.result.final_summary) {
-                    const s = status.result.final_summary;
-                    focusHistogramInfo.innerHTML = `Avg: ${(s.average_focus_score*100).toFixed(1)}% | Peak: ${(s.peak_focus_score*100).toFixed(1)}% | Duration: ${Math.floor(s.total_duration_seconds/60)}m ${(s.total_duration_seconds%60)}s`;
-                }
-            }
-        } catch (e) {
-            // Ignore errors during polling
-        }
-    }
+    // function startHistogramPolling() {
+    //     // Reset data
+    //     focusHistogramData = [];
+    //     focusHistogramLabels = [];
+    //     if (focusHistogramChart) {
+    //         focusHistogramChart.data.labels = [];
+    //         focusHistogramChart.data.datasets[0].data = [];
+    //         focusHistogramChart.update();
+    //     }
+    //     if (histogramPolling) clearInterval(histogramPolling);
+    //     histogramPolling = setInterval(fetchHistogramData, 1000);
+    // }
+
+    // async function fetchHistogramData() {
+    //     // Example: fetch from a new endpoint that returns real-time focus data array
+    //     try {
+    //         const res = await fetch('/realtime_eeg_status/', { method: 'GET' });
+    //         const status = await res.json();
+    //         if (status.ok && status.result && status.result.data_points) {
+    //             // data_points: [{timestamp, focus_score, ...}]
+    //             focusHistogramLabels = status.result.data_points.map(p => p.timestamp);
+    //             focusHistogramData = status.result.data_points.map(p => p.focus_score);
+    //             if (focusHistogramChart) {
+    //                 focusHistogramChart.data.labels = focusHistogramLabels;
+    //                 focusHistogramChart.data.datasets[0].data = focusHistogramData;
+    //                 focusHistogramChart.update();
+    //             }
+    //             // Show info below
+    //             if (focusHistogramInfo && status.result.final_summary) {
+    //                 const s = status.result.final_summary;
+    //                 focusHistogramInfo.innerHTML = `Avg: ${(s.average_focus_score*100).toFixed(1)}% | Peak: ${(s.peak_focus_score*100).toFixed(1)}% | Duration: ${Math.floor(s.total_duration_seconds/60)}m ${(s.total_duration_seconds%60)}s`;
+    //             }
+    //         }
+    //     } catch (e) {
+    //         // Ignore errors during polling
+    //     }
+    // }
+
+    let stopRetryCount = 0;
+    const MAX_STOP_RETRIES = 3;
 
     async function stopEEGsession() {
         console.log("Ending EEG session");
+        
+        // Prevent infinite retries
+        if (stopRetryCount >= MAX_STOP_RETRIES) {
+            console.log("Max stop retries reached, stopping attempts");
+            const sessionOutput = document.getElementById('sessionOutput');
+            window.location.href = '/dashboard/';
+            return;
+        }
 
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
-        if (histogramPolling) {
-            clearInterval(histogramPolling);
-            histogramPolling = null;
-        }
+        // if (histogramPolling) {
+        //     clearInterval(histogramPolling);
+        //     histogramPolling = null;
+        // }
 
+        stopRetryCount++;
+        
         try {
             var res = await fetch('/stop_realtime_eeg/', {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                 }
             });
 
             var data = await res.json();
@@ -416,14 +481,34 @@
             document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
 
             
-            if (data.status === 'completed' || data.status === "SUCCESS") {
-                console.log("will recommend")
+            if (data.status === 'completed' || data.status === "SUCCESS" || data.ok === true) {
+                console.log("Session completed, redirecting to dashboard");
+                
+                // Stop any remaining polling
+                if (typeof stopLiveStatePolling === 'function') {
+                    stopLiveStatePolling();
+                }
+                
+                // Set session as inactive before redirecting
+                sessionStorage.setItem('realtime_session_active', 'false');
+                
+                // Redirect directly to dashboard
                 window.location.href = '/dashboard/';
+                
             } else if (data.status === 'processing' ||
                 data.status === 'PENDING' ||
                 data.status === 'running' ||
                 data.status === 'STARTED') {
                 setTimeout(stopEEGsession, 3000);
+            } else {
+                // Handle other statuses (errors, etc) - don't retry
+                console.log("Stop request completed with status:", data.status);
+                
+                // Set session as inactive before redirecting
+                sessionStorage.setItem('realtime_session_active', 'false');
+                
+                // Redirect directly to dashboard
+                window.location.href = '/dashboard/';
             } 
         } catch (err) {
             console.error(err);

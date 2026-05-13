@@ -65,17 +65,62 @@ class FocusDataService:
             else:
                 concentrated_pct = neutral_pct = relaxed_pct = 0
             
-            # Create session name from date/time if no task name
-            session_name = f"Focus Session"
-            if session.task_id:
-                session_name = f"Task {session.task_id[:8]}"
+            # Try to get session_name from PreSessionCheckIn first
+            try:
+                from secondBrain_App.models import PreSessionCheckIn
+                presession = PreSessionCheckIn.objects.filter(
+                    user=user_profile,
+                    session_id=session.session_id
+                ).first()
+                # Use session_name if available, otherwise fall back to task_id
+                if presession and presession.session_name:
+                    session_name = presession.session_name
+                elif presession.subject_task:
+                    session_name = f"New Task {presession.subject_task}"
+                else:
+                    session_name = session.session_id.replace('_', ' ').title()
+                session_goal = presession.session_goal if presession and presession.session_goal else ''
+                subject = presession.subject_task if presession and presession.subject_task else ''
+                difficulty = presession.task_difficulty if presession and presession.task_difficulty else ''
+                energy_level = presession.energy_level if presession and presession.energy_level else ''
+                stress_level = presession.stress_level if presession and presession.stress_level else ''
+                caffeine_intake = presession.caffeine_intake if presession and presession.caffeine_intake else ''
+                time_since_meal = presession.time_since_meal if presession and presession.time_since_meal else ''
+                physical_activity = presession.physical_activity if presession and presession.physical_activity else ''
+                current_location = presession.current_location if presession and presession.current_location else ''
+                estimated_length = presession.estimated_length if presession and presession.estimated_length else ''
+                assignment_deadline = presession.assignment_deadline if presession and presession.assignment_deadline else ''
+                mood_emoji = presession.mood_emoji if presession and presession.mood_emoji else ''
+                time_since_waking = presession.time_since_waking if presession and presession.time_since_waking else ''
+                current_noise = presession.current_noise if presession and presession.current_noise else ''
+                lighting_conditions = presession.lighting_conditions if presession and presession.lighting_conditions else ''
+                study_method = presession.study_method if presession and presession.study_method else ''
+                
+            except Exception:
+                # Fallback if there's an error
+                if session.task_id:
+                    session_name = f"Task {session.task_id[:8]}"
+                else:
+                    session_name = session.session_id.replace('_', ' ').title()
             
             # Get recommendations for this session
-            from secondBrain_App.models import Recommendation
+            from secondBrain_App.models import Recommendation, UserFeedback
             recommendations = Recommendation.objects.filter(
                 user__email=self.user_email,
                 session=session
             ).order_by('-created_at')
+
+            rec_list = []
+            for rec in recommendations:
+                existing_feedback = UserFeedback.objects.filter(
+                    recommendation=rec
+                ).first()
+                rec_list.append({
+                    'recommendation_id': rec.recommendation_id,
+                    'message': rec.message,
+                    'helpfulness_rating': existing_feedback.helpfulness_rating if existing_feedback else None,
+                    'feedback_given': existing_feedback is not None,
+                })
             
             formatted_sessions.append({
                 'id': session.id,  # Database ID for template compatibility
@@ -95,7 +140,23 @@ class FocusDataService:
                 'peak_focus': session.peak_focus_score,
                 'focus_streak': session.longest_focus_streak,
                 'created_at': session.created_at,
-                'recommendations': recommendations
+                'recommendations': rec_list,
+                'session_goal': session_goal,
+                'subject': subject,
+                'difficulty': difficulty,
+                'energy_level': energy_level,
+                'stress_level': stress_level,
+                'caffeine_intake': caffeine_intake,
+                'time_since_meal': time_since_meal,
+                'physical_activity': physical_activity,
+                'current_location': current_location,
+                'estimated_length': estimated_length,
+                'assignment_deadline': assignment_deadline,
+                'mood_emoji': mood_emoji,
+                'time_since_waking': time_since_waking,
+                'current_noise': current_noise,
+                'lighting_conditions': lighting_conditions,
+                'study_method': study_method,
             })
         
         return formatted_sessions

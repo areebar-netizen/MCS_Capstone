@@ -49,3 +49,4 @@ preprocessing_artifacts/
 .env
 
 
+.djcache

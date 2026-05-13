@@ -1243,8 +1243,8 @@ def onboarding_view(request):
             'questions': [
                 {'id': 'name', 'type': 'text', 'label': "What's your name?", 'placeholder': 'Enter your name'},
                 {'id': 'age', 'type': 'number', 'label': 'How old are you?', 'placeholder': 'Enter your age', 'min': 13, 'max': 99},
-                {'id': 'academic_level', 'type': 'radio', 'label': 'What\'s your academic level?', 
-                 'options': ['High School', 'Undergraduate', 'Graduate/Masters', 'PhD/Doctoral', 'Professional/Continuing Education', 'Other']}
+                {'id': 'academic_level', 'type': 'radio', 'label': 'What\'s your academic/professional level?', 
+                 'options': ['High School', 'Undergraduate', 'Graduate/Masters', 'PhD/Doctoral', 'Professional', 'Other']}
             ]
         },
         2: {
@@ -1277,9 +1277,9 @@ def onboarding_view(request):
                 {'id': 'learning_style', 'type': 'radio', 'label': 'How do you learn best?',
                  'options': ['Visual (diagrams, charts, videos, reading)', 'Auditory (listening to lectures, discussions, audio)', 
                           'Kinesthetic (hands-on practice, movement, doing)', 'Reading/Writing (taking notes, writing summaries)', 'Not sure']},
-                {'id': 'study_subjects', 'type': 'checkbox', 'label': 'What subjects/topics do you typically study?',
-                 'options': ['Math/Statistics/Calculus', 'Sciences (Biology, Chemistry, Physics)', 'Reading/Literature/Humanities', 
-                          'Writing/Essays/Creative Work', 'Languages', 'Programming/Computer Science', 'Memorization-heavy subjects', 'Other']}
+                {'id': 'study_subjects', 'type': 'checkbox', 'label': 'What subjects/topics do you typically work on?',
+                 'options': ['Math/Statistics/Calculus', 'Sciences (Biology, Chemistry, Physics)', 'Reading/Literature/Humanities', 'Data Entry', 
+                          'Writing/Essays/Reports/Creative Work', 'Languages', 'Programming/Computer Science', 'Memorization-heavy subjects', 'Other']}
             ]
         },
         5: {
@@ -1530,16 +1530,24 @@ def start_realtime_eeg_view(request):
     try:
         # Get duration and session_id from request
         data = json.loads(request.body) if request.body else {}
-        duration = int(data.get('duration', 1))
+        duration = int(data.get('duration_minutes', 1))
         session_id = data.get('session_id')  # Get session_id from pre-session check-in for linking
         
         # Trigger real-time Celery task with session_id
+        print(f"[DEBUG] Starting EEG session with session_id: {session_id}")
+        print(f"[DEBUG] Duration: {duration} minutes")
+        print(f"[DEBUG] User: {user_email}")
+        
         task = run_live_inference_streaming.delay(user_email, duration, session_id)
         
-        # Store task ID in session
+        # Store task ID and session start time
         request.session['current_eeg_task_id'] = task.id
         request.session['realtime_session_active'] = True
+        request.session['session_start_time'] = timezone.now().isoformat()
+        request.session['latest_session_id'] = session_id  # Store for stop functionality
         request.session.modified = True
+        
+        print(f"[DEBUG] Session started. Task ID: {task.id}, Session ID: {session_id}")
 
         
         return JsonResponse({
@@ -1565,19 +1573,81 @@ def stop_realtime_eeg_view(request):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
     try:
+        # Clear live EEG cache to prevent stale data
+        from django.core.cache import cache
+        live_cache_key = f"live_eeg_stream_{user_email}"
+        cache.delete(live_cache_key)
+        
+        # Set stop signal for the running task
+        task_id = request.session.get('current_eeg_task_id')
+        if task_id:
+            stop_signal_key = f"stop_eeg_task_{task_id}"
+            cache.set(stop_signal_key, True, timeout=60)  # Signal for 60 seconds
+            print(f"[STOP] Set stop signal for task {task_id}")
+        
         request.session['realtime_session_active'] = False
         request.session.modified = True
 
         task_id = request.session.get('current_eeg_task_id')
+        session_id = request.session.get('latest_session_id')
+        
+        print(f"[DEBUG STOP] Stop requested. Task ID: {task_id}, Session ID: {session_id}")
+        print(f"[DEBUG STOP] User: {user_email}")
+        
         if not task_id:
             return JsonResponse({'error': 'No active EEG task found'}, status=400)
 
         task_result = get_task_status(task_id)
 
-        if task_result['status'] == 'SUCCESS':
-            result       = task_result['result']
-            session_id   = result.get('session_id')
-            final_summary = result.get('final_summary', {})
+        # Handle both SUCCESS and incomplete sessions
+        if task_result['status'] == 'SUCCESS' or task_result['status'] in ['PENDING', 'STARTED', 'RUNNING']:
+            # For incomplete sessions, create a basic summary
+            if task_result['status'] != 'SUCCESS':
+                print(f"Force completing incomplete session with status: {task_result['status']}")
+                # Try to get any cached data for the summary
+                from django.core.cache import cache
+                cached_data = cache.get(f"live_eeg_stream_{user_email}")
+                
+                # Calculate actual elapsed time
+                session_start_time = request.session.get('session_start_time')
+                if session_start_time:
+                    # Parse the stored start time
+                    if isinstance(session_start_time, str):
+                        from datetime import datetime
+                        session_start_time = datetime.fromisoformat(session_start_time.replace('Z', '+00:00'))
+                    elapsed_seconds = int((timezone.now() - session_start_time).total_seconds())
+                else:
+                    elapsed_seconds = 300  # Default to 5 minutes if no start time
+                
+                # Ensure minimum duration of 1 minute
+                elapsed_seconds = max(elapsed_seconds, 60)
+                
+                # Create minimal session data for incomplete sessions
+                session_id = request.session.get('latest_session_id', f"incomplete_{timezone.now().strftime('%Y%m%d_%H%M%S')}")
+                final_summary = {
+                    'average_focus_score': cached_data.get('focus_score', 5.0) if cached_data else 5.0,
+                    'peak_focus_score': cached_data.get('focus_score', 5.0) if cached_data else 5.0,
+                    'total_duration_seconds': elapsed_seconds,
+                    'concentrating_seconds': 0,
+                    'session_completed': False,
+                    'completion_reason': 'manual_stop'
+                }
+                
+                # Note: Recommendation generation is handled by tasks_realtime.py when the loop breaks
+                # The live_predict task will continue to save_session_summary after stopping EEG prediction
+                
+                # Note: Don't terminate the task - let it complete recommendation generation naturally
+                # The stop signal will break the EEG prediction loop, but task will continue to save_session_summary
+                try:
+                    from secondBrain.celery import app
+                    app.control.revoke(task_id, terminate=False)  # Don't terminate, just signal
+                    print(f"[STOP] Sent revoke signal (no terminate) for task {task_id}")
+                except Exception as revoke_error:
+                    print(f"Could not revoke task {task_id}: {revoke_error}")
+            else:
+                result = task_result['result']
+                session_id = result.get('session_id')
+                final_summary = result.get('final_summary', {})
 
             # ── READ recommendation from cache (generated in tasks_realtime.py) ──
             from django.core.cache import cache
@@ -1590,14 +1660,23 @@ def stop_realtime_eeg_view(request):
             request.session['latest_session_id']     = session_id
             request.session.modified = True
 
+            # Calculate duration for response
+            if task_result['status'] == 'SUCCESS':
+                duration_minutes = result.get('duration_minutes', 1)
+                csv_file_path = result.get('csv_file_path')
+            else:
+                # For incomplete sessions, calculate from elapsed seconds
+                duration_minutes = max(1, round(final_summary['total_duration_seconds'] / 60, 1))
+                csv_file_path = None
+            
             return JsonResponse({
                 'ok'             : True,
                 'status'         : 'completed',
                 'session_id'     : session_id,
                 'final_summary'  : final_summary,
                 'recommendation' : recommendation,
-                'csv_file_path'  : result.get('csv_file_path'),
-                'duration_minutes': result.get('duration_minutes')
+                'csv_file_path'  : csv_file_path,
+                'duration_minutes': duration_minutes
             })
 
         elif task_result['status'] == 'FAILURE':
@@ -1691,6 +1770,11 @@ def get_latest_eeg_state_view(request):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
     try:
+        # Check if realtime session is active first
+        is_active = request.session.get('realtime_session_active', False)
+        if not is_active:
+            return JsonResponse({'ok': False, 'status': 'idle', 'message': 'Session not active'})
+        
         from django.core.cache import cache
         cache_key = f"live_eeg_stream_{user_email}"
         data = cache.get(cache_key)
@@ -1770,7 +1854,7 @@ def start_live_eeg_view(request):
     try:
         # Get duration from request (default to 1 minute)
         data = json.loads(request.body) if request.body else {}
-        duration = int(data.get('duration', 1))
+        duration = int(data.get('duration_minutes', 1))
         
         # Trigger Celery task
         task = run_live_inference.delay(user_email, duration)
@@ -2111,12 +2195,18 @@ def calculate_aggregate_stats(sessions):
 @csrf_exempt
 def presession_checkin_view(request):
     """Handle pre-session check-in questionnaire submission"""
+    print(f"[DEBUG] Presession checkin API called - Method: {request.method}")
+    
     user_email = request.session.get('user_email')
+    print(f"[DEBUG] User email from session: {user_email}")
+    
     if not user_email:
+        print(f"[DEBUG] Unauthorized - no user email in session")
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
     if request.method == 'POST':
         try:
+            print(f"[DEBUG] Processing POST request for presession checkin")
             from .models import UserProfile, PreSessionCheckIn
             from datetime import datetime
             from django.utils import timezone
@@ -2130,8 +2220,8 @@ def presession_checkin_view(request):
             session_id = data.get('session_id') or f"{user_email}_{timezone.now().strftime('%Y%m%d_%H%M%S')}"
             
             # Parse deadline if provided
+            deadline_val = data.get('assignment_deadline', '').strip()
             assignment_deadline = None
-            deadline_val = data.get('assignment_deadline')
             if deadline_val and deadline_val != '':
                 from django.utils import timezone
                 now = timezone.now()
@@ -2142,8 +2232,20 @@ def presession_checkin_view(request):
                     assignment_deadline = assignment_deadline.replace(hour=23, minute=59, second=59)
                 elif deadline_val == 'this_week':
                     assignment_deadline = now + timezone.timedelta(days=7)
+                    assignment_deadline = assignment_deadline.replace(hour=23, minute=59, second=59)
                 elif deadline_val == 'next_week':
                     assignment_deadline = now + timezone.timedelta(days=14)
+                    assignment_deadline = assignment_deadline.replace(hour=23, minute=59, second=59)
+            
+            # Debug logging to identify the issue
+            print(f"DEBUG: Assignment deadline processing:")
+            print(f"  deadline_val from frontend: {deadline_val}")
+            print(f"  processed assignment_deadline: {assignment_deadline}")
+            print(f"  deadline_val type: {type(deadline_val)}")
+            print(f"  deadline_val is empty: {deadline_val == ''}")
+            print(f"  deadline_val is truthy: {bool(deadline_val)}")
+            
+            # Map time since meal to model choice
             
             # Map mood emoji to model choice
             mood_mapping = {
@@ -2215,27 +2317,33 @@ def presession_checkin_view(request):
             physical_activity = activity_mapping.get(data.get('activity'), 'None')
             
             # Create PreSessionCheckIn record
+            print(f"[DEBUG] Creating PreSessionCheckIn with session_id: {session_id}")
+            print(f"[DEBUG] User: {user_profile.email}")
+            print(f"[DEBUG] Data received: {data}")
+            
             checkin = PreSessionCheckIn.objects.create(
-                user=user_profile,
-                session_id=session_id,
-                session_name=data.get('session_name', ''),
-                subject_task=subject_task,
-                task_difficulty=int(data.get('difficulty', 5)),
-                estimated_length=estimated_length,
-                assignment_deadline=assignment_deadline,
-                session_goal=data.get('goal', ''),
-                energy_level=int(data.get('energy', 5)),
-                mood_emoji=mood_emoji,
-                stress_level=int(data.get('stress', 5)),
-                time_since_meal=time_since_meal,
-                caffeine_intake=caffeine_intake,
-                time_since_waking=time_since_waking,
-                physical_activity=physical_activity,
-                current_noise=data.get('noise', ''),
-                lighting_conditions=data.get('lighting', ''),
-                study_method=data.get('method', ''),
-                current_location=data.get('location', '')
-            )
+            user=user_profile,
+            session_id=session_id,
+            session_name=data.get('session_name', ''),
+            subject_task=subject_task,
+            task_difficulty=int(data.get('difficulty', 5)),
+            estimated_length=estimated_length,
+            assignment_deadline=assignment_deadline,
+            session_goal=data.get('goal', ''),
+            energy_level=int(data.get('energy', 5)),
+            mood_emoji=mood_emoji,
+            stress_level=int(data.get('stress', 5)),
+            time_since_meal=time_since_meal,
+            caffeine_intake=caffeine_intake,
+            time_since_waking=time_since_waking,
+            physical_activity=physical_activity,
+            current_noise=data.get('noise') or '',        # ← empty string fallback
+            lighting_conditions=data.get('lighting') or '',  # ← empty string fallback
+            study_method=data.get('method') or '',        # ← empty string fallback
+            current_location=data.get('location') or ''  # ← empty string fallback
+        )
+            
+            print(f"[DEBUG] PreSessionCheckIn created successfully with ID: {checkin.check_in_id}")
             
             return JsonResponse({
                 'ok': True,
@@ -2245,7 +2353,80 @@ def presession_checkin_view(request):
             })
             
         except Exception as e:
-            pass
+            import traceback
+            print(f"[ERROR] Failed to create PreSessionCheckIn: {e}")
+            print(f"[ERROR] Traceback: {traceback.format_exc()}")
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def recommendation_feedback_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        from .models import UserProfile, UserFeedback, Recommendation
+        data = json.loads(request.body)
+        
+        user_profile = UserProfile.objects.get(email=user_email)
+        recommendation = Recommendation.objects.get(
+            recommendation_id=data['recommendation_id']
+        )
+        
+        UserFeedback.objects.create(
+            user=user_profile,
+            session_id=data.get('session_id', ''),
+            recommendation=recommendation,
+            helpfulness_rating=data.get('helpfulness_rating'),
+            feedback_type=data.get('feedback_type', ''),
+            sentiment='positive' if data.get('helpfulness_rating', 0) >= 4 else 'negative'
+        )
+        
+        return JsonResponse({'ok': True})
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def get_last_checkin_view(request):
+    if not request.session.get('user_email'):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        from .models import PreSessionCheckIn, UserProfile
+        user_profile = UserProfile.objects.get(email=request.session['user_email'])
+        last = PreSessionCheckIn.objects.filter(
+            user=user_profile
+        ).order_by('-created_at').first()
+        
+        if not last:
+            return JsonResponse({'ok': False, 'message': 'No previous session found'})
+        
+        return JsonResponse({
+            'ok': True,
+            'data': {
+                'subject': last.subject_task,
+                'difficulty': last.task_difficulty,
+                'tasklength': last.estimated_length,
+                'energy': last.energy_level,
+                'mood': last.mood_emoji,
+                'stress': last.stress_level,
+                'meal': last.time_since_meal,
+                'caffeine': last.caffeine_intake,
+                'wake': last.time_since_waking,
+                'activity': last.physical_activity,
+                'noise': last.current_noise or '',
+                'lighting': last.lighting_conditions or '',
+                'method': last.study_method or '',
+                'location': last.current_location or '',
+                'goal': last.session_goal or '',
+                'session_name': last.session_name or '',
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

@@ -110,7 +110,7 @@ body {
     grid-template-columns: repeat(12, 1fr);
     gap: 1.5rem;
     min-width: 0;
-    align-items: start;
+   
 }
 
 .col-span-12 { grid-column: span 12; }

@@ -109,7 +109,31 @@
             </div>
         </div>
 
-        <!-- Row 3: Focus Track History -->
+        <!-- Row 3: Recommended Study Method -->
+        <div class="grid-row">
+            <div class="col-span-12">
+                <div class="card" style="padding: 0; overflow: hidden; border: 1.5px solid #ffe0d4; border-radius: 14px;">
+                    <div style="background: linear-gradient(135deg, #FF9168 0%, #ff6b35 100%); padding: 14px 20px; display: flex; align-items: center; gap: 10px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <h4 style="margin:0; font-size: 0.95rem; font-weight: 700; color: #fff;">Personalized Recommendation</h4>
+                    </div>
+                    <div style="padding: 20px; background: #fff;">
+                        {% if ai_recommendation %}
+                            <div class="ai-rec-rendered-full" data-raw="{{ ai_recommendation }}"></div>
+                        {% else %}
+                            <p style="color: #aaa; font-size: 0.88rem; text-align: center; margin: 0;">Complete a session to generate your custom study method based on your EEG patterns.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4: Focus Track History -->
         <div class="grid-row">
             <div class="col-span-12">
                 {% include 'focus_track_history.html' %}
@@ -648,6 +672,31 @@ function pollForRecommendation() {
     }, 3000);
 }
 
+// Check if we should poll for recommendations on page load
+function checkForPendingRecommendations() {
+    console.log('[EEG] Checking for pending recommendations...');
+    
+    // Check if there's a session that was just stopped
+    const sessionStartTimer = sessionStorage.getItem('start_timer');
+    const sessionActive = sessionStorage.getItem('realtime_session_active');
+    
+    // If we just came from a stopped session, start polling for recommendations
+    if (sessionStartTimer === 'true' && sessionActive === 'false') {
+        console.log('[EEG] Session was stopped, starting recommendation polling...');
+        pollForRecommendation();
+        
+        // Clear the session markers
+        sessionStorage.removeItem('start_timer');
+        sessionStorage.removeItem('realtime_session_active');
+    }
+}
+
+// Initialize dashboard and check for pending recommendations
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[EEG] Dashboard loaded, checking for pending recommendations...');
+    checkForPendingRecommendations();
+});
+
 // Helper function to refresh the focus track history to show new recommendations
 async function refreshFocusHistory() {
     try {
@@ -1010,4 +1059,101 @@ window.addEventListener('beforeunload', function() {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
     }
 </style>
+
+<style>
+.ai-rec-rendered-full {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+.ai-rec-rendered-full .method-section {
+    padding: 14px;
+    border-radius: 10px;
+    background: #fff8f5;
+    border: 1.5px solid #ffe0d4;
+}
+.ai-rec-rendered-full .method-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #FF9168;
+    margin: 0 0 8px 0;
+}
+.ai-rec-rendered-full .method-section div {
+    font-size: 0.85rem;
+    color: #444;
+    line-height: 1.6;
+}
+.ai-rec-rendered-full strong { color: #FF9168; }
+</style>
+
+<!-- /* @media (max-width: 900px) {
+    .ai-rec-rendered-full .method-section {
+        width: calc(50% - 16px);
+    }
+}
+@media (max-width: 600px) {
+    .ai-rec-rendered-full .method-section {
+        width: 100%;
+        margin-right: 0;
+    }
+}
+</style> */ -->
+
+<script>
+document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el) {
+    let text = el.getAttribute('data-raw');
+
+    // Remove stray ** 
+    text = text.replace(/\*\*\s*$/gm, '').replace(/^\s*\*\*\s*/gm, '');
+
+    const sections = text.split(/(?=\d+\.\s)/);
+    let html = '';
+    sections.forEach(function(section) {
+        section = section.trim();
+        
+        if (!section || section === '**' || section.trim() === '') return;
+        const stripped = section.replace(/#+/g, '').replace(/\*/g, '').trim();
+        if (!stripped || stripped.length < 20) return;
+        const titleMatch = section.match(/^(\d+)\.\s+\*?\*?([^*\n:]+):?\*?\*?/);
+        if (titleMatch) {
+            const title = titleMatch[2].replace(/\*/g, '').trim();
+            let body = section.slice(titleMatch[0].length).trim();
+            body = body.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            body = body.replace(/^\*\s+/gm, '• ');
+            body = body.replace(/\n\*\s+/g, '\n• ');
+            body = body.replace(/\*\*/g, ''); // strip leftover **
+            body = body.replace(/\n/g, '<br>');
+            body = body.replace(/###/g, '').replace(/##/g, '').replace(/#/g, '').trim();
+            body = body.trim();
+            if (!body) return;
+            const emojiMap = {
+            'personalized recommendation': '🧠',
+            'recommended study methods': '📚',
+            'optimal study environment': '☀️',
+            'what to avoid': '🚫'
+        };
+
+        const titleLower = title.toLowerCase();
+        let emoji = '';
+        for (const [key, val] of Object.entries(emojiMap)) {
+            if (titleLower.includes(key)) { emoji = val; break; }
+        }
+
+        html += `<div class="method-section"><div class="method-section-title">${emoji} ${title}</div><div>${body}</div></div>`;
+
+        } else {
+            let body = section
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*\*/g, '')
+                .replace(/\n/g, '<br>')
+                .trim();
+            if (!body) return;
+            html += `<div class="method-section"><div>${body}</div></div>`;
+        }
+    });
+    el.innerHTML = html || text;
+});
+</script>
 {% endblock %}

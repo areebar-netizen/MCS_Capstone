@@ -1,6 +1,15 @@
 <div id="checkinView" style="display:none;">
             <h3 style="margin:0 0 4px;font-size:1rem;color:#222;">Pre-Session Check-In</h3>
-            <p style="margin:0 0 18px;color:#888;font-size:0.82rem;">Help us personalize your session by answering a few quick questions about your current state and goals.</p>
+            <p style="margin:0 0 12px;color:#888;font-size:0.82rem;">Help us personalize your session by answering a few quick questions about your current state and goals.</p>
+
+            <!-- Use previous session checkbox -->
+            <div class="psc-prev-session">
+                <label class="psc-prev-label">
+                    <input type="checkbox" id="psc-use-prev" onchange="togglePrevSession(this.checked)">
+                    <span>Use options from my previous session</span>
+                </label>
+                <span id="psc-prev-status" style="font-size:0.75rem;color:#22c55e;display:none;margin-left:auto;">✓ Previous session loaded</span>
+            </div>
 
             <div class="psc-section">
                 <label class="psc-label"><span style="color:#e05a2b;">&#9632;</span> What subject/task are you studying?</label>
@@ -82,11 +91,11 @@
 
             <div class="psc-section">
                 <label class="psc-label">&#9749; Caffeinated drinks today</label>
-                <div class="psc-grid psc-grid-2">
-                    <button class="psc-opt psc-opt-selected" data-group="caffeine" data-val="None">None</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="1 cup">1 cup</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="2 cups">2 cups</button>
-                    <button class="psc-opt" data-group="caffeine" data-val="3-5 cups">3-5 cups</button>
+                <input type="range" min="0" max="10" value="5" id="caffeine-slider" class="psc-slider" >
+                <div class="psc-slider-val" id="caffeine-val" data-group="caffeine" data-val="5">5/10</div>
+                <div class="psc-slider-labels">
+                    <span>No Caffeine</span>
+                    <span>Very Caffeinated</span>
                 </div>
             </div>
 
@@ -135,6 +144,15 @@
                         <button class="psc-opt" data-group="noise" data-val="Loud/Busy">Loud/Busy</button>
                     </div>
                 </div>
+                <div class="psc-section">
+                    <label class="psc-label">&#128161; Lighting conditions</label>
+                    <div class="psc-grid psc-grid-2">
+                        <button class="psc-opt" data-group="lighting" data-val="Bright">Bright</button>
+                        <button class="psc-opt" data-group="lighting" data-val="Dim">Dim</button>
+                        <button class="psc-opt" data-group="lighting" data-val="Natural">Natural</button>
+                        <button class="psc-opt" data-group="lighting" data-val="Artificial">Artificial</button>
+                    </div>
+                </div>
 
                 <div class="psc-section">
                     <label class="psc-label">&#128218; Intended study method</label>
@@ -158,7 +176,7 @@
             </div>
 
             <div class="psc-footer">
-                <button type=button class="psc-back-btn" onclick="showSetup()">Back</button>
+                <button type="button" class="psc-back-btn" onclick="showSetup()">Back</button>
                 <button type="button" class="psc-start-btn" onclick="confirmPreSessionAndStart()">&#9654; Start Session</button>
             </div>
         </div>
@@ -178,13 +196,17 @@
     text-align: center;
     transition: background 0.12s, border-color 0.12s, color 0.12s;
     color: #333;
+    overflow-wrap: anywhere;
+    
 }
 .psc-opt:hover { border-color: #e05a2b; background: #fff5f1; }
 .psc-opt-selected { background: #e05a2b !important; color: #fff !important; border-color: #e05a2b !important; }
 .psc-slider { width:100%; accent-color:#e05a2b; margin:6px 0 2px; }
 .psc-slider-val { text-align:center; font-size:1.3rem; font-weight:600; color:#222; }
 .psc-slider-labels { display:flex; justify-content:space-between; font-size:0.72rem; color:#aaa; margin-top:2px; }
-.psc-select { width:100%; padding:8px 11px; border:1px solid #ddd; border-radius:8px; font-size:0.88rem; background:#fafafa; }
+.psc-select { width:100%; padding:14px 18px; border:2px solid #e05a2b; border-radius:10px; font-size:0.92rem; background:#fff; color:#333; font-weight:500; cursor:pointer; transition:all 0.3s ease; box-shadow:0 2px 4px rgba(224,90,43,0.1); }
+.psc-select:hover { border-color:#d64420; box-shadow:0 4px 8px rgba(224,90,43,0.2); transform:translateY(-1px); }
+.psc-select:focus { outline:none; border-color:#d64420; box-shadow:0 0 0 3px rgba(224,90,43,0.2); }
 .psc-textarea { width:100%; padding:9px 11px; border:1px solid #ddd; border-radius:8px; font-size:0.88rem; resize:vertical; min-height:65px; background:#fafafa; box-sizing:border-box; }
 .psc-footer { display:flex; gap:10px; margin-top:22px; }
 .psc-back-btn { flex:1; padding:11px; border:2px solid #e05a2b; background:#fff; color:#e05a2b; border-radius:8px; font-size:0.92rem; cursor:pointer; font-weight:500; }
@@ -195,13 +217,160 @@
 .psc-yn-btn { flex:1; padding:9px; border:1.5px solid #ddd; border-radius:8px; background:#fafafa; font-size:0.88rem; font-weight:600; cursor:pointer; transition:background 0.12s, border-color 0.12s, color 0.12s; color:#333; }
 .psc-yn-btn:hover { border-color:#e05a2b; background:#fff5f1; }
 .psc-yn-selected { background:#e05a2b !important; color:#fff !important; border-color:#e05a2b !important; }
+
+/* Previous session checkbox */
+.psc-prev-session {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 10px 14px;
+    background: #fff8f5;
+    border: 1.5px solid #ffe0d4;
+    border-radius: 10px;
+}
+.psc-prev-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+}
+.psc-prev-label input[type="checkbox"] {
+    accent-color: #e05a2b;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
 </style>
 
 <script>
-function pscToggleExtra(show) {
-    document.getElementById('psc-extra-section').style.display = show ? 'block' : 'none';
-    document.getElementById('psc-extra-yes').classList.toggle('psc-yn-selected', show);
-    document.getElementById('psc-extra-no').classList.toggle('psc-yn-selected', !show);
+
+
+
+async function togglePrevSession(checked) {
+    if (!checked) {
+        document.getElementById('psc-prev-status').style.display = 'none';
+
+        // Reset all buttons
+        document.querySelectorAll('#checkinView .psc-opt').forEach(btn => {
+            btn.classList.remove('psc-opt-selected');
+        });
+        // Restore default caffeine (None)
+        const caffeineNone = document.querySelector('#checkinView .psc-opt[data-group="caffeine"][data-val="None"]');
+        if (caffeineNone) caffeineNone.classList.add('psc-opt-selected');
+
+        // Reset sliders to 5
+        ['psc-difficulty', 'psc-energy', 'psc-stress'].forEach(id => {
+            const el = document.getElementById(id);
+            const valEl = document.getElementById(id + '-val');
+            if (el) el.value = 5;
+            if (valEl) valEl.textContent = '5/10';
+        });
+
+        // Reset goal textarea
+        const goalEl = document.getElementById('psc-goal');
+        if (goalEl) goalEl.value = '';
+
+        // Hide extra section
+        // pscToggleExtra(false);
+
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/last-checkin/', {
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            alert('No previous session found.');
+            document.getElementById('psc-use-prev').checked = false;
+            return;
+        }
+
+        const d = data.data;
+
+        // Fill sliders
+        const setSlider = (id, valId, val) => {
+            const el = document.getElementById(id);
+            const valEl = document.getElementById(valId);
+            if (el) { el.value = val; }
+            if (valEl) { valEl.textContent = val + '/10'; }
+        };
+        setSlider('psc-difficulty', 'psc-difficulty-val', d.difficulty);
+        setSlider('psc-energy', 'psc-energy-val', d.energy);
+        setSlider('psc-stress', 'psc-stress-val', d.stress);
+
+        // Fill goal textarea
+        const goalEl = document.getElementById('psc-goal');
+        if (goalEl) goalEl.value = d.goal || '';
+
+        // Map model stored values back to button data-val
+        const subjectMap = {
+            'Math': 'Math/Problem-solving',
+            'Reading': 'Reading/Comprehension',
+            'Writing': 'Writing/Essay',
+            'Coding': 'Coding/Technical',
+            'Studying': 'Note-taking',
+            'Creative Work': 'Creative work',
+            'Problem Solving': 'Other',
+            'Research': 'Other',
+            'Other': 'Other'
+        };
+        const mealMap = {
+            '<1h': '<1 hour', '1-2h': '1-2 hours',
+            '2-4h': '2-4 hours', '4h+': '4+ hours'
+        };
+        const wakeMap = {
+            '<1h': '<1 hour', '1-3h': '1-3 hours',
+            '3-6h': '3-6 hours', '6h+': '6+ hours'
+        };
+        const activityMap = {
+            'None': 'None', 'Light': 'Light (walk)',
+            'Moderate': 'Moderate (jog)', 'Intense': 'Intense (workout)'
+        };
+        const lengthMap = {
+            '15-30m': '15-30 minutes', '30-60m': '30-60 minutes',
+            '1-2h': '1-2 hours', '2h+': '2+ hours'
+        };
+
+        // Select a button by group and value
+        const selectBtn = (group, val) => {
+            if (!val) return;
+            document.querySelectorAll(`#checkinView .psc-opt[data-group="${group}"]`).forEach(btn => {
+                btn.classList.remove('psc-opt-selected');
+                if (btn.dataset.val === val) btn.classList.add('psc-opt-selected');
+            });
+        };
+        selectBtn('subject', subjectMap[d.subject] || d.subject);
+        selectBtn('tasklength', lengthMap[d.tasklength] || d.tasklength);
+        selectBtn('mood', d.mood);
+        selectBtn('meal', mealMap[d.meal] || d.meal);
+        selectBtn('caffeine', d.caffeine);
+        selectBtn('wake', wakeMap[d.wake] || d.wake);
+        selectBtn('activity', activityMap[d.activity] || d.activity);
+        selectBtn('noise', d.noise);
+        selectBtn('method', d.method);
+        selectBtn('location', d.location);
+        selectBtn('lighting', d.lighting);
+
+        // If any additional fields loaded, show extra section
+        if (d.wake || d.activity || d.noise || d.method || d.location || d.lighting || d.goal) {
+            document.getElementById('psc-extra-section').style.display = 'block';
+            document.getElementById('psc-extra-yes').classList.add('psc-yn-selected');
+            document.getElementById('psc-extra-no').classList.remove('psc-yn-selected');
+        }
+        // Show success message
+        document.getElementById('psc-prev-status').style.display = 'inline';
+
+    } catch (err) {
+        console.error('Failed to load previous session:', err);
+        document.getElementById('psc-use-prev').checked = false;
+        alert('Failed to load previous session. Please try again.');
+    }
 }
 </script>
-
