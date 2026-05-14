@@ -17,11 +17,14 @@ from .tasks import run_live_inference, get_task_status
 from .tasks_realtime import run_live_inference_streaming
 from django.views.decorators.csrf import csrf_exempt
 import csv
+import logging
 
 from .models import UserProfile, Recommendation, SessionSummary
 from .services.eeg_service import EEGService
 
 # Create your views here.
+
+logger = logging.getLogger(__name__)
 
 MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts', model_name='xgboost')
 
@@ -629,6 +632,10 @@ def send_otp(request):
             message = f'Your BrainWave verification code is: {otp_code}\n\nThis code will expire in 5 minutes.'
             from_email = 'noreply@brainwave.com'
             recipient_list = [email]
+
+            # Helpful for local development when email delivery is not configured.
+            if settings.DEBUG:
+                logger.info("DEV OTP for %s: %s", email, otp_code)
             
             send_mail(
                 subject,
@@ -638,8 +645,10 @@ def send_otp(request):
                 fail_silently=False,
             )
         except Exception as e:
-            pass
-            # For now, we'll continue with the flow even if email fails
+            logger.exception("OTP email send failed for %s", email)
+            if settings.DEBUG:
+                logger.info("DEV FALLBACK OTP for %s: %s", email, otp_code)
+            # Continue the flow in development even if email backend is not configured.
         
         # Redirect to OTP verification page
         return render(request, 'otp_verification.html', {'email': email})
@@ -1265,8 +1274,8 @@ def onboarding_view(request):
                 {'id': 'consumes_caffeine', 'type': 'radio', 'label': 'Do you consume caffeine?', 'options': ['Yes', 'No']},
                 {'id': 'caffeine_types', 'type': 'checkbox', 'label': 'What type(s) of caffeine? (if Yes)',
                  'options': ['Coffee', 'Tea (black/green)', 'Energy drinks', 'Soda', 'Other']},
-                {'id': 'caffeine_servings', 'type': 'number', 'label': 'How many servings per day? (if Yes)', 'min': 1, 'max': 10},
-                {'id': 'caffeine_timing', 'type': 'radio', 'label': 'When do you typically consume caffeine? (if Yes)',
+                {'id': 'caffeine_servings', 'type': 'range', 'label': 'How many servings per day? (if Yes)', 'min': 1, 'max': 10, 'default': 1},
+                {'id': 'caffeine_timing', 'type': 'checkbox', 'label': 'When do you typically consume caffeine? (if Yes)',
                  'options': ['Early morning only (before 10am)', 'Morning to noon (before 12pm)', 
                           'Throughout the day (morning to afternoon)', 'Anytime (including evenings)']}
             ]
@@ -1407,12 +1416,14 @@ def onboarding_view(request):
                 if not consumes_caffeine:
                     caffeine_types_list = None  # Explicitly set to None
                     caffeine_servings = 0
-                    caffeine_timing = ''
+                    caffeine_timing = []
                 else:
                     # Only process caffeine data if user actually consumes caffeine
                     caffeine_types_list = onboarding_data.get('caffeine_types', [])
                     caffeine_servings = int(onboarding_data.get('caffeine_servings', 0))
-                    caffeine_timing = onboarding_data.get('caffeine_timing', '')
+                    caffeine_timing = onboarding_data.get('caffeine_timing', [])
+                    if not isinstance(caffeine_timing, list):
+                        caffeine_timing = [caffeine_timing] if caffeine_timing else []
                 
                 profile_data = {
                     'email': user_email,  # Use 'email' to match model field name
@@ -1429,7 +1440,7 @@ def onboarding_view(request):
                     'consumes_caffeine': consumes_caffeine,
                     'caffeine_types': ', '.join(caffeine_types_list) if caffeine_types_list and isinstance(caffeine_types_list, list) else '',
                     'caffeine_servings': caffeine_servings,
-                    'caffeine_timing': caffeine_timing,
+                    'caffeine_timing': ', '.join(caffeine_timing) if caffeine_timing and isinstance(caffeine_timing, list) else '',
                     
                     # Section 4: Styles
                     'learning_style': onboarding_data.get('learning_style', ''),

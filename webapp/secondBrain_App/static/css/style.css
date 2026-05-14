@@ -1210,6 +1210,7 @@ body {
     height: 100%;
     border-radius: 10px;
     transition: width 0.3s ease;
+    background: var(--primary-color); /* Replace gradient with solid color */
 }
 
 .concentrated-bar {
@@ -1788,6 +1789,7 @@ body {
     height: 100%;
     border-radius: 4px;
     transition: width 0.3s ease;
+    background: var(--primary-color); /* Replace gradient with solid color */
 }
 
 .concentrated-bar {
@@ -2270,33 +2272,52 @@ body {
 }
 
 .progress-text {
-    font-size: 14px;
+    font-size: 17px;
     color: var(--text-secondary);
     font-weight: var(--font-weight-medium);
 }
 
 .progress-bar-container {
     flex: 1;
-    height: 4px;
+    height: 8px;
     background-color: var(--bg-white-overlay);
-    border-radius: 2px;
+    border-radius: 6px;
     margin: 0 var(--spacing-md);
     overflow: hidden;
 }
 
 .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(to right, #fe938c, #ffffff);
-    border-radius: 2px;
+    background: #fe938c;
+    border-radius: 6px;
     transition: all 0.3s ease-out;
     transition: width 0.3s ease;
     width: 0%; /* Default width, will be set by JavaScript */
 }
 
 .progress-percentage {
-    font-size: 14px;
+    font-size: 17px;
     color: var(--text-secondary);
     font-weight: var(--font-weight-medium);
+}
+
+.progress-bar-container.segmented {
+    position: relative;
+}
+
+.progress-dividers {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    pointer-events: none;
+}
+
+.progress-dividers span {
+    justify-self: end;
+    width: 3px;
+    height: 100%;
+    background: rgba(148, 163, 184, 0.75);
 }
 
 /* Form Card */
@@ -2654,6 +2675,10 @@ body {
     
     .subtitle {
         font-size: 15px;
+    }
+
+    .progress-section {
+        gap: 8px;
     }
 }
 
