@@ -9,6 +9,8 @@ import random
 import string
 import json
 from pathlib import Path
+import time
+import math
 
 from urllib3 import request
 from .services.prediction_service import PredictionService
@@ -687,6 +689,64 @@ def verify_otp(request):
     
     return redirect('/')
 
+@csrf_exempt
+def get_latest_eeg_state_view(request):
+    """Lightning-fast cache-only view for live brain data"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Check if realtime session is active first
+        is_active = request.session.get('realtime_session_active', False)
+        if not is_active:
+            return JsonResponse({'ok': False, 'status': 'idle', 'message': 'Session not active'})
+        
+        from django.core.cache import cache
+        cache_key = f"live_eeg_stream_{user_email}"
+        data = cache.get(cache_key)
+        
+        if not data:
+            return JsonResponse({
+                'ok': True,
+                'status': 'initializing',
+                'state': 'INITIALIZING',
+                'confidence': 0,
+                'waves': {
+                    'delta': 0,
+                    'theta': 0,
+                    'alpha': 0,
+                    'beta': 0,
+                    'gamma': 0
+                },
+                'last_updated': '--'
+            })
+        # Add ok: true to successful responses for JavaScript compatibility
+        data['ok'] = True
+        return JsonResponse(data)
+            
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+  
+def expo_dash_view(request):
+    """Expo dashboard view for live brainwave data visualizations"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return redirect('/')
+    
+    # Get user profile data from database
+    from .models import UserProfile
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return redirect('/onboarding/')
+    
+    # Import data service
+    from .services.data_service import FocusDataService
+    data_service = FocusDataService(user_email)
+
+    return render(request, 'expo_dash.html')
+
 def dashboard_view(request):
     """Dashboard view with user profile and focus tracking data"""
     # Security check - ensure user is authenticated via OTP
@@ -704,6 +764,8 @@ def dashboard_view(request):
     # Import data service
     from .services.data_service import FocusDataService
     data_service = FocusDataService(user_email)
+
+
     
     # Helper functions to map indices to human-readable text
     def get_academic_level_text(level_id):
@@ -1524,6 +1586,7 @@ def prediction_view(request):
 def start_realtime_eeg_view(request):
     """Start real-time EEG inference with per-second streaming"""
     user_email = request.session.get('user_email')
+    
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=400)
     
@@ -1532,13 +1595,14 @@ def start_realtime_eeg_view(request):
         data = json.loads(request.body) if request.body else {}
         duration = int(data.get('duration_minutes', 1))
         session_id = data.get('session_id')  # Get session_id from pre-session check-in for linking
+        from_expo = data.get("from_expo", False)
         
         # Trigger real-time Celery task with session_id
         print(f"[DEBUG] Starting EEG session with session_id: {session_id}")
         print(f"[DEBUG] Duration: {duration} minutes")
         print(f"[DEBUG] User: {user_email}")
         
-        task = run_live_inference_streaming.delay(user_email, duration, session_id)
+        task = run_live_inference_streaming.delay(user_email, duration, session_id, from_expo)
         
         # Store task ID and session start time
         request.session['current_eeg_task_id'] = task.id
@@ -1571,6 +1635,9 @@ def stop_realtime_eeg_view(request):
     user_email = request.session.get('user_email')
     if not user_email:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    data = json.loads(request.body) if request.body else {}
+    from_expo = data.get("from_expo", False)
 
     try:
         # Clear live EEG cache to prevent stale data
@@ -1651,9 +1718,12 @@ def stop_realtime_eeg_view(request):
 
             # ── READ recommendation from cache (generated in tasks_realtime.py) ──
             from django.core.cache import cache
-            cache_key       = f"recommendation_{user_email}"
-            cached_rec      = cache.get(cache_key)
-            recommendation  = cached_rec.get('text') if cached_rec else None
+            recommendation = None
+
+            if not from_expo:
+                cache_key = f"recommendation_{user_email}"
+                cached_rec = cache.get(cache_key)
+                recommendation = cached_rec.get('text') if cached_rec else None
 
             # Save to Django session for recommendation page
             request.session['latest_recommendation'] = recommendation
@@ -1761,33 +1831,8 @@ def get_realtime_eeg_status_view(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-@csrf_exempt
-def get_latest_eeg_state_view(request):
-    """Lightning-fast cache-only view for live brain data"""
-    user_email = request.session.get('user_email')
-    if not user_email:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
     
-    try:
-        # Check if realtime session is active first
-        is_active = request.session.get('realtime_session_active', False)
-        if not is_active:
-            return JsonResponse({'ok': False, 'status': 'idle', 'message': 'Session not active'})
-        
-        from django.core.cache import cache
-        cache_key = f"live_eeg_stream_{user_email}"
-        data = cache.get(cache_key)
-        
-        if not data:
-            return JsonResponse({'ok': False, 'status': 'idle', 'message': 'Waiting for worker...', 'cache_key': cache_key})
-        
-        # Add ok: true to successful responses for JavaScript compatibility
-        data['ok'] = True
-        return JsonResponse(data)
-            
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+
 
 @csrf_exempt
 def test_cache_view(request):

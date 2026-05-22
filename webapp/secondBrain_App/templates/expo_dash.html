@@ -1,0 +1,783 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load secondBrain_App_templatetags %}
+
+{% block content %}
+<div class="card focus-track-setup">
+    <!-- Focus Track Setup Component -->
+    <div class="card-header">
+        <h2 class="card-title" id="cardTitle">Start Focus Track</h2>
+        <p class="card-subtitle" id="cardSubtitle"></p>
+    </div>
+
+    <div class="card-content">
+
+        <!-- VIEW 1: Setup -->
+        <div id="setupView">
+            <div class="focus-setup-shell">
+                <label class="focus-label" for="sessionNameInput">Session Name</label>
+                <input
+                    type="text"
+                    id="sessionNameInput"
+                    class="focus-text-input"
+                    placeholder="e.g. Deep Work, Study Session, Creative Flow"
+                    maxlength="80"
+                    required
+                >
+
+                <div class="duration-section">
+                    <h3 class="section-title">Duration</h3>
+                    <div class="duration-grid">
+                        <button class="duration-btn btn-deselected" data-duration="15">15 min</button>
+
+                        <div class="duration-option-wrap">
+                            <button class="duration-btn btn-selected" data-duration="25">25 min</button>
+                            <span class="duration-tag">Pomodoro</span>
+                        </div>
+
+                        <button class="duration-btn btn-deselected" data-duration="30">30 min</button>
+                        <button class="duration-btn btn-deselected" data-duration="45">45 min</button>
+                        <button class="duration-btn btn-deselected" data-duration="60">1 hour</button>
+                        <button class="duration-btn btn-deselected" data-duration="90">90 min</button>
+                    </div>
+                </div>
+
+                <label class="focus-label" for="customDurationInput">Custom Duration (minutes)</label>
+                <input
+                    type="number"
+                    id="customDurationInput"
+                    class="focus-text-input"
+                    min="1"
+                    max="360"
+                    step="1"
+                    value="25"
+                >
+
+                <button class="btn-primary btn-start focus-continue-btn" id="startSessionBtn" onclick="startEEGsession()">
+                    <span class="focus-continue-arrow">&#8594;</span>
+                    <span>Start Session</span>
+                </button>
+
+                <div class="focus-note">
+                    <span class="focus-note-icon" aria-hidden="true">&#9432;</span>
+                    <p>
+                        The pre-session check-in helps us provide better AI recommendations by understanding your
+                        current state and goals. It takes less than 2 minutes.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: Active Session -->
+        <div class="active-session" id="activeSession" style="display: none;">
+            <div class="timer-display">
+                <span id="sessionTimer">00:00</span>
+            </div>
+            <div class="session-stats">
+                <div class="stat">
+                    <span class="stat-label">Elapsed</span>
+                    <span class="stat-value" id="elapsedTime">00:00</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Check-ins</span>
+                    <span class="stat-value" id="checkIns">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Avg Focus</span>
+                    <span class="stat-value" id="avgFocus">--</span>
+                </div>
+            </div>
+            <div class="session-controls">
+                <button type="button" class="btn-danger" id="endBtn" onclick="stopEEGsession()">End Session</button>
+            </div>
+            <div class="session-controls">
+                <pre id="sessionOutput"></pre>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="grid-row mt-4">
+    <div class="col-span-12">
+        <div id="liveBrainStateCard" class="card shadow-sm border-0" style="background: #ffffff; border-radius: 15px; border-left: 5px solid #28a745; display: block;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0" style="color: #28a745; font-weight: bold;">
+                        <span class="live-indicator" id="liveIndicator">
+                            <span class="pulse-dot" id="statusDot" style="width: 10px; height: 10px; background-color: #6c757d; border-radius: 50%; display: inline-block; margin-right: 8px;"></span>
+                            Live Brain State
+                        </span>
+                    </h5>
+                    <small class="text-muted" id="lastUpdate">Last updated: --</small>
+                </div>
+                
+                <div class="text-center">
+                    <div class="live-state-display" id="currentStateText" style="font-size: 2.5rem; font-weight: bold; color: #6c757d; margin: 20px 0;">
+                        Idle
+                    </div>
+                    <div class="confidence-display" id="liveConfidence" style="font-size: 1.2rem; color: #6c757d; margin-bottom: 15px;">
+                        Confidence: --%
+                    </div>
+                                            </div>
+                
+                <!-- Brainwave Monitors -->
+                <div class="brainwave-monitors" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px;">
+                    <!-- Delta Monitor -->
+                    <div class="wave-monitor" id="delta-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                        <div style="color: #FF00FF; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">DELTA</div>
+                        <canvas id="delta-canvas" style="width: 100%; height: 50px;"></canvas>
+                    </div>
+                    
+                    <!-- Theta Monitor -->
+                    <div class="wave-monitor" id="theta-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                        <div style="color: #00FFFF; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">THETA</div>
+                        <canvas id="theta-canvas" style="width: 100%; height: 50px;"></canvas>
+                    </div>
+                    
+                    <!-- Alpha Monitor -->
+                    <div class="wave-monitor" id="alpha-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                        <div style="color: #39FF14; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">ALPHA</div>
+                        <canvas id="alpha-canvas" style="width: 100%; height: 50px;"></canvas>
+                    </div>
+                    
+                    <!-- Beta Monitor -->
+                    <div class="wave-monitor" id="beta-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                        <div style="color: #FFFF00; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">BETA</div>
+                        <canvas id="beta-canvas" style="width: 100%; height: 50px;"></canvas>
+                    </div>
+                    
+                    <!-- Gamma Monitor -->
+                    <div class="wave-monitor" id="gamma-wave-container" style="background-color: #000000; border: 1px solid #1a2236; border-radius: 8px; padding: 10px; height: 80px; position: relative; overflow: hidden;">
+                        <div style="color: #FF3131; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">GAMMA</div>
+                        <canvas id="gamma-canvas" style="width: 100%; height: 50px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    let selectedDuration = 25;
+    let timerInterval = null;
+    let remainingSeconds = 0;
+    let elapsedSeconds = 0;
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            document.cookie.split(';').forEach(cookie => {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                }
+            });
+        }
+        return cookieValue;
+    }
+
+    
+    // ---- Duration selection ----
+    function setSelectedDuration(duration, fromCustomInput) {
+        selectedDuration = duration;
+
+        document.querySelectorAll('#setupView .duration-btn').forEach(btn => {
+            if (Number(btn.dataset.duration) === duration && !fromCustomInput) {
+                btn.classList.remove('btn-deselected');
+                btn.classList.add('btn-selected');
+            } else {
+                btn.classList.remove('btn-selected');
+                btn.classList.add('btn-deselected');
+            }
+        });
+
+        const customInput = document.getElementById('customDurationInput');
+        if (customInput && String(customInput.value) !== String(duration)) {
+            customInput.value = duration;
+        }
+
+        console.log("Selected:", selectedDuration);
+    }
+
+    // ---- Get current duration from input ----
+    function getCurrentDuration() {
+        const customInput = document.getElementById('customDurationInput');
+        const inputValue = Number(customInput.value);
+        
+        // Validate that input is a valid number between 1 and 360
+        if (Number.isFinite(inputValue) && inputValue >= 1 && inputValue <= 360) {
+            return inputValue;
+        }
+        
+        // Fallback to selectedDuration if input is invalid
+        return selectedDuration;
+    }
+
+    document.querySelectorAll('#setupView .duration-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setSelectedDuration(Number(btn.dataset.duration), false);
+        });
+    });
+
+    const customDurationInput = document.getElementById('customDurationInput');
+    if (customDurationInput) {
+        customDurationInput.addEventListener('input', () => {
+            const value = Number(customDurationInput.value);
+            if (Number.isFinite(value) && value >= 1) {
+                setSelectedDuration(value, true);
+            }
+        });
+    }
+
+    setSelectedDuration(selectedDuration, false);
+
+    // ---- Pre-session option toggle ----
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('psc-opt')) {
+            const group = e.target.dataset.group;
+            document.querySelectorAll('.psc-opt[data-group="' + group + '"]').forEach(b => b.classList.remove('psc-opt-selected'));
+            e.target.classList.add('psc-opt-selected');
+        }
+    });
+
+    function showActiveSession() {
+        document.getElementById('setupView').style.display = 'none';
+        document.getElementById('activeSession').style.display = 'block';
+        document.getElementById('cardTitle').textContent = 'Focus Track Session';
+        document.getElementById('cardSubtitle').textContent = 'Session in progress';
+    }
+
+    function formatTime(totalSeconds) {
+        var mins = Math.floor(totalSeconds / 60);
+        var secs = totalSeconds % 60;
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    let timerEndTime = null;
+    let timerStartTime = null;
+
+    function startTimer(durationMinutes) {
+        timerStartTime = Date.now();
+        timerEndTime = timerStartTime + durationMinutes * 60 * 1000;
+
+        if (timerInterval) clearInterval(timerInterval);
+
+        updateTimerDisplay();
+
+        timerInterval = setInterval(updateTimerDisplay, 500);
+    }
+
+    async function updateTimerDisplay() {
+        const now = Date.now();
+
+        const remainingMs = Math.max(timerEndTime - now, 0);
+        const elapsedMs = Math.max(now - timerStartTime, 0);
+
+        document.getElementById('sessionTimer').textContent =
+            formatTime(Math.ceil(remainingMs / 1000));
+
+        document.getElementById('elapsedTime').textContent =
+            formatTime(Math.floor(elapsedMs / 1000));
+
+        if (remainingMs <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            await stopEEGsession();
+        }
+    }
+
+
+    async function startEEGsession() {
+        console.log("starting EEG session");
+        showActiveSession();
+        
+        // Get current duration from input (prioritizes manual input)
+        const currentDuration = getCurrentDuration();
+        startTimer(currentDuration);
+
+        try {
+            // Get session_id from sessionStorage (stored during pre-session check-in)
+            
+            console.log("Starting EEG session with session_id:");
+            
+            var res = await fetch('/start_realtime_eeg/', {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                 },
+                body: JSON.stringify({ 
+                    duration_minutes: currentDuration,
+                    //session_id: sessionId  // Send session_id to link with pre-session data
+                    from_expo: true
+                })
+            });
+
+            const data = await res.json();
+            console.log(data);
+
+            document.getElementById('sessionOutput').textContent =
+                JSON.stringify(data, null, 2);
+
+            if (res.ok && data.ok !== false) {
+                console.log("EEG session started successfully");
+
+                showActiveSession();
+                startTimer(currentDuration);
+                startLiveStatePolling();
+
+                const liveStateCard = document.getElementById('liveBrainStateCard');
+                if (liveStateCard) {
+                    liveStateCard.style.display = 'block';
+                }
+
+                sessionStorage.setItem('realtime_session_active', 'true');
+            } else {
+                alert(data.error || "Could not start EEG session.");
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('sessionOutput').textContent = "Start error: " + err;
+        }
+    }
+
+
+    let stopRetryCount = 0;
+    const MAX_STOP_RETRIES = 3;
+
+    async function stopEEGsession() {
+        console.log("Ending EEG session");
+        
+        // Prevent infinite retries
+        if (stopRetryCount >= MAX_STOP_RETRIES) {
+            console.log("Max stop retries reached, stopping attempts");
+            const sessionOutput = document.getElementById('sessionOutput');
+            window.location.href = '/expo_dash/';
+            return;
+        }
+
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        stopRetryCount++;
+        
+        try {
+            var res = await fetch('/stop_realtime_eeg/', {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    from_expo: true
+                })
+            });
+
+            var data = await res.json();
+            console.log(data);
+            document.getElementById('sessionOutput').textContent = JSON.stringify(data, null, 2);
+
+            
+            if (data.status === 'completed' || data.status === "SUCCESS" || data.ok === true) {
+                console.log("Session completed, redirecting to dashboard");
+                
+                // Stop any remaining polling
+                if (typeof stopLiveStatePolling === 'function') {
+                    stopLiveStatePolling();
+                }
+                
+                // Set session as inactive before redirecting
+                sessionStorage.setItem('realtime_session_active', 'false');
+                
+                // Redirect directly to dashboard
+                window.location.href = '/expo_dash/';
+                
+            } else if (data.status === 'processing' ||
+                data.status === 'PENDING' ||
+                data.status === 'running' ||
+                data.status === 'STARTED') {
+                setTimeout(stopEEGsession, 3000);
+            } else {
+                // Handle other statuses (errors, etc) - don't retry
+                console.log("Stop request completed with status:", data.status);
+                
+                // Set session as inactive before redirecting
+                sessionStorage.setItem('realtime_session_active', 'false');
+                
+                // Redirect directly to dashboard
+                window.location.href = '/expo_dash/';
+            } 
+        } catch (err) {
+            console.error(err);
+            document.getElementById('sessionOutput').textContent = "Stop error: " + err;
+        }
+    }
+
+    // Live Brain State Polling
+let liveStatePollingInterval = null;
+
+function startLiveStatePolling() {
+    if (liveStatePollingInterval) {
+        clearInterval(liveStatePollingInterval);
+    }
+    
+    // Poll every 500ms for smooth heart monitor effect
+    liveStatePollingInterval = setInterval(updateLiveBrainState, 500);
+    console.log('Started live brain state polling');
+}
+
+function stopLiveStatePolling() {
+    if (liveStatePollingInterval) {
+        clearInterval(liveStatePollingInterval);
+        liveStatePollingInterval = null;
+        console.log('Stopped live brain state polling');
+    }
+}
+
+function updateLiveBrainBox() {
+    fetch('/get-latest-eeg-state/')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Live brain state data:', data); // Debug logging
+            
+            const liveStateCard = document.getElementById('liveBrainStateCard');
+            
+            if (data.ok && data.status === 'active') {
+                updateLiveStateDisplay(data);
+                liveStateCard.style.display = 'block';
+            } else if (data.status === 'initializing') {
+                updateLiveStateDisplay(data);
+                liveStateCard.style.display = 'block';
+            } else if (data.status === 'idle') {
+                liveStateCard.style.display = 'none';
+                stopLiveStatePolling();
+            } else {
+                console.log('Temporary missing EEG data:', data);
+                // Do NOT stop polling here
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching live brain state:', error);
+            // Stop polling on error
+            stopLiveStatePolling();
+        });
+}
+
+async function updateLiveBrainState() {
+    updateLiveBrainBox();
+}
+
+// Brainwave Chart Management
+const brainwaveCharts = {
+    delta: null,
+    theta: null,
+    alpha: null,
+    beta: null,
+    gamma: null
+};
+
+const waveColors = {
+    delta: '#FF00FF',  // Neon Purple - Slow, deep pulses
+    theta: '#00FFFF',  // Cyan - Rolling waves
+    alpha: '#39FF14',  // Green - Sharp rhythmic spikes
+    beta: '#FFFF00',   // Yellow - Fast jittery lines
+    gamma: '#FF3131'   // Red - Rapid micro-oscillations
+};
+
+function initializeBrainwaveCharts() {
+    const waves = ['delta', 'theta', 'alpha', 'beta', 'gamma'];
+    
+    waves.forEach(wave => {
+        const canvas = document.getElementById(`${wave}-canvas`);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) {
+                console.log(`[CHART INIT] Failed to get context for ${wave} canvas`);
+                return;
+            }
+            
+            // Initialize with empty data
+            brainwaveCharts[wave] = {
+                canvas: canvas,
+                ctx: ctx,
+                data: new Array(150).fill(0),  // 150 data points for denser waves
+                color: waveColors[wave]
+            };
+            
+            // Set canvas size with proper dimensions - account for device pixel ratio
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect(); // Get container width for proper scaling
+            const displayWidth = rect.width - 20;  // Account for padding
+            
+            // Set display size (CSS)
+            canvas.style.width = displayWidth + 'px';
+            canvas.style.height = '50px';
+            
+            // Set actual size in memory
+            canvas.width = displayWidth * dpr;
+            canvas.height = 50 * dpr;
+            
+            // Scale context to account for device pixel ratio
+            ctx.scale(dpr, dpr);
+            
+            console.log(`[CHART INIT] Initialized ${wave} chart: display ${displayWidth}x50, actual ${canvas.width}x${canvas.height}, DPR: ${dpr}`);
+        } else {
+            console.log(`[CHART INIT] Canvas not found for wave: ${wave}`);
+        }
+    });
+}
+
+const smoothedWaves = {
+    delta: 0,
+    theta: 0,
+    alpha: 0,
+    beta: 0,
+    gamma: 0
+};
+
+const waveFrequencies = {
+    delta: 1.2,
+    theta: 3,
+    alpha: 6,
+    beta: 12,
+    gamma: 22
+};
+
+
+function updateBrainwaveChart(wave, value) {
+    console.log(`[CHART UPDATE] ${wave} called with value: ${value}`);
+    const chart = brainwaveCharts[wave];
+    if (!chart) {
+        console.log(`[CHART] No chart found for wave: ${wave}`);
+        return;
+    }
+    
+    // Convert value to number if it's not already
+    const numValue = typeof value === 'number' ? value : 0;
+    console.log(`[CHART UPDATE] ${wave} numValue: ${numValue}, chart exists: ${!!chart}`);
+    
+    // Add new value and remove old one
+    chart.data.push(numValue);
+    chart.data.shift();
+    
+    // Ensure canvas context is valid
+    if (!chart.ctx || !chart.canvas) {
+        return;
+    }
+   
+
+    const smoothing = 0.18
+    smoothedWaves[wave] = smoothedWaves[wave] * (1 - smoothing) + numValue * smoothing;
+
+    const amplitude = Math.max(3, smoothedWaves[wave] * 0.35)
+    const freq = waveFrequencies[wave] || 6;
+
+
+    // Get display dimensions (account for device pixel ratio)
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = chart.canvas.width / dpr;
+    const displayHeight = chart.canvas.height / dpr;
+    const midY = displayHeight / 2;
+    
+    // Clear canvas
+    chart.ctx.clearRect(0, 0, displayWidth, displayHeight);
+    
+    
+
+    // Begin path for wave
+    chart.ctx.beginPath();
+
+    const time = Date.now() * 0.004;
+
+    const noiseState = {
+        delta: 0,
+        theta: 0,
+        alpha: 0,
+        beta: 0,
+        gamma: 0
+    };
+
+    for (let i = 0; i < chart.data.length; i++) {
+        const x = (i / (chart.data.length - 1)) * displayWidth;
+
+        noiseState[wave] =
+        noiseState[wave] * 0.92 +
+            (Math.random() - 0.5) * 0.08;
+
+        const noise = noiseState[wave] * amplitude * 0.3
+        
+        const waveShape =
+            Math.sin((i * 0.12 * freq) + time) * amplitude * 0.55 +
+            Math.sin((i * 0.04 * freq) + time * 0.7) * amplitude * 0.20 +
+            noise
+
+        const y = midY - waveShape;
+
+        if (i === 0) {
+            chart.ctx.moveTo(x, y);
+        } else {
+            chart.ctx.lineTo(x, y);
+        }
+    }
+    
+    // Simple colored line with subtle glow
+    chart.ctx.strokeStyle = chart.color;
+    chart.ctx.lineWidth = 2;
+    chart.ctx.shadowBlur = 8;
+    chart.ctx.shadowColor = chart.color;
+    chart.ctx.stroke();
+}
+
+function updateLiveStateDisplay(data) {
+    const stateText = document.getElementById('currentStateText');
+    const confidenceText = document.getElementById('liveConfidence');
+    const statusDot = document.getElementById('statusDot');
+    const lastUpdateText = document.getElementById('lastUpdate');
+    
+    // Update state text and color
+    if (data.state && data.status === 'active') {
+                stateText.textContent = data.state;
+        stateText.classList.add('glow-text');
+        
+        // Set color based on state
+        const stateColors = {
+            'CONCENTRATING': '#2563eb',  // Deep Blue
+            'NEUTRAL': '#6b7280',        // Gray
+            'RELAXED': '#10b981'         // Green
+        };
+        stateText.style.color = stateColors[data.state] || '#6b7280';
+    } else if (data.status === 'initializing') {
+        stateText.textContent = 'LOADING BRAINWAVES...';
+        stateText.classList.remove('glow-text');
+        stateText.style.color = '#6b7280';
+    } else {
+        stateText.textContent = 'IDLE';
+        stateText.classList.remove('glow-text');
+        stateText.style.color = '#6b7280';
+    }
+    
+    // Update confidence
+    if (data.confidence !== null && data.confidence !== undefined && data.status === 'active') {
+        confidenceText.textContent = `Confidence: ${data.confidence}%`;
+        console.log('Updated confidence to:', data.confidence);
+    } else if (data.status === 'idle') {
+        confidenceText.textContent = 'Confidence: --%';
+    } else {
+        confidenceText.textContent = 'Confidence: --%';
+    }
+    
+        
+    // Update brainwave charts
+    if (data.waves && data.status === 'active') {
+        // Handle both old format (direct value) and new format (nested object)
+        const getWaveValue = (wave) => {
+            if (typeof wave === 'object' && wave.value !== undefined) {
+                return wave.value; // New format: {value: 36.5, raw: 5634.22, unit: 'uV²'}
+            } else if (typeof wave === 'number') {
+                return wave; // Current format: direct number (0-100 scale)
+            } else {
+                return 0; // Fallback
+            }
+        };
+        
+        const deltaValue = getWaveValue(data.waves.delta);
+        const thetaValue = getWaveValue(data.waves.theta);
+        const alphaValue = getWaveValue(data.waves.alpha);
+        const betaValue = getWaveValue(data.waves.beta);
+        const gammaValue = getWaveValue(data.waves.gamma);
+        
+        console.log(`[DATA FLOW] Wave values - delta: ${deltaValue}, theta: ${thetaValue}, alpha: ${alphaValue}, beta: ${betaValue}, gamma: ${gammaValue}`);
+                
+        updateBrainwaveChart('delta', deltaValue);
+        updateBrainwaveChart('theta', thetaValue);
+        updateBrainwaveChart('alpha', alphaValue);
+        updateBrainwaveChart('beta', betaValue);
+        updateBrainwaveChart('gamma', gammaValue);
+    }
+    
+    // Update status dot
+    if (data.status === 'active') {
+        statusDot.style.backgroundColor = '#28a745';  // Green
+        statusDot.style.animation = 'pulse 1.5s infinite';
+    } else {
+        statusDot.style.backgroundColor = '#6c757d';  // Gray
+        statusDot.style.animation = 'none';
+    }
+    
+    // Update last update time
+    if (data.last_updated && data.last_updated !== '--' && data.status === 'active') {
+        lastUpdateText.textContent = `Last updated: ${data.last_updated}`;
+        console.log('Updated last_updated to:', data.last_updated);
+    } else if (data.status === 'idle') {
+        lastUpdateText.textContent = 'Last updated: --';
+    } else {
+        const now = new Date();
+        lastUpdateText.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+    }
+}
+
+// Start polling when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize brainwave charts
+    initializeBrainwaveCharts();
+    
+    // Start live state polling
+    startLiveStatePolling();
+});
+
+//For Testing without MUSE
+// document.addEventListener('DOMContentLoaded', function() {
+//     initializeBrainwaveCharts();
+
+//     const liveStateCard = document.getElementById('liveBrainStateCard');
+//     if (liveStateCard) {
+//         liveStateCard.style.display = 'block';
+//     }
+
+//     startLiveStatePolling();
+// });
+
+// Stop polling when page is unloaded
+window.addEventListener('beforeunload', function() {
+    stopLiveStatePolling();
+});
+
+</script>
+
+<style>
+    /*Timer Card Styling*/
+        .card.focus-track-setup {
+            width: 95%;
+            margin: 25px auto 0 auto;
+            padding: 14px;
+            border-radius: 14px;
+        }
+    /* Live Brain State Pulse Animation */
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    /* Glow text effect for active state */
+    .glow-text {
+        text-shadow: 0 0 10px white, 0 0 20px white, 0 0 30px white;
+        animation: text-glow 1.5s ease-in-out infinite alternate;
+    }
+    .grid-row.mt-4 {
+        width: 95%;
+        margin: 25px auto 0 auto;
+    }
+
+    @keyframes text-glow {
+        from { text-shadow: 0 0 10px white, 0 0 20px white; }
+        to { text-shadow: 0 0 20px white, 0 0 30px white, 0 0 40px white; }
+    }
+</style>
+
+{% endblock %}

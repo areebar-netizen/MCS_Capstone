@@ -66,6 +66,26 @@ class FocusDataService:
                 concentrated_pct = neutral_pct = relaxed_pct = 0
             
             # Try to get session_name from PreSessionCheckIn first
+            # Default fallback values
+            session_name = ''
+            session_goal = ''
+            subject = ''
+            difficulty = ''
+            energy_level = ''
+            stress_level = ''
+            caffeine_intake = ''
+            time_since_meal = ''
+            physical_activity = ''
+            current_location = ''
+            estimated_length = ''
+            assignment_deadline = ''
+            mood_emoji = ''
+            time_since_waking = ''
+            current_noise = ''
+            lighting_conditions = ''
+            study_method = ''
+
+            # Try to get session_name from PreSessionCheckIn first
             try:
                 from secondBrain_App.models import PreSessionCheckIn
                 presession = PreSessionCheckIn.objects.filter(

@@ -1108,7 +1108,7 @@ document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el
     // Remove stray ** 
     text = text.replace(/\*\*\s*$/gm, '').replace(/^\s*\*\*\s*/gm, '');
 
-    const sections = text.split(/(?=\d+\.\s)/);
+    const sections = text.split(/(?=#+\s)|(?=\d+\.\s)/);
     let html = '';
     sections.forEach(function(section) {
         section = section.trim();
@@ -1116,7 +1116,9 @@ document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el
         if (!section || section === '**' || section.trim() === '') return;
         const stripped = section.replace(/#+/g, '').replace(/\*/g, '').trim();
         if (!stripped || stripped.length < 20) return;
-        const titleMatch = section.match(/^(\d+)\.\s+\*?\*?([^*\n:]+):?\*?\*?/);
+        const titleMatch = section.match(
+            /^(?:#+\s*|(\d+)\.\s+)\*?\*?([^*\n:]+):?\*?\*?/
+        );
         if (titleMatch) {
             const title = titleMatch[2].replace(/\*/g, '').trim();
             let body = section.slice(titleMatch[0].length).trim();

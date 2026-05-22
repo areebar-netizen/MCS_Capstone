@@ -168,7 +168,7 @@ def focus_latency(labels):
 
 
 @shared_task(bind=True)
-def run_live_inference_streaming(self, user_email, duration_minutes=1, session_id=None):
+def run_live_inference_streaming(self, user_email, duration_minutes=1, session_id=None, from_expo = False):
     """
     Real-time EEG inference with per-second focus streaming
     """
@@ -265,8 +265,9 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1, session_i
             
             try:
                 # Get buffer data
-                rows = acq.get_buffer_copy()
+                rows = acq.get_buffer_copy()[-1536:]
                 
+
                 # Track EEG buffer size
                 if len(rows) == 0:
                     print(f"[DEBUG] Empty EEG buffer, waiting for data...")
@@ -274,8 +275,10 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1, session_i
                 # Need minimum samples for prediction (approximately 1 second)
                 min_samples = int(256 * 1.0)
                 if len(rows) < min_samples:
-                    time.sleep(0.1)
+                    print("[WAIT] Not enough EEG samples yet")
+                    time.sleep(1)
                     continue
+
                 
                 try:
                     # Process prediction
@@ -416,7 +419,7 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1, session_i
                         
                         print(f"   {current_time} | {predicted_label:12} | {confidence:.2f} | {focus_score:.2f}")
                     else:
-                        print(f"[ERROR] Prediction returned not ok")
+                        print(f"[ERROR] Prediction returned not ok", result)
                     
                 except Exception as e:
                     print(f"[ERROR] Failed to process prediction: {e}")
@@ -520,26 +523,29 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1, session_i
         # Final seconds calculated
         
         # Save session summary to database
-        save_session_summary({
-            'session_id': session_id,
-            'user_email': user_email,
-            'task_id': self.request.id,
-            'csv_file_path': str(csv_output_path),
-            'start_time': start_time,
-            'end_time': actual_end_time,
-            'total_duration_seconds': total_duration,
-            'average_focus_score': avg_focus,
-            'peak_focus_score': peak_focus,
-            'relaxed_seconds': relaxed_seconds,
-            'neutral_seconds': neutral_seconds,
-            'concentrating_seconds': concentrating_seconds,
-            'longest_focus_streak': lfocus_streak,
-            'state_switch_count': switch_count,
-            'focus_latency': latency,
-            'avg_confidence': np.mean(confidence_scores) if confidence_scores else 0.0,
-            'data_points_count': len(data_points)
-        })
-        
+        if(not from_expo):
+            save_session_summary({
+                'session_id': session_id,
+                'user_email': user_email,
+                'task_id': self.request.id,
+                'csv_file_path': str(csv_output_path),
+                'start_time': start_time,
+                'end_time': actual_end_time,
+                'total_duration_seconds': total_duration,
+                'average_focus_score': avg_focus,
+                'peak_focus_score': peak_focus,
+                'relaxed_seconds': relaxed_seconds,
+                'neutral_seconds': neutral_seconds,
+                'concentrating_seconds': concentrating_seconds,
+                'longest_focus_streak': lfocus_streak,
+                'state_switch_count': switch_count,
+                'focus_latency': latency,
+                'avg_confidence': np.mean(confidence_scores) if confidence_scores else 0.0,
+                'data_points_count': len(data_points)
+            })
+        else:
+            print("[FROM EXPO] no summary and recommendations saved")
+            
         # Final state update
         self.update_state(
             state='completed',

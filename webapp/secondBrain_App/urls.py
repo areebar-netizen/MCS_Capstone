@@ -28,4 +28,5 @@ urlpatterns = [
     path('api/presession-checkin/', views.presession_checkin_view, name='presession_checkin'),
     path('api/recommendation-feedback/', views.recommendation_feedback_view, name='recommendation_feedback'),
     path('api/last-checkin/', views.get_last_checkin_view, name='last_checkin'),
+    path('expo_dash/', views.expo_dash_view, name='expo_dash'),
 ]
