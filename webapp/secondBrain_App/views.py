@@ -1386,6 +1386,7 @@ def onboarding_view(request):
     if request.method == 'POST':
         # Get current step from form data or default to 1
         current_step = int(request.POST.get('current_step', 1))
+        nav_action = request.POST.get('nav_action', 'next')
         
         # Store form data in session
         if 'onboarding_data' not in request.session:
@@ -1405,6 +1406,11 @@ def onboarding_view(request):
         request.session['onboarding_data'].update(step_data)
         request.session.modified = True
         
+        # Handle step navigation actions
+        if nav_action == 'back':
+            previous_step = max(1, current_step - 1)
+            return redirect(f'/onboarding/?step={previous_step}')
+
         # Move to next step
         next_step = current_step + 1
         
@@ -2308,6 +2314,7 @@ def presession_checkin_view(request):
             
             # Map task length to model choice
             task_length_mapping = {
+                'None': 'None',
                 '15-30 minutes': '15-30m',
                 '30-60 minutes': '30-60m',
                 '1-2 hours': '1-2h',

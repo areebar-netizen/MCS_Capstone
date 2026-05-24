@@ -2616,9 +2616,46 @@ body {
     gap: var(--spacing-sm);
 }
 
+.onboarding-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.back-btn {
+    background-color: var(--bg-white);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 16px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    min-width: 140px;
+}
+
+.back-btn:hover {
+    border-color: rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+}
+
+.back-arrow {
+    width: 16px;
+    height: 16px;
+}
+
 /* Continue Button */
 .continue-btn {
-    width: 100%;
+    flex: 1;
     background-color: var(--bg-white);
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-sm);
@@ -2687,6 +2724,15 @@ body {
 
     .progress-section {
         gap: 8px;
+    }
+
+    .onboarding-nav-actions {
+        flex-direction: column;
+    }
+
+    .back-btn,
+    .continue-btn {
+        width: 100%;
     }
 }
 

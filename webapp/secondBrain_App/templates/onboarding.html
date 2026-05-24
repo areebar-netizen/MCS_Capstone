@@ -41,6 +41,7 @@
         <form id="onboarding-form" method="post">
             {% csrf_token %}
             <input type="hidden" name="current_step" value="{{ current_step|default:1 }}">
+            <input type="hidden" name="nav_action" id="nav-action" value="next">
             
             {% for question in section.questions %}
             {% if question.id == 'caffeine_types' or question.id == 'caffeine_servings' or question.id == 'caffeine_timing' %}
@@ -141,13 +142,24 @@
             <input type="hidden" id="radio-selection" name="radio_selection" value="">
         </form>
         
-        <!-- Continue Button -->
-        <button type="button" id="continue-btn" class="continue-btn" disabled aria-label="Continue to next step">
-            Continue
-            <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
-            </svg>
-        </button>
+        <div class="onboarding-nav-actions">
+            {% if current_step|default:1 > 1 %}
+            <button type="button" id="back-btn" class="back-btn" aria-label="Go to previous step">
+                <svg class="arrow-icon back-arrow" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M9.707 3.293a1 1 0 00-1.414 0l-6 6a1 1 0 000 1.414l6 6a1 1 0 101.414-1.414L5.414 11H17a1 1 0 100-2H5.414l4.293-4.293a1 1 0 000-1.414z" clip-rule="evenodd"/>
+                </svg>
+                Back
+            </button>
+            {% endif %}
+
+            <!-- Continue Button -->
+            <button type="button" id="continue-btn" class="continue-btn" disabled aria-label="Continue to next step">
+                Continue
+                <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
     </main>
     
     <!-- Session History (if available) -->
@@ -176,7 +188,9 @@
     // Dynamic form handling for multi-step questionnaire
     document.addEventListener('DOMContentLoaded', function() {
         const continueBtn = document.getElementById('continue-btn');
+        const backBtn = document.getElementById('back-btn');
         const form = document.getElementById('onboarding-form');
+        const navActionInput = document.getElementById('nav-action');
         
         // Function to check if form is valid and enable/disable continue button
         function validateForm() {
@@ -436,8 +450,21 @@
         // Handle continue button
         continueBtn.addEventListener('click', function() {
             if (this.disabled) return;
+            if (navActionInput) {
+                navActionInput.value = 'next';
+            }
             form.submit();
         });
+
+        // Handle back button
+        if (backBtn) {
+            backBtn.addEventListener('click', function() {
+                if (navActionInput) {
+                    navActionInput.value = 'back';
+                }
+                form.submit();
+            });
+        }
         
         // Handle Enter key in form inputs
         form.addEventListener('keypress', function(e) {
