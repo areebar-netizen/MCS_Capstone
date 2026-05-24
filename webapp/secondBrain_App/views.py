@@ -753,7 +753,25 @@ def dashboard_view(request):
             2: 'Kinesthetic Learner',
             3: 'Reading/Writing Learner'
         }
-        return styles.get(int(style_id), 'Not Set')
+        if style_id is None or style_id == '':
+            return 'Not Set'
+
+        # Support both legacy single-index values and new multi-select values.
+        if isinstance(style_id, str):
+            raw_parts = [part.strip() for part in style_id.split(',') if part.strip()]
+        elif isinstance(style_id, (list, tuple)):
+            raw_parts = [str(part).strip() for part in style_id if str(part).strip()]
+        else:
+            raw_parts = [str(style_id).strip()]
+
+        mapped_parts = []
+        for part in raw_parts:
+            if part.isdigit():
+                mapped_parts.append(styles.get(int(part), part))
+            else:
+                mapped_parts.append(part)
+
+        return ', '.join(mapped_parts) if mapped_parts else 'Not Set'
     
     def get_session_length_text(length_id):
         lengths = {
@@ -1285,7 +1303,7 @@ def onboarding_view(request):
         4: {
             'title': 'SECTION 4: LEARNING STYLE & PREFERENCES',
             'questions': [
-                {'id': 'learning_style', 'type': 'radio', 'label': 'How do you learn best?',
+                {'id': 'learning_style', 'type': 'checkbox', 'label': 'How do you learn best? (Select all that apply)',
                  'options': ['Visual (diagrams, charts, videos, reading)', 'Auditory (listening to lectures, discussions, audio)', 
                           'Kinesthetic (hands-on practice, movement, doing)', 'Reading/Writing (taking notes, writing summaries)', 'Not sure']},
                 {'id': 'study_subjects', 'type': 'checkbox', 'label': 'What subjects/topics do you typically work on?',
@@ -1408,8 +1426,12 @@ def onboarding_view(request):
                 
                 # Handle multi-select fields (checkboxes)
                 caffeine_types_list = onboarding_data.get('caffeine_types', [])
+                learning_style_list = onboarding_data.get('learning_style', [])
                 study_subjects_list = onboarding_data.get('study_subjects', [])
                 distractions_list = onboarding_data.get('distractions', [])
+
+                if not isinstance(learning_style_list, list):
+                    learning_style_list = [learning_style_list] if learning_style_list else []
                 
                 # Check if user consumes caffeine
                 consumes_caffeine = onboarding_data.get('consumes_caffeine', 'false').lower() == 'true'
@@ -1445,7 +1467,7 @@ def onboarding_view(request):
                     'caffeine_timing': ', '.join(caffeine_timing) if caffeine_timing and isinstance(caffeine_timing, list) else '',
                     
                     # Section 4: Styles
-                    'learning_style': onboarding_data.get('learning_style', ''),
+                    'learning_style': ', '.join(learning_style_list),
                     'study_subjects': ', '.join(study_subjects_list) if isinstance(study_subjects_list, list) else str(study_subjects_list),
                     
                     # Section 5: Habits
