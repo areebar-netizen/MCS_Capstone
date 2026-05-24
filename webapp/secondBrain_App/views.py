@@ -130,7 +130,7 @@ def calendar_view(request):
                     if focus_pct >= 75:
                         image_path = '/static/images/Master.jpg'
                     elif focus_pct >= 60:
-                        image_path = '/static/images/LockedIn.jpg'
+                        image_path = '/static/images/Curiosity.jpg'
                     elif focus_pct >= 45:
                         image_path = '/static/images/Steady.jpg'
                     elif focus_pct >= 30:
@@ -138,7 +138,7 @@ def calendar_view(request):
                     elif focus_pct >= 15:
                         image_path = '/static/images/Distracted.jpg'
                     else:
-                        image_path = '/static/images/BrainFog.jpg'
+                            image_path = '/static/images/Anxiety.jpg'  # Anxiety image
                 else:
                     focus_pct = None
                     image_path = None
@@ -163,7 +163,7 @@ def calendar_view(request):
         avg_focus = avg_focus * 100  # Convert to percentage
     
     active_days = len(session_data_by_day)
-    
+
     # Calculate navigation context
     if current_month == 1:
         prev_month = 12
@@ -171,17 +171,17 @@ def calendar_view(request):
     else:
         prev_month = current_month - 1
         prev_year = current_year
-    
+
     if current_month == 12:
         next_month = 1
         next_year = current_year + 1
     else:
         next_month = current_month + 1
         next_year = current_year
-    
+
     # Get month name for display
     month_name = calendar.month_name[current_month]
-    
+
     context = {
         'user': request.user if request.user.is_authenticated else None,
         'user_profile': user_profile,
@@ -198,14 +198,14 @@ def calendar_view(request):
         'next_year': next_year,
         'focus_legend': [
             {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
-            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
+            {'percentage': '60-74%', 'image': '/static/images/Curiosity.jpg', 'label': 'Locked In'},
             {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
             {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
             {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
-            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+            {'percentage': '<15%', 'image': '/static/images/Anxiety.jpg', 'label': 'Anxiety'}
         ]
     }
-    
+
     return render(request, 'focus_calendar.html', context)
 
 def calendar_api_data(request):
@@ -310,7 +310,7 @@ def calendar_api_data(request):
                     if focus_pct >= 75:
                         image_path = '/static/images/Master.jpg'
                     elif focus_pct >= 60:
-                        image_path = '/static/images/LockedIn.jpg'
+                        image_path = '/static/images/Curiosity.jpg'
                     elif focus_pct >= 45:
                         image_path = '/static/images/Steady.jpg'
                     elif focus_pct >= 30:
@@ -318,7 +318,7 @@ def calendar_api_data(request):
                     elif focus_pct >= 15:
                         image_path = '/static/images/Distracted.jpg'
                     else:
-                        image_path = '/static/images/BrainFog.jpg'
+                        image_path = '/static/images/Anxiety.jpg'  # Anxiety image
                 else:
                     focus_pct = None
                     image_path = None
@@ -380,11 +380,11 @@ def calendar_api_data(request):
         'next_year': next_year,
         'focus_legend': [
             {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
-            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
+            {'percentage': '60-74%', 'image': '/static/images/Curiosity.jpg', 'label': 'Locked In'},
             {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
             {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
             {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
-            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+            {'percentage': '<15%', 'image': '/static/images/Anxiety.jpg', 'label': 'Anxiety'}
         ]
     })
 
@@ -1150,7 +1150,7 @@ def dashboard_view(request):
                     if focus_pct >= 75:
                         image_path = '/static/images/Master.jpg'
                     elif focus_pct >= 60:
-                        image_path = '/static/images/LockedIn.jpg'
+                        image_path = '/static/images/Curiosity.jpg'
                     elif focus_pct >= 45:
                         image_path = '/static/images/Steady.jpg'
                     elif focus_pct >= 30:
@@ -1158,7 +1158,7 @@ def dashboard_view(request):
                     elif focus_pct >= 15:
                         image_path = '/static/images/Distracted.jpg'
                     else:
-                        image_path = '/static/images/BrainFog.jpg'
+                        image_path = '/static/images/Anxiety.jpg'
                 else:
                     focus_pct = None
                     image_path = None
@@ -1238,11 +1238,11 @@ def dashboard_view(request):
         'next_year': next_year,
         'focus_legend': [
             {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
-            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
+            {'percentage': '60-74%', 'image': '/static/images/Curiosity.jpg', 'label': 'Locked In'},
             {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
             {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
             {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
-            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+            {'percentage': '<15%', 'image': '/static/images/Anxiety.jpg', 'label': 'Anxiety'}
         ],
         'progress_stats': {
             'total_sessions': total_sessions_count,
