@@ -57,7 +57,7 @@ body {
     background-color: #F6F2F0;
     min-height: 100vh;
     padding: 2rem 1rem;
-    max-width: 1280px;
+    max-width: 1160px;
     margin: 0 auto;
 }
 
@@ -110,6 +110,7 @@ body {
     grid-template-columns: repeat(12, 1fr);
     gap: 1.5rem;
     min-width: 0;
+    align-items: start;
    
 }
 
@@ -129,12 +130,12 @@ body {
 
 /* Make Study Time and Progress Tracker match Focus Calendar height */
 .grid-row .col-span-6 .left-column {
-    height: 100%;
-    min-height: 500px;
+    height: auto;
+    min-height: 0;
 }
 
 .grid-row .col-span-6 .left-column > .card {
-    flex: 1;
+    flex: 0 0 auto;
     margin: 0;
 }
 

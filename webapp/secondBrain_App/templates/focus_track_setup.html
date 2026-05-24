@@ -223,9 +223,11 @@
     // ---- Slider live update ----
     ['psc-difficulty', 'psc-energy', 'psc-stress', 'caffeine-slider'].forEach(function(id) {
         var el = document.getElementById(id);
-        if (el) {
+        var valueEl = document.getElementById(id + '-val') || (id === 'caffeine-slider' ? document.getElementById('caffeine-val') : null);
+
+        if (el && valueEl) {
             el.addEventListener('input', function() {
-                document.getElementById(id + '-val').textContent = el.value + '/10';
+                valueEl.textContent = el.value + '/10';
             });
         }
     });

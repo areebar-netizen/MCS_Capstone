@@ -636,6 +636,7 @@ def send_otp(request):
             # Helpful for local development when email delivery is not configured.
             if settings.DEBUG:
                 logger.info("DEV OTP for %s: %s", email, otp_code)
+                print(f"DEV OTP for {email}: {otp_code}")
             
             send_mail(
                 subject,
@@ -648,6 +649,7 @@ def send_otp(request):
             logger.exception("OTP email send failed for %s", email)
             if settings.DEBUG:
                 logger.info("DEV FALLBACK OTP for %s: %s", email, otp_code)
+                print(f"DEV FALLBACK OTP for {email}: {otp_code}")
             # Continue the flow in development even if email backend is not configured.
         
         # Redirect to OTP verification page
