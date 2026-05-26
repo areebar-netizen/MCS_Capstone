@@ -39,7 +39,17 @@ from secondBrain_App.models import (
 from django.db import models
 import google.generativeai as genai
 
-API_KEY = os.getenv("GEMINI_API_KEY")
+# API Key rotation to avoid rate limits
+API_KEY_1 = os.getenv("GEMINI_API_KEY1")
+API_KEY_2 = os.getenv("GEMINI_API_KEY")
+_api_key_index = 0  # Module-level counter for rotation
+
+def get_api_key():
+    """Rotate between two API keys to avoid rate limits"""
+    global _api_key_index
+    key = API_KEY_1 if _api_key_index % 2 == 0 else API_KEY_2
+    _api_key_index += 1
+    return key
 
 
 # ============================================================
@@ -209,7 +219,7 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
 # ============================================================
 def _phase1_llm(user_profile, session, final_summary, subject='General'):
     """Phase 1 LLM recommendation using profile and session data only."""
-    genai.configure(api_key=API_KEY)
+    genai.configure(api_key=get_api_key())
     model = genai.GenerativeModel(model_name="gemini-3-flash-preview")
 
     avg_focus             = final_summary.get('average_focus_score', 0)
@@ -295,7 +305,7 @@ RESPOND WITH:
 # ============================================================
 def _phase2_llm(user_profile, session, user_summary_data, user_email, final_summary, subject='General'):
     """Phase 2 LLM recommendation using full history and feedback."""
-    genai.configure(api_key=API_KEY)
+    genai.configure(api_key=get_api_key())
     model = genai.GenerativeModel(model_name="gemini-3-flash-preview") 
 
     avg_focus             = final_summary.get('average_focus_score', 0)
