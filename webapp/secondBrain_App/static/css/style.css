@@ -881,20 +881,20 @@ body {
 }
 
 .focus-calendar-container .legend-items {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
 }
 
 .focus-calendar-container .legend-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
+    gap: 0.35rem;
+    padding: 0.35rem 0.5rem;
     background: rgba(255, 255, 255, 0.5);
     border-radius: var(--radius-sm);
     transition: all 0.3s ease;
+    min-width: 0;
 }
 
 .focus-calendar-container .legend-item:hover {
@@ -906,14 +906,34 @@ body {
     font-size: 0.75rem;
     color: rgba(0, 0, 0, 0.6);
     font-weight: 500;
+    line-height: 1.2;
 }
 
 /* Calendar Images - Base styling */
-.card.focus-calendar-container .focus-image,
+.card.focus-calendar-container .focus-image {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    mix-blend-mode: normal !important;
+    display: block !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
 .card.focus-calendar-container .legend-image {
-    width: 30px !important;
-    height: 30px !important;
-    border-radius: 50% !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    mix-blend-mode: normal !important;
+    flex-shrink: 0 !important;
     display: block !important;
     object-fit: cover !important;
     object-position: center !important;
@@ -1435,38 +1455,38 @@ body {
 }
 
 /* Brain Image Color Schemes */
-.card.focus-calendar-container .focus-image[src*="Master.jpg"],
-.card.focus-calendar-container .legend-image[src*="Master.jpg"] {
+.card.focus-calendar-container .focus-image[src*="Focus.png"],
+.card.focus-calendar-container .legend-image[src*="Focus.png"] {
     border: 1px solid #D580FF !important;
     box-shadow: 0 0 8px #D580FF !important;
 }
 
-.card.focus-calendar-container .focus-image[src*="LockedIn.jpg"],
-.card.focus-calendar-container .legend-image[src*="LockedIn.jpg"] {
+.card.focus-calendar-container .focus-image[src*="Curiosity.png"],
+.card.focus-calendar-container .legend-image[src*="Curiosity.png"] {
     border: 1px solid #00ACC1 !important;
     box-shadow: 0 0 8px #00ACC1 !important;
 }
 
-.card.focus-calendar-container .focus-image[src*="Steady.jpg"],
-.card.focus-calendar-container .legend-image[src*="Steady.jpg"] {
+.card.focus-calendar-container .focus-image[src*="Excite.png"],
+.card.focus-calendar-container .legend-image[src*="Excite.png"] {
     border: 1px solid #4CAF50 !important;
     box-shadow: 0 0 8px #4CAF50 !important;
 }
 
-.card.focus-calendar-container .focus-image[src*="Neutral.jpg"],
-.card.focus-calendar-container .legend-image[src*="Neutral.jpg"] {
+.card.focus-calendar-container .focus-image[src*="Calm.png"],
+.card.focus-calendar-container .legend-image[src*="Calm.png"] {
     border: 1px solid #FFD600 !important;
     box-shadow: 0 0 8px #FFD600 !important;
 }
 
-.card.focus-calendar-container .focus-image[src*="Distracted.jpg"],
-.card.focus-calendar-container .legend-image[src*="Distracted.jpg"] {
+.card.focus-calendar-container .focus-image[src*="Distracted2.png"],
+.card.focus-calendar-container .legend-image[src*="Distracted2.png"] {
     border: 1px solid #FF9800 !important;
     box-shadow: 0 0 8px #FF9800 !important;
 }
 
-.card.focus-calendar-container .focus-image[src*="BrainFog.jpg"],
-.card.focus-calendar-container .legend-image[src*="BrainFog.jpg"] {
+.card.focus-calendar-container .focus-image[src*="Anxiety.png"],
+.card.focus-calendar-container .legend-image[src*="Anxiety.png"] {
     border: 1px solid #9E9E9E !important;
     box-shadow: 0 0 8px #9E9E9E !important;
 }
