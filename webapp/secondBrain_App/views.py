@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.conf import settings
 from django.core.cache import cache
+from django.db import models
 import random
 import string
 import json
@@ -385,6 +386,67 @@ def calendar_api_data(request):
             {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
             {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
         ]
+    })
+
+def recommendation_api_data(request):
+    """API endpoint for filtered recommendations by subject"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'error': 'User profile not found'}, status=404)
+    
+    from .models import Recommendation, PreSessionCheckIn
+    
+    # Get subject filter from query parameters
+    subject_filter = request.GET.get('subject', '')
+    
+    # Filter recommendations based on subject
+    if not subject_filter:
+        latest_rec = Recommendation.objects.filter(user=user_profile).order_by('-created_at').first()
+    else:
+        # First try direct subject match (case-insensitive) - get latest for that subject
+        latest_rec = Recommendation.objects.filter(
+            user=user_profile,
+            subject__iexact=subject_filter
+        ).order_by('-created_at').first()
+        
+        # If no direct match, try to find via PreSessionCheckIn
+        # This handles the case where subject_filter is a custom "Other" value
+        if not latest_rec:
+            matching_checkin = PreSessionCheckIn.objects.filter(
+                user=user_profile
+            ).filter(
+                models.Q(subject_task__iexact=subject_filter) |
+                models.Q(subject_task='Other', subject_other_value__iexact=subject_filter)
+            ).first()
+            
+            if matching_checkin:
+                # Get all sessions for this subject and find the latest recommendation
+                all_matching_checkins = PreSessionCheckIn.objects.filter(
+                    user=user_profile
+                ).filter(
+                    models.Q(subject_task__iexact=subject_filter) |
+                    models.Q(subject_task='Other', subject_other_value__iexact=subject_filter)
+                )
+                
+                session_ids = list(all_matching_checkins.values_list('session_id', flat=True))
+                
+                # Get the latest recommendation from any of these sessions
+                latest_rec = Recommendation.objects.filter(
+                    user=user_profile,
+                    session__session_id__in=session_ids
+                ).order_by('-created_at').first()
+    
+    ai_recommendation_text = latest_rec.message if latest_rec else None
+    # Don't remove markdown symbols - frontend needs them for parsing into sections
+    
+    return JsonResponse({
+        'recommendation': ai_recommendation_text,
+        'subject': subject_filter
     })
 
 def study_time_api_data(request):
@@ -1238,6 +1300,26 @@ def dashboard_view(request):
     # Get month name for display
     month_name = calendar.month_name[current_month]
     
+    # Get unique subjects from user's PreSessionCheckIn records
+    from .models import PreSessionCheckIn
+    checkins = PreSessionCheckIn.objects.filter(user=user_profile).distinct()
+    
+    # Build list of display subjects (use custom value if "Other" is selected)
+    user_subjects = []
+    for checkin in checkins:
+        if checkin.subject_task == 'Other' and checkin.subject_other_value:
+            user_subjects.append(checkin.subject_other_value)
+        else:
+            user_subjects.append(checkin.subject_task)
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    user_subjects = [x for x in user_subjects if not (x in seen or seen.add(x))]
+    
+    # If no subjects yet, use empty list
+    if not user_subjects:
+        user_subjects = []
+    
     cache_key = f"recommendation_{user_email}"
     cached_data = cache.get(cache_key)
     ai_recommendation_text = cached_data.get('text') if cached_data else None
@@ -1257,6 +1339,7 @@ def dashboard_view(request):
         'session_stats': session_stats,
         'recommendations': recommendations,
         'ai_recommendation': ai_recommendation_text,
+        'user_subjects': user_subjects,
         'aggregate_stats': aggregate_stats,
         'calendar_weeks': calendar_weeks,
         'current_month': current_month,
@@ -2316,6 +2399,11 @@ def presession_checkin_view(request):
             }
             subject_task = subject_mapping.get(data.get('subject'), 'Studying')
             
+            # Handle custom subject value for "Other"
+            subject_other_value = None
+            if subject_task == 'Other' and data.get('subject_other'):
+                subject_other_value = data.get('subject_other')
+            
             # Map task length to model choice
             task_length_mapping = {
                 '15-30 minutes': '15-30m',
@@ -2371,6 +2459,7 @@ def presession_checkin_view(request):
             session_id=session_id,
             session_name=data.get('session_name', ''),
             subject_task=subject_task,
+            subject_other_value=subject_other_value,
             task_difficulty=int(data.get('difficulty', 5)),
             estimated_length=estimated_length,
             assignment_deadline=assignment_deadline,

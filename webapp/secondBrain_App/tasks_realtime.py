@@ -801,7 +801,11 @@ def save_session_summary(summary_data):
                 
                 print(f"[RECOMMENDATION DEBUG] Found PreSessionCheckIn: {checkin is not None}")
                 if checkin:
-                    subject = checkin.subject_task or 'General'
+                    # Use custom value if subject is "Other"
+                    if checkin.subject_task == 'Other' and checkin.subject_other_value:
+                        subject = checkin.subject_other_value
+                    else:
+                        subject = checkin.subject_task or 'General'
                     print(f"[RECOMMENDATION DEBUG] Subject from PreSessionCheckIn: {subject}")
                 else:
                     print(f"[RECOMMENDATION DEBUG] No PreSessionCheckIn found for session {summary_data['session_id']}")
