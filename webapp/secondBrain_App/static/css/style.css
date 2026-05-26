@@ -57,7 +57,8 @@ body {
     background-color: #F6F2F0;
     min-height: 100vh;
     padding: 2rem 1rem;
-    max-width: 1280px;
+    width: min(1160px, 100%);
+    max-width: 1160px;
     margin: 0 auto;
 }
 
@@ -103,14 +104,21 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    min-width: 0;
 }
 
 .grid-row {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 1.5rem;
+    width: 100%;
     min-width: 0;
+    align-items: start;
    
+}
+
+.grid-row > [class^="col-span-"] {
+    min-width: 0;
 }
 
 .col-span-12 { grid-column: span 12; }
@@ -129,12 +137,12 @@ body {
 
 /* Make Study Time and Progress Tracker match Focus Calendar height */
 .grid-row .col-span-6 .left-column {
-    height: 100%;
-    min-height: 500px;
+    height: auto;
+    min-height: 0;
 }
 
 .grid-row .col-span-6 .left-column > .card {
-    flex: 1;
+    flex: 0 0 auto;
     margin: 0;
 }
 
@@ -1210,6 +1218,7 @@ body {
     height: 100%;
     border-radius: 10px;
     transition: width 0.3s ease;
+    background: var(--primary-color); /* Replace gradient with solid color */
 }
 
 .concentrated-bar {
@@ -1788,6 +1797,7 @@ body {
     height: 100%;
     border-radius: 4px;
     transition: width 0.3s ease;
+    background: var(--primary-color); /* Replace gradient with solid color */
 }
 
 .concentrated-bar {
@@ -1992,7 +2002,8 @@ body {
 }
 
 .session-info {
-    flex: 1;
+    flex: 1 1 200px;
+    min-width: 0;
 }
 
 .session-name {
@@ -2175,7 +2186,7 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
+@media (max-width: 820px) {
     .grid-row {
         grid-template-columns: 1fr;
     }
@@ -2269,33 +2280,52 @@ body {
 }
 
 .progress-text {
-    font-size: 14px;
+    font-size: 17px;
     color: var(--text-secondary);
     font-weight: var(--font-weight-medium);
 }
 
 .progress-bar-container {
     flex: 1;
-    height: 4px;
+    height: 8px;
     background-color: var(--bg-white-overlay);
-    border-radius: 2px;
+    border-radius: 6px;
     margin: 0 var(--spacing-md);
     overflow: hidden;
 }
 
 .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(to right, #fe938c, #ffffff);
-    border-radius: 2px;
+    background: #fe938c;
+    border-radius: 6px;
     transition: all 0.3s ease-out;
     transition: width 0.3s ease;
     width: 0%; /* Default width, will be set by JavaScript */
 }
 
 .progress-percentage {
-    font-size: 14px;
+    font-size: 17px;
     color: var(--text-secondary);
     font-weight: var(--font-weight-medium);
+}
+
+.progress-bar-container.segmented {
+    position: relative;
+}
+
+.progress-dividers {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    pointer-events: none;
+}
+
+.progress-dividers span {
+    justify-self: end;
+    width: 3px;
+    height: 100%;
+    background: rgba(148, 163, 184, 0.75);
 }
 
 /* Form Card */
@@ -2586,9 +2616,46 @@ body {
     gap: var(--spacing-sm);
 }
 
+.onboarding-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.back-btn {
+    background-color: var(--bg-white);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 16px;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    min-width: 140px;
+}
+
+.back-btn:hover {
+    border-color: rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+}
+
+.back-arrow {
+    width: 16px;
+    height: 16px;
+}
+
 /* Continue Button */
 .continue-btn {
-    width: 100%;
+    flex: 1;
     background-color: var(--bg-white);
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-sm);
@@ -2654,6 +2721,19 @@ body {
     .subtitle {
         font-size: 15px;
     }
+
+    .progress-section {
+        gap: 8px;
+    }
+
+    .onboarding-nav-actions {
+        flex-direction: column;
+    }
+
+    .back-btn,
+    .continue-btn {
+        width: 100%;
+    }
 }
 
 /* Accessibility */
@@ -2663,4 +2743,15 @@ body {
 .form-input:focus {
     outline: 2px solid #FF4757;
     outline-offset: 2px;
+}
+
+.focus-track-history {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.focus-track-history.card {
+    display: block;
+    width: 100%;
+    align-self: stretch;
 }

@@ -33,8 +33,9 @@
             </div>
 
             <div class="psc-section">
-                <label class="psc-label">Estimated task length</label>
+                <label class="psc-label">Goal length to finish the task</label>
                 <div class="psc-grid psc-grid-2">
+                    <button class="psc-opt" data-group="tasklength" data-val="None">None</button>
                     <button class="psc-opt" data-group="tasklength" data-val="15-30 minutes">15-30 minutes</button>
                     <button class="psc-opt" data-group="tasklength" data-val="30-60 minutes">30-60 minutes</button>
                     <button class="psc-opt" data-group="tasklength" data-val="1-2 hours">1-2 hours</button>
@@ -334,6 +335,7 @@ async function togglePrevSession(checked) {
             'Moderate': 'Moderate (jog)', 'Intense': 'Intense (workout)'
         };
         const lengthMap = {
+            'None': 'None',
             '15-30m': '15-30 minutes', '30-60m': '30-60 minutes',
             '1-2h': '1-2 hours', '2h+': '2+ hours'
         };
