@@ -38,6 +38,7 @@
         <form id="onboarding-form" method="post">
             {% csrf_token %}
             <input type="hidden" name="current_step" value="{{ current_step|default:1 }}">
+            <input type="hidden" name="nav_action" id="nav-action" value="next">
             
             {% for question in section.questions %}
             {% if question.id == 'caffeine_types' or question.id == 'caffeine_servings' or question.id == 'caffeine_timing' %}
@@ -80,14 +81,14 @@
                         type="range" 
                         id="{{ question.id }}" 
                         name="{{ question.id }}" 
-                        class="range-slider"
+                        class="range-slider {% if question.id == 'caffeine_servings' %}caffeine-detail-input{% endif %}"
                         {% if question.min %}min="{{ question.min }}"{% endif %}
                         {% if question.max %}max="{{ question.max }}"{% endif %}
                         value="{{ saved_data|get_saved_value:question.id|default:question.default|default:5 }}"
                         aria-label="{{ question.label }}"
                     >
                     <div class="range-labels">
-                        <span>1</span>
+                        <span>{{ question.min|default:1 }}</span>
                         <span>{{ question.max }}</span>
                     </div>
                 </div>
@@ -120,9 +121,9 @@
                                 type="checkbox" 
                                 id="chk-{{ question.id }}-{{ forloop.counter0 }}" 
                                 name="{{ question.id }}" 
-                                value="{{ forloop.counter0 }}"
-                                class="hidden-input {% if question.id == 'caffeine_types' %}caffeine-detail-checkbox{% endif %}"
-                                {% if forloop.counter0|stringformat:'s' in saved_data|get_saved_value:question.id %}checked{% endif %}
+                                value="{{ option }}"
+                                class="hidden-input {% if question.id == 'caffeine_types' or question.id == 'caffeine_timing' %}caffeine-detail-checkbox{% endif %}"
+                                {% if option in saved_data|get_saved_value:question.id|default:'' %}checked{% endif %}
                             >
                             <span class="label-text">{{ option }}</span>
                         </label>
@@ -138,13 +139,24 @@
             <input type="hidden" id="radio-selection" name="radio_selection" value="">
         </form>
         
-        <!-- Continue Button -->
-        <button type="button" id="continue-btn" class="continue-btn" disabled aria-label="Continue to next step">
-            Continue
-            <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
-            </svg>
-        </button>
+        <div class="onboarding-nav-actions">
+            {% if current_step|default:1 > 1 %}
+            <button type="button" id="back-btn" class="back-btn" aria-label="Go to previous step">
+                <svg class="arrow-icon back-arrow" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M9.707 3.293a1 1 0 00-1.414 0l-6 6a1 1 0 000 1.414l6 6a1 1 0 101.414-1.414L5.414 11H17a1 1 0 100-2H5.414l4.293-4.293a1 1 0 000-1.414z" clip-rule="evenodd"/>
+                </svg>
+                Back
+            </button>
+            {% endif %}
+
+            <!-- Continue Button -->
+            <button type="button" id="continue-btn" class="continue-btn" disabled aria-label="Continue to next step">
+                Continue
+                <svg class="arrow-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
     </main>
     
     <!-- Session History (if available) -->
@@ -172,15 +184,10 @@
 <script>
     // Dynamic form handling for multi-step questionnaire
     document.addEventListener('DOMContentLoaded', function() {
-        // Set progress bar width from data attribute
-        const progressBar = document.querySelector('.progress-bar-fill');
-        if (progressBar) {
-            const progress = progressBar.dataset.progress || 10;
-            progressBar.style.width = progress + '%';
-        }
-        
         const continueBtn = document.getElementById('continue-btn');
+        const backBtn = document.getElementById('back-btn');
         const form = document.getElementById('onboarding-form');
+        const navActionInput = document.getElementById('nav-action');
         
         // Function to check if form is valid and enable/disable continue button
         function validateForm() {
@@ -247,12 +254,6 @@
                     return;
                 }
                 
-                // SHORT-CIRCUIT: Auto-pass caffeine_timing radio if user selected No
-                if (button.name === 'btn-group-caffeine_timing' && userSelectedNoForCaffeine) {
-                    console.log('SHORT-CIRCUIT: Auto-passing caffeine_timing - user selected No');
-                    return; // Skip this entire button group
-                }
-                
                 if (!buttonGroups[button.name]) {
                     buttonGroups[button.name] = false;
                 }
@@ -280,8 +281,8 @@
             
             Object.keys(checkboxGroups).forEach(groupName => {
                 // SHORT-CIRCUIT: Auto-pass caffeine_types if user selected No
-                if (groupName === 'caffeine_types' && userSelectedNoForCaffeine) {
-                    console.log('SHORT-CIRCUIT: Auto-passing caffeine_types - user selected No');
+                if ((groupName === 'caffeine_types' || groupName === 'caffeine_timing') && userSelectedNoForCaffeine) {
+                    console.log('SHORT-CIRCUIT: Auto-passing caffeine checkbox group - user selected No');
                     return; // Skip validation for this group
                 }
                 
@@ -422,21 +423,19 @@
                 caffeineTypesHidden.value = '';
             }
             
-            // Reset number input and clear hidden input
+            // Reset servings input
             const servingsInput = document.querySelector('.caffeine-detail-input');
             if (servingsInput) {
-                servingsInput.value = '';
-            }
-            
-            // Reset radio buttons for timing and clear hidden input
-            const timingRadios = document.querySelectorAll('button[name="btn-group-caffeine_timing"]');
-            timingRadios.forEach(radio => {
-                radio.classList.remove('btn-selected');
-                radio.classList.add('btn-deselected');
-            });
-            const timingHidden = document.getElementById('hidden-caffeine_timing');
-            if (timingHidden) {
-                timingHidden.value = '';
+                if (servingsInput.type === 'range') {
+                    const minValue = servingsInput.min || '1';
+                    servingsInput.value = minValue;
+                    const servingsDisplay = document.getElementById('caffeine_servings-value');
+                    if (servingsDisplay) {
+                        servingsDisplay.textContent = minValue;
+                    }
+                } else {
+                    servingsInput.value = '';
+                }
             }
             
             console.log('Caffeine details reset completed');
@@ -448,8 +447,21 @@
         // Handle continue button
         continueBtn.addEventListener('click', function() {
             if (this.disabled) return;
+            if (navActionInput) {
+                navActionInput.value = 'next';
+            }
             form.submit();
         });
+
+        // Handle back button
+        if (backBtn) {
+            backBtn.addEventListener('click', function() {
+                if (navActionInput) {
+                    navActionInput.value = 'back';
+                }
+                form.submit();
+            });
+        }
         
         // Handle Enter key in form inputs
         form.addEventListener('keypress', function(e) {

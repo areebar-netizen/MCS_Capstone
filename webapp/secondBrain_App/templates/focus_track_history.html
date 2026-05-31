@@ -56,13 +56,14 @@
 }
 
 .progress-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: 120px 1fr 48px;
     align-items: center;
     gap: 12px;
 }
 
 .progress-label {
-    min-width: 80px;
+    width: 120px;
     font-weight: 500;
     color: var(--text-muted);
     font-size: 0.85rem;
@@ -87,11 +88,25 @@
 .relaxed-bar { background: #8b5cf6; }
 
 .progress-value {
-    min-width: 40px;
+    width: 48px;
     font-weight: 600;
     color: var(--text-color);
     font-size: 0.85rem;
     text-align: right;
+}
+
+@media (max-width: 480px) {
+    .progress-item {
+        grid-template-columns: 100px 1fr 44px;
+    }
+
+    .progress-label {
+        width: 100px;
+    }
+
+    .progress-value {
+        width: 44px;
+    }
 }
 
 /* Session Timeline */

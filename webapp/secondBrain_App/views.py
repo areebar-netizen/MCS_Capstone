@@ -20,11 +20,14 @@ from .tasks import run_live_inference, get_task_status
 from .tasks_realtime import run_live_inference_streaming
 from django.views.decorators.csrf import csrf_exempt
 import csv
+import logging
 
 from .models import UserProfile, Recommendation, SessionSummary
 from .services.eeg_service import EEGService
 
 # Create your views here.
+
+logger = logging.getLogger(__name__)
 
 MODEL_SERVICE = PredictionService(models_dir=Path(settings.BASE_DIR.parent)/ 'core_engine' / 'artifacts', model_name='xgboost')
 
@@ -128,17 +131,17 @@ def calendar_view(request):
                     
                     # Map focus percentage to image path based on requirements
                     if focus_pct >= 75:
-                        image_path = '/static/images/Master.jpg'
+                        image_path = '/static/images/Focus.png'
                     elif focus_pct >= 60:
-                        image_path = '/static/images/LockedIn.jpg'
+                        image_path = '/static/images/Curiosity.png'
                     elif focus_pct >= 45:
-                        image_path = '/static/images/Steady.jpg'
+                        image_path = '/static/images/Excite.png'
                     elif focus_pct >= 30:
-                        image_path = '/static/images/Neutral.jpg'
+                        image_path = '/static/images/Calm.png'
                     elif focus_pct >= 15:
-                        image_path = '/static/images/Distracted.jpg'
+                        image_path = '/static/images/Distracted2.png'
                     else:
-                        image_path = '/static/images/BrainFog.jpg'
+                            image_path = '/static/images/Anxiety.png'  # Anxiety image
                 else:
                     focus_pct = None
                     image_path = None
@@ -163,7 +166,7 @@ def calendar_view(request):
         avg_focus = avg_focus * 100  # Convert to percentage
     
     active_days = len(session_data_by_day)
-    
+
     # Calculate navigation context
     if current_month == 1:
         prev_month = 12
@@ -171,17 +174,17 @@ def calendar_view(request):
     else:
         prev_month = current_month - 1
         prev_year = current_year
-    
+
     if current_month == 12:
         next_month = 1
         next_year = current_year + 1
     else:
         next_month = current_month + 1
         next_year = current_year
-    
+
     # Get month name for display
     month_name = calendar.month_name[current_month]
-    
+
     context = {
         'user': request.user if request.user.is_authenticated else None,
         'user_profile': user_profile,
@@ -197,15 +200,15 @@ def calendar_view(request):
         'next_month': next_month,
         'next_year': next_year,
         'focus_legend': [
-            {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
-            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
-            {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
-            {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
-            {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
-            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+            {'percentage': '75%+', 'image': '/static/images/Focus.png', 'label': 'Master'},
+            {'percentage': '60-74%', 'image': '/static/images/Curiosity.png', 'label': 'Locked In'},
+            {'percentage': '45-59%', 'image': '/static/images/Excite.png', 'label': 'Steady'},
+            {'percentage': '30-44%', 'image': '/static/images/Calm.png', 'label': 'Neutral'},
+            {'percentage': '15-29%', 'image': '/static/images/Distracted2.png', 'label': 'Distracted'},
+            {'percentage': '<15%', 'image': '/static/images/Anxiety.png', 'label': 'Anxiety'}
         ]
     }
-    
+
     return render(request, 'focus_calendar.html', context)
 
 def calendar_api_data(request):
@@ -308,17 +311,17 @@ def calendar_api_data(request):
                     
                     # Map focus percentage to image path based on requirements
                     if focus_pct >= 75:
-                        image_path = '/static/images/Master.jpg'
+                        image_path = '/static/images/Focus.png'
                     elif focus_pct >= 60:
-                        image_path = '/static/images/LockedIn.jpg'
+                        image_path = '/static/images/Curiosity.png'
                     elif focus_pct >= 45:
-                        image_path = '/static/images/Steady.jpg'
+                        image_path = '/static/images/Excite.png'
                     elif focus_pct >= 30:
-                        image_path = '/static/images/Neutral.jpg'
+                        image_path = '/static/images/Calm.png'
                     elif focus_pct >= 15:
-                        image_path = '/static/images/Distracted.jpg'
+                        image_path = '/static/images/Distracted2.png'
                     else:
-                        image_path = '/static/images/BrainFog.jpg'
+                        image_path = '/static/images/Anxiety.png'  # Anxiety image
                 else:
                     focus_pct = None
                     image_path = None
@@ -379,12 +382,12 @@ def calendar_api_data(request):
         'next_month': next_month,
         'next_year': next_year,
         'focus_legend': [
-            {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
-            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
-            {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
-            {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
-            {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
-            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+            {'percentage': '75%+', 'image': '/static/images/Focus.png', 'label': 'Master'},
+            {'percentage': '60-74%', 'image': '/static/images/Curiosity.png', 'label': 'Locked In'},
+            {'percentage': '45-59%', 'image': '/static/images/Excite.png', 'label': 'Steady'},
+            {'percentage': '30-44%', 'image': '/static/images/Calm.png', 'label': 'Neutral'},
+            {'percentage': '15-29%', 'image': '/static/images/Distracted2.png', 'label': 'Distracted'},
+            {'percentage': '<15%', 'image': '/static/images/Anxiety.png', 'label': 'Anxiety'}
         ]
     })
 
@@ -774,6 +777,11 @@ def send_otp(request):
             message = f'Your BrainWave verification code is: {otp_code}\n\nThis code will expire in 5 minutes.'
             from_email = 'noreply@brainwave.com'
             recipient_list = [email]
+
+            # Helpful for local development when email delivery is not configured.
+            if settings.DEBUG:
+                logger.info("DEV OTP for %s: %s", email, otp_code)
+                print(f"DEV OTP for {email}: {otp_code}")
             
             send_mail(
                 subject,
@@ -783,8 +791,11 @@ def send_otp(request):
                 fail_silently=False,
             )
         except Exception as e:
-            pass
-            # For now, we'll continue with the flow even if email fails
+            logger.exception("OTP email send failed for %s", email)
+            if settings.DEBUG:
+                logger.info("DEV FALLBACK OTP for %s: %s", email, otp_code)
+                print(f"DEV FALLBACK OTP for {email}: {otp_code}")
+            # Continue the flow in development even if email backend is not configured.
         
         # Redirect to OTP verification page
         return render(request, 'otp_verification.html', {'email': email})
@@ -947,7 +958,25 @@ def dashboard_view(request):
             2: 'Kinesthetic Learner',
             3: 'Reading/Writing Learner'
         }
-        return styles.get(int(style_id), 'Not Set')
+        if style_id is None or style_id == '':
+            return 'Not Set'
+
+        # Support both legacy single-index values and new multi-select values.
+        if isinstance(style_id, str):
+            raw_parts = [part.strip() for part in style_id.split(',') if part.strip()]
+        elif isinstance(style_id, (list, tuple)):
+            raw_parts = [str(part).strip() for part in style_id if str(part).strip()]
+        else:
+            raw_parts = [str(style_id).strip()]
+
+        mapped_parts = []
+        for part in raw_parts:
+            if part.isdigit():
+                mapped_parts.append(styles.get(int(part), part))
+            else:
+                mapped_parts.append(part)
+
+        return ', '.join(mapped_parts) if mapped_parts else 'Not Set'
     
     def get_session_length_text(length_id):
         lengths = {
@@ -1315,17 +1344,17 @@ def dashboard_view(request):
                     
                     # Map focus percentage to image path based on requirements
                     if focus_pct >= 75:
-                        image_path = '/static/images/Master.jpg'
+                        image_path = '/static/images/Focus.png'
                     elif focus_pct >= 60:
-                        image_path = '/static/images/LockedIn.jpg'
+                        image_path = '/static/images/Curiosity.png'
                     elif focus_pct >= 45:
-                        image_path = '/static/images/Steady.jpg'
+                        image_path = '/static/images/Excite.png'
                     elif focus_pct >= 30:
-                        image_path = '/static/images/Neutral.jpg'
+                        image_path = '/static/images/Calm.png'
                     elif focus_pct >= 15:
-                        image_path = '/static/images/Distracted.jpg'
+                        image_path = '/static/images/Distracted2.png'
                     else:
-                        image_path = '/static/images/BrainFog.jpg'
+                        image_path = '/static/images/Anxiety.png'
                 else:
                     focus_pct = None
                     image_path = None
@@ -1425,12 +1454,12 @@ def dashboard_view(request):
         'next_month': next_month,
         'next_year': next_year,
         'focus_legend': [
-            {'percentage': '75%+', 'image': '/static/images/Master.jpg', 'label': 'Master'},
-            {'percentage': '60-74%', 'image': '/static/images/LockedIn.jpg', 'label': 'Locked In'},
-            {'percentage': '45-59%', 'image': '/static/images/Steady.jpg', 'label': 'Steady'},
-            {'percentage': '30-44%', 'image': '/static/images/Neutral.jpg', 'label': 'Neutral'},
-            {'percentage': '15-29%', 'image': '/static/images/Distracted.jpg', 'label': 'Distracted'},
-            {'percentage': '<15%', 'image': '/static/images/BrainFog.jpg', 'label': 'Brain Fog'}
+            {'percentage': '75%+', 'image': '/static/images/Focus.png', 'label': 'Master'},
+            {'percentage': '60-74%', 'image': '/static/images/Curiosity.png', 'label': 'Locked In'},
+            {'percentage': '45-59%', 'image': '/static/images/Excite.png', 'label': 'Steady'},
+            {'percentage': '30-44%', 'image': '/static/images/Calm.png', 'label': 'Neutral'},
+            {'percentage': '15-29%', 'image': '/static/images/Distracted2.png', 'label': 'Distracted'},
+            {'percentage': '<15%', 'image': '/static/images/Anxiety.png', 'label': 'Anxiety'}
         ],
         'progress_stats': {
             'total_sessions': total_sessions_count,
@@ -1482,8 +1511,8 @@ def onboarding_view(request):
                 {'id': 'consumes_caffeine', 'type': 'radio', 'label': 'Do you consume caffeine?', 'options': ['Yes', 'No']},
                 {'id': 'caffeine_types', 'type': 'checkbox', 'label': 'What type(s) of caffeine? (if Yes)',
                  'options': ['Coffee', 'Tea (black/green)', 'Energy drinks', 'Soda', 'Other']},
-                {'id': 'caffeine_servings', 'type': 'number', 'label': 'How many servings per day? (if Yes)', 'min': 1, 'max': 10},
-                {'id': 'caffeine_timing', 'type': 'radio', 'label': 'When do you typically consume caffeine? (if Yes)',
+                {'id': 'caffeine_servings', 'type': 'range', 'label': 'How many servings per day? (if Yes)', 'min': 1, 'max': 10, 'default': 1},
+                {'id': 'caffeine_timing', 'type': 'checkbox', 'label': 'When do you typically consume caffeine? (if Yes)',
                  'options': ['Early morning only (before 10am)', 'Morning to noon (before 12pm)', 
                           'Throughout the day (morning to afternoon)', 'Anytime (including evenings)']}
             ]
@@ -1491,7 +1520,7 @@ def onboarding_view(request):
         4: {
             'title': 'SECTION 4: LEARNING STYLE & PREFERENCES',
             'questions': [
-                {'id': 'learning_style', 'type': 'radio', 'label': 'How do you learn best?',
+                {'id': 'learning_style', 'type': 'checkbox', 'label': 'How do you learn best? (Select all that apply)',
                  'options': ['Visual (diagrams, charts, videos, reading)', 'Auditory (listening to lectures, discussions, audio)', 
                           'Kinesthetic (hands-on practice, movement, doing)', 'Reading/Writing (taking notes, writing summaries)', 'Not sure']},
                 {'id': 'study_subjects', 'type': 'checkbox', 'label': 'What subjects/topics do you typically work on?',
@@ -1574,6 +1603,7 @@ def onboarding_view(request):
     if request.method == 'POST':
         # Get current step from form data or default to 1
         current_step = int(request.POST.get('current_step', 1))
+        nav_action = request.POST.get('nav_action', 'next')
         
         # Store form data in session
         if 'onboarding_data' not in request.session:
@@ -1593,6 +1623,11 @@ def onboarding_view(request):
         request.session['onboarding_data'].update(step_data)
         request.session.modified = True
         
+        # Handle step navigation actions
+        if nav_action == 'back':
+            previous_step = max(1, current_step - 1)
+            return redirect(f'/onboarding/?step={previous_step}')
+
         # Move to next step
         next_step = current_step + 1
         
@@ -1614,8 +1649,12 @@ def onboarding_view(request):
                 
                 # Handle multi-select fields (checkboxes)
                 caffeine_types_list = onboarding_data.get('caffeine_types', [])
+                learning_style_list = onboarding_data.get('learning_style', [])
                 study_subjects_list = onboarding_data.get('study_subjects', [])
                 distractions_list = onboarding_data.get('distractions', [])
+
+                if not isinstance(learning_style_list, list):
+                    learning_style_list = [learning_style_list] if learning_style_list else []
                 
                 # Check if user consumes caffeine
                 consumes_caffeine = onboarding_data.get('consumes_caffeine', 'false').lower() == 'true'
@@ -1624,12 +1663,14 @@ def onboarding_view(request):
                 if not consumes_caffeine:
                     caffeine_types_list = None  # Explicitly set to None
                     caffeine_servings = 0
-                    caffeine_timing = ''
+                    caffeine_timing = []
                 else:
                     # Only process caffeine data if user actually consumes caffeine
                     caffeine_types_list = onboarding_data.get('caffeine_types', [])
                     caffeine_servings = int(onboarding_data.get('caffeine_servings', 0))
-                    caffeine_timing = onboarding_data.get('caffeine_timing', '')
+                    caffeine_timing = onboarding_data.get('caffeine_timing', [])
+                    if not isinstance(caffeine_timing, list):
+                        caffeine_timing = [caffeine_timing] if caffeine_timing else []
                 
                 profile_data = {
                     'email': user_email,  # Use 'email' to match model field name
@@ -1646,10 +1687,10 @@ def onboarding_view(request):
                     'consumes_caffeine': consumes_caffeine,
                     'caffeine_types': ', '.join(caffeine_types_list) if caffeine_types_list and isinstance(caffeine_types_list, list) else '',
                     'caffeine_servings': caffeine_servings,
-                    'caffeine_timing': caffeine_timing,
+                    'caffeine_timing': ', '.join(caffeine_timing) if caffeine_timing and isinstance(caffeine_timing, list) else '',
                     
                     # Section 4: Styles
-                    'learning_style': onboarding_data.get('learning_style', ''),
+                    'learning_style': ', '.join(learning_style_list),
                     'study_subjects': ', '.join(study_subjects_list) if isinstance(study_subjects_list, list) else str(study_subjects_list),
                     
                     # Section 5: Habits
@@ -2478,6 +2519,7 @@ def presession_checkin_view(request):
             
             # Map task length to model choice
             task_length_mapping = {
+                'None': 'None',
                 '15-30 minutes': '15-30m',
                 '30-60 minutes': '30-60m',
                 '1-2 hours': '1-2h',
