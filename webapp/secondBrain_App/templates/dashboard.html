@@ -127,7 +127,6 @@
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <label for="subjectFilter" style="color: rgba(255,255,255,0.9); font-size: 0.85rem; margin: 0;">Filter by Subject:</label>
                             <select id="subjectFilter" style="padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem; cursor: pointer;">
-                                <option value="">Select a subject...</option>
                                 {% for subject in user_subjects %}
                                     <option value="{{ subject }}">{{ subject }}</option>
                                 {% endfor %}
@@ -137,7 +136,7 @@
                     </div>
                     <div style="padding: 20px; background: #fff;">
                         {% if ai_recommendation %}
-                            <div class="ai-rec-rendered-full" data-raw="{{ ai_recommendation }}"></div>
+                            <div class="ai-rec-rendered-full" id="initialRecommendation" data-raw="{{ ai_recommendation }}"></div>
                         {% else %}
                             <p style="color: #aaa; font-size: 0.88rem; text-align: center; margin: 0;">Complete a session to generate your custom study method based on your EEG patterns.</p>
                         {% endif %}
@@ -664,63 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     recParent.appendChild(newDiv);
                     
                     // Trigger the page load script to process the new element
-                    document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el) {
-                        let text = el.getAttribute('data-raw');
-
-                        // Remove stray **
-                        text = text.replace(/\*\*\s*$/gm, '').replace(/^\s*\*\*\s*/gm, '');
-
-                        const sections = text.split(/(?=#+\s)|(?=\d+\.\s)/);
-                        let html = '';
-                        sections.forEach(function(section) {
-                            section = section.trim();
-                            
-                            if (!section || section === '**' || section.trim() === '') return;
-                            const stripped = section.replace(/#+/g, '').replace(/\*/g, '').trim();
-                            if (!stripped || stripped.length < 20) return;
-                            const titleMatch = section.match(
-                                /^(?:#+\s*|(\d+)\.\s+)\*?\*?([^*\n:]+):?\*?\*?/
-                            );
-                            if (titleMatch) {
-                                const title = titleMatch[2].replace(/\*/g, '').trim();
-                                let body = section.slice(titleMatch[0].length).trim();
-                                body = body.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                                body = body.replace(/^\*\s+/gm, '• ');
-                                body = body.replace(/\n\*\s+/g, '\n• ');
-                                body = body.replace(/\*\*/g, ''); // strip leftover **
-                                body = body.replace(/\n/g, '<br>');
-                                body = body.replace(/###/g, '').replace(/##/g, '').replace(/#/g, '').trim();
-                                body = body.trim();
-                                if (!body) return;
-                                const emojiMap = {
-                                'personalized recommendation': '🧠',
-                                'recommended study methods': '📚',
-                                'optimal study environment': '☀️',
-                                'what to avoid': '🚫'
-                            };
-
-                            const titleLower = title.toLowerCase();
-                            let emoji = '';
-                            for (const [key, val] of Object.entries(emojiMap)) {
-                                if (titleLower.includes(key)) { emoji = val; break; }
-                            }
-
-                            html += `<div class="method-section"><div class="method-section-title">${emoji} ${title}</div><div>${body}</div></div>`;
-
-                            } else {
-                                let body = section
-                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                    .replace(/\*\*/g, '')
-                                    .replace(/\n/g, '<br>')
-                                    .replace(/###/g, '').replace(/##/g, '').replace(/#/g, '').trim();
-                                if (body) {
-                                    html += `<div class="method-section"><div class="method-section-title">💡 Additional Insight</div><div>${body}</div></div>`;
-                                }
-                            }
-                        });
-                        
-                        el.innerHTML = html;
-                    });
+                    document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(processRecommendationElement);
                 } else {
                     recParent.innerHTML = `<p style="color: #aaa; font-size: 0.88rem; text-align: center; margin: 0;">No recommendation found for this subject. Complete a session to generate your custom study method based on your EEG patterns.</p>`;
                 }
@@ -1214,13 +1157,22 @@ window.addEventListener('beforeunload', function() {
 </style> */ -->
 
 <script>
-document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el) {
+function processRecommendationElement(el) {
+    console.log('Processing recommendation element:', el);
     let text = el.getAttribute('data-raw');
+    console.log('Raw data length:', text ? text.length : 0);
+    console.log('Raw data preview:', text ? text.substring(0, 100) : 'null');
+
+    if (!text) {
+        console.log('No raw data found, skipping');
+        return;
+    }
 
     // Remove stray ** 
     text = text.replace(/\*\*\s*$/gm, '').replace(/^\s*\*\*\s*/gm, '');
 
-    const sections = text.split(/(?=#+\s)|(?=\d+\.\s)/);
+    const sections = text.split(/(?=#+\s)|(?=\d+\.\s)|(?=Recommended Study Methods)|(?=Optimal Study Environment)|(?=What to Avoid)|(?=Personalized Recommendation)/);
+    console.log('Number of sections:', sections.length);
     let html = '';
     sections.forEach(function(section) {
         section = section.trim();
@@ -1231,9 +1183,29 @@ document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el
         const titleMatch = section.match(
             /^(?:#+\s*|(\d+)\.\s+)\*?\*?([^*\n:]+):?\*?\*?/
         );
+        
+        // Check if section starts with known section titles without markdown prefix
+        let title = null;
+        let body = section;
+        
         if (titleMatch) {
-            const title = titleMatch[2].replace(/\*/g, '').trim();
-            let body = section.slice(titleMatch[0].length).trim();
+            title = titleMatch[2].replace(/\*/g, '').trim();
+            body = section.slice(titleMatch[0].length).trim();
+        } else if (section.startsWith('Recommended Study Methods')) {
+            title = 'Recommended Study Methods';
+            body = section.slice('Recommended Study Methods'.length).trim();
+        } else if (section.startsWith('Optimal Study Environment')) {
+            title = 'Optimal Study Environment';
+            body = section.slice('Optimal Study Environment'.length).trim();
+        } else if (section.startsWith('What to Avoid')) {
+            title = 'What to Avoid';
+            body = section.slice('What to Avoid'.length).trim();
+        } else if (section.startsWith('Personalized Recommendation')) {
+            title = 'Personalized Recommendation';
+            body = section.slice('Personalized Recommendation'.length).trim();
+        }
+        
+        if (title) {
             body = body.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             body = body.replace(/^\*\s+/gm, '• ');
             body = body.replace(/\n\*\s+/g, '\n• ');
@@ -1268,6 +1240,14 @@ document.querySelectorAll('.ai-rec-rendered-full[data-raw]').forEach(function(el
         }
     });
     el.innerHTML = html || text;
+}
+
+// Process on DOMContentLoaded to ensure elements exist
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded fired, processing recommendations...');
+    const elements = document.querySelectorAll('.ai-rec-rendered-full[data-raw]');
+    console.log('Found elements:', elements.length);
+    elements.forEach(processRecommendationElement);
 });
 </script>
 {% endblock %}
