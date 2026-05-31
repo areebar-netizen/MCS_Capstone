@@ -449,6 +449,87 @@ def recommendation_api_data(request):
         'subject': subject_filter
     })
 
+def progress_tracker_api_data(request):
+    """API endpoint for progress tracker line graph data"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'error': 'User profile not found'}, status=404)
+    
+    # Get subject filter from query parameters
+    subject_filter = request.GET.get('subject', '')
+    
+    # Query SessionSummary with PreSessionCheckIn to get subject information
+    from .models import PreSessionCheckIn
+    from django.db.models import Q
+    
+    # Build base queryset
+    sessions = SessionSummary.objects.filter(user=user_profile).order_by('start_time')
+    
+    # Filter by subject if specified
+    if subject_filter:
+        # Get session IDs that match the subject filter
+        matching_checkins = PreSessionCheckIn.objects.filter(
+            user=user_profile
+        ).filter(
+            Q(subject_task__iexact=subject_filter) |
+            Q(subject_task='Other', subject_other_value__iexact=subject_filter)
+        )
+        session_ids = list(matching_checkins.values_list('session_id', flat=True))
+        sessions = sessions.filter(session_id__in=session_ids)
+    
+    # Prepare data for line graph
+    graph_data = []
+    for session in sessions:
+        # Get subject for this session
+        subject = 'Unknown'
+        try:
+            checkin = PreSessionCheckIn.objects.filter(
+                user=user_profile,
+                session_id=session.session_id
+            ).first()
+            if checkin:
+                if checkin.subject_task == 'Other' and checkin.subject_other_value:
+                    subject = checkin.subject_other_value
+                else:
+                    subject = checkin.subject_task
+        except:
+            subject = 'Unknown'
+        
+        # Format date for display
+        local_time = timezone.localtime(session.start_time)
+        date_str = local_time.strftime('%Y-%m-%d')
+        
+        graph_data.append({
+            'date': date_str,
+            'focus_score': session.average_focus_score,
+            'subject': subject,
+            'session_id': session.session_id
+        })
+    
+    # Get all unique subjects for the filter dropdown
+    all_checkins = PreSessionCheckIn.objects.filter(user=user_profile)
+    all_subjects = []
+    for checkin in all_checkins:
+        if checkin.subject_task == 'Other' and checkin.subject_other_value:
+            all_subjects.append(checkin.subject_other_value)
+        else:
+            all_subjects.append(checkin.subject_task)
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    all_subjects = [x for x in all_subjects if not (x in seen or seen.add(x))]
+    
+    return JsonResponse({
+        'data': graph_data,
+        'subjects': all_subjects,
+        'current_filter': subject_filter
+    })
+
 def study_time_api_data(request):
     """API endpoint for study time analysis data"""
     user_email = request.session.get('user_email')
@@ -895,16 +976,16 @@ def dashboard_view(request):
         
         # Define goal choices mapping
         GOAL_CHOICES = {
-            '1': 'Improve Grades',
-            '2': 'Learn New Skill', 
-            '3': 'Complete Assignments',
-            '4': 'Prepare for Exams',
-            '5': 'Increase Study Time',
-            '6': 'Better Time Management',
-            '7': 'Reduce Distractions',
-            '8': 'Improve Focus',
-            '9': 'Career Development',
-            '10': 'Personal Growth'
+            '0': 'Improve Grades',
+            '1': 'Learn New Skill', 
+            '2': 'Complete Assignments',
+            '3': 'Prepare for Exams',
+            '4': 'Increase Study Time',
+            '5': 'Better Time Management',
+            '6': 'Reduce Distractions',
+            '7': 'Improve Focus',
+            '8': 'Career Development',
+            '9': 'Personal Growth'
         }
         
         # Parse the string and map each index to text
@@ -931,16 +1012,16 @@ def dashboard_view(request):
         
         # Define location choices mapping
         LOCATION_CHOICES = {
-            '1': 'Library',
-            '2': 'Home Office',
-            '3': 'Bedroom',
-            '4': 'Living Room',
-            '5': 'Cafe/Coffee Shop',
-            '6': 'Study Room',
-            '7': 'Classroom',
-            '8': 'Co-working Space',
-            '9': 'Outdoor',
-            '10': 'Other'
+            '0': 'Library',
+            '1': 'Home Office',
+            '2': 'Bedroom',
+            '3': 'Living Room',
+            '4': 'Cafe/Coffee Shop',
+            '5': 'Study Room',
+            '6': 'Classroom',
+            '7': 'Co-working Space',
+            '8': 'Outdoor',
+            '9': 'Other'
         }
         
         # Parse the string and map each index to text
@@ -967,13 +1048,13 @@ def dashboard_view(request):
         
         # Define health condition choices mapping
         HEALTH_CHOICES = {
-            '1': 'Anxiety',
-            '2': 'ADHD',
-            '3': 'Depression',
-            '4': 'Insomnia',
-            '5': 'Migraines',
-            '6': 'None',
-            '7': 'Other'
+            '0': 'Anxiety',
+            '1': 'ADHD',
+            '2': 'Depression',
+            '3': 'Insomnia',
+            '4': 'Migraines',
+            '5': 'None',
+            '6': 'Other'
         }
         
         # Parse the string and map each index to text
@@ -1000,15 +1081,15 @@ def dashboard_view(request):
         
         # Define subject choices mapping
         SUBJECT_CHOICES = {
-            '1': 'Mathematics',
-            '2': 'Science',
-            '3': 'English/Literature',
-            '4': 'History/Social Studies',
-            '5': 'Computer Science',
-            '6': 'Arts',
-            '7': 'Languages',
-            '8': 'Business',
-            '9': 'Other'
+            '0': 'Mathematics',
+            '1': 'Science',
+            '2': 'English/Literature',
+            '3': 'History/Social Studies',
+            '4': 'Computer Science',
+            '5': 'Arts',
+            '6': 'Languages',
+            '7': 'Business',
+            '8': 'Other'
         }
         
         # Parse the string and map each index to text
@@ -1027,15 +1108,6 @@ def dashboard_view(request):
             return ', '.join(subject_texts) if subject_texts else 'Not Set'
         except Exception:
             return subjects_string
-        environments = {
-            0: 'Complete Silence',
-            1: 'White Noise',
-            2: 'Soft Music',
-            3: 'Nature Sounds',
-            4: 'Cafe/Background Noise',
-            5: 'Instrumental Music'
-        }
-        return environments.get(int(env_id), 'Not Set')
     
     def get_study_time_text(time_id):
         times = {

@@ -40,16 +40,7 @@ from django.db import models
 import google.generativeai as genai
 
 # API Key rotation to avoid rate limits
-API_KEY_1 = os.getenv("GEMINI_API_KEY1")
-API_KEY_2 = os.getenv("GEMINI_API_KEY")
-_api_key_index = 0  # Module-level counter for rotation
-
-def get_api_key():
-    """Rotate between two API keys to avoid rate limits"""
-    global _api_key_index
-    key = API_KEY_1 if _api_key_index % 2 == 0 else API_KEY_2
-    _api_key_index += 1
-    return key
+API_KEY = os.getenv("GEMINI_API_KEY")
 
 
 # ============================================================
@@ -57,45 +48,45 @@ def get_api_key():
 # ============================================================
 def get_sound_environment(value):
     mapping = {
-        '1': 'Silent',
-        '2': 'White Noise', 
-        '3': 'Nature Sounds',
-        '4': 'Music',
-        '5': 'Cafe/Background',
-        '6': 'Other'
+        '0': 'Silent',
+        '1': 'White Noise', 
+        '2': 'Nature Sounds',
+        '3': 'Music',
+        '4': 'Cafe/Background',
+        '5': 'Other'
     }
     return mapping.get(str(value), value)
 
 def get_main_goals(value):
     mapping = {
-        '1': 'Improve grades',
-        '2': 'Learn new skill',
-        '3': 'Career advancement',
-        '4': 'Personal interest',
-        '5': 'Other'
+        '0': 'Improve grades',
+        '1': 'Learn new skill',
+        '2': 'Career advancement',
+        '3': 'Personal interest',
+        '4': 'Other'
     }
     return mapping.get(str(value), value)
 
 def get_sleep_quality(value):
     mapping = {
-        '1': 'Poor',
-        '2': 'Fair',
-        '3': 'Good',
-        '4': 'Excellent',
-        '5': 'Perfect',
-        '6': 'None',
-        '7': 'Other'
+        '0': 'Poor',
+        '1': 'Fair',
+        '2': 'Good',
+        '3': 'Excellent',
+        '4': 'Perfect',
+        '5': 'None',
+        '6': 'Other'
     }
     return mapping.get(str(value), value)
 
 def get_learning_style(value):
     mapping = {
-        '1': 'Visual',
-        '2': 'Auditory',
-        '3': 'Kinesthetic',
-        '4': 'Reading/Writing',
-        '5': 'Mixed',
-        '6': 'Other'
+        '0': 'Visual',
+        '1': 'Auditory',
+        '2': 'Kinesthetic',
+        '3': 'Reading/Writing',
+        '4': 'Mixed',
+        '5': 'Other'
     }
     return mapping.get(str(value), value)
 
@@ -219,7 +210,7 @@ def generate_recommendation_for_session(user_email, session_id, final_summary):
 # ============================================================
 def _phase1_llm(user_profile, session, final_summary, subject='General'):
     """Phase 1 LLM recommendation using profile and session data only."""
-    genai.configure(api_key=get_api_key())
+    genai.configure(api_key=API_KEY)
     model = genai.GenerativeModel(model_name="gemini-3-flash-preview")
 
     avg_focus             = final_summary.get('average_focus_score', 0)
@@ -305,7 +296,7 @@ RESPOND WITH:
 # ============================================================
 def _phase2_llm(user_profile, session, user_summary_data, user_email, final_summary, subject='General'):
     """Phase 2 LLM recommendation using full history and feedback."""
-    genai.configure(api_key=get_api_key())
+    genai.configure(api_key=API_KEY)
     model = genai.GenerativeModel(model_name="gemini-3-flash-preview") 
 
     avg_focus             = final_summary.get('average_focus_score', 0)
