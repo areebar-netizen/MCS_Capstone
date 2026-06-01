@@ -4,8 +4,8 @@
         <h2 class="card-title">Your Profile</h2>
     </div>
     
-    <div class="card-content">
-        <div class="profile-stats">
+    <div class="card-content" style="padding: 0px 8px;">
+        <div class="profile-stats" style="gap: 0rem;">
             <div class="profile-stat">
                 <div class="stat-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -15,7 +15,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Academic Level</span>
-                    <span class="stat-value">{{ user_profile.academic_level|default:"Not Set" }}</span>
+                    <span class="stat-value" style="font-size: 16px;">{{ user_profile.academic_level|default:"Not Set" }}</span>
                 </div>
             </div>
 
@@ -27,7 +27,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Sleep</span>
-                    <span class="stat-value">{{ user_profile.sleep_hours|default:"--" }} hours • {{ user_profile.sleep_quality|default:"--" }}</span>
+                    <span class="stat-value" style="font-size: 16px;">{{ user_profile.sleep_hours|default:"--" }} hours • {{ user_profile.sleep_quality|default:"--" }}</span>
                 </div>
             </div>
 
@@ -39,7 +39,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Learning Style</span>
-                    <span class="stat-value">{{ user_profile.learning_style|default:"Not Set" }}</span>
+                    <span class="stat-value" style="font-size: 16px;">{{ user_profile.learning_style|default:"Not Set" }}</span>
                 </div>
             </div>
 
@@ -55,7 +55,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Caffeine</span>
-                    <span class="stat-value">
+                    <span class="stat-value" style="font-size: 16px;">
                         {% if user_profile.caffeine_servings %}{{ user_profile.caffeine_servings }} servings/day{% else %}None{% endif %}
                     </span>
                 </div>
@@ -70,7 +70,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Procrastination</span>
-                    <span class="stat-value">{{ user_profile.procrastination_level|default:"--" }}/10</span>
+                    <span class="stat-value" style="font-size: 16px;">{{ user_profile.procrastination_level|default:"--" }}/10</span>
                 </div>
             </div>
 
@@ -84,7 +84,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Primary Goal</span>
-                    <span class="stat-value">{{ user_profile.main_goals|default:"Not Set" }}</span>
+                    <span class="stat-value" style="font-size: 16px;">{{ user_profile.main_goals|default:"Not Set" }}</span>
                 </div>
             </div>
         </div>

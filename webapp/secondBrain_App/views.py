@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.conf import settings
 from django.core.cache import cache
+from django.db import models
 import random
 import string
 import json
@@ -388,6 +389,148 @@ def calendar_api_data(request):
             {'percentage': '15-29%', 'image': '/static/images/Distracted2.png', 'label': 'Distracted'},
             {'percentage': '<15%', 'image': '/static/images/Anxiety.png', 'label': 'Anxiety'}
         ]
+    })
+
+def recommendation_api_data(request):
+    """API endpoint for filtered recommendations by subject"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'error': 'User profile not found'}, status=404)
+    
+    from .models import Recommendation, PreSessionCheckIn
+    
+    # Get subject filter from query parameters
+    subject_filter = request.GET.get('subject', '')
+    
+    # Filter recommendations based on subject
+    if not subject_filter:
+        latest_rec = Recommendation.objects.filter(user=user_profile).order_by('-created_at').first()
+    else:
+        # First try direct subject match (case-insensitive) - get latest for that subject
+        latest_rec = Recommendation.objects.filter(
+            user=user_profile,
+            subject__iexact=subject_filter
+        ).order_by('-created_at').first()
+        
+        # If no direct match, try to find via PreSessionCheckIn
+        # This handles the case where subject_filter is a custom "Other" value
+        if not latest_rec:
+            matching_checkin = PreSessionCheckIn.objects.filter(
+                user=user_profile
+            ).filter(
+                models.Q(subject_task__iexact=subject_filter) |
+                models.Q(subject_task='Other', subject_other_value__iexact=subject_filter)
+            ).first()
+            
+            if matching_checkin:
+                # Get all sessions for this subject and find the latest recommendation
+                all_matching_checkins = PreSessionCheckIn.objects.filter(
+                    user=user_profile
+                ).filter(
+                    models.Q(subject_task__iexact=subject_filter) |
+                    models.Q(subject_task='Other', subject_other_value__iexact=subject_filter)
+                )
+                
+                session_ids = list(all_matching_checkins.values_list('session_id', flat=True))
+                
+                # Get the latest recommendation from any of these sessions
+                latest_rec = Recommendation.objects.filter(
+                    user=user_profile,
+                    session__session_id__in=session_ids
+                ).order_by('-created_at').first()
+    
+    ai_recommendation_text = latest_rec.message if latest_rec else None
+    # Don't remove markdown symbols - frontend needs them for parsing into sections
+    
+    return JsonResponse({
+        'recommendation': ai_recommendation_text,
+        'subject': subject_filter
+    })
+
+def progress_tracker_api_data(request):
+    """API endpoint for progress tracker line graph data"""
+    user_email = request.session.get('user_email')
+    if not user_email:
+        return JsonResponse({'error': 'User not authenticated'}, status=401)
+    
+    try:
+        user_profile = UserProfile.objects.get(email=user_email)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'error': 'User profile not found'}, status=404)
+    
+    # Get subject filter from query parameters
+    subject_filter = request.GET.get('subject', '')
+    
+    # Query SessionSummary with PreSessionCheckIn to get subject information
+    from .models import PreSessionCheckIn
+    from django.db.models import Q
+    
+    # Build base queryset
+    sessions = SessionSummary.objects.filter(user=user_profile).order_by('start_time')
+    
+    # Filter by subject if specified
+    if subject_filter:
+        # Get session IDs that match the subject filter
+        matching_checkins = PreSessionCheckIn.objects.filter(
+            user=user_profile
+        ).filter(
+            Q(subject_task__iexact=subject_filter) |
+            Q(subject_task='Other', subject_other_value__iexact=subject_filter)
+        )
+        session_ids = list(matching_checkins.values_list('session_id', flat=True))
+        sessions = sessions.filter(session_id__in=session_ids)
+    
+    # Prepare data for line graph
+    graph_data = []
+    for session in sessions:
+        # Get subject for this session
+        subject = 'Unknown'
+        try:
+            checkin = PreSessionCheckIn.objects.filter(
+                user=user_profile,
+                session_id=session.session_id
+            ).first()
+            if checkin:
+                if checkin.subject_task == 'Other' and checkin.subject_other_value:
+                    subject = checkin.subject_other_value
+                else:
+                    subject = checkin.subject_task
+        except:
+            subject = 'Unknown'
+        
+        # Format date for display
+        local_time = timezone.localtime(session.start_time)
+        date_str = local_time.strftime('%Y-%m-%d')
+        
+        graph_data.append({
+            'date': date_str,
+            'focus_score': session.average_focus_score,
+            'subject': subject,
+            'session_id': session.session_id
+        })
+    
+    # Get all unique subjects for the filter dropdown
+    all_checkins = PreSessionCheckIn.objects.filter(user=user_profile)
+    all_subjects = []
+    for checkin in all_checkins:
+        if checkin.subject_task == 'Other' and checkin.subject_other_value:
+            all_subjects.append(checkin.subject_other_value)
+        else:
+            all_subjects.append(checkin.subject_task)
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    all_subjects = [x for x in all_subjects if not (x in seen or seen.add(x))]
+    
+    return JsonResponse({
+        'data': graph_data,
+        'subjects': all_subjects,
+        'current_filter': subject_filter
     })
 
 def study_time_api_data(request):
@@ -862,16 +1005,16 @@ def dashboard_view(request):
         
         # Define goal choices mapping
         GOAL_CHOICES = {
-            '1': 'Improve Grades',
-            '2': 'Learn New Skill', 
-            '3': 'Complete Assignments',
-            '4': 'Prepare for Exams',
-            '5': 'Increase Study Time',
-            '6': 'Better Time Management',
-            '7': 'Reduce Distractions',
-            '8': 'Improve Focus',
-            '9': 'Career Development',
-            '10': 'Personal Growth'
+            '0': 'Improve Grades',
+            '1': 'Learn New Skill', 
+            '2': 'Complete Assignments',
+            '3': 'Prepare for Exams',
+            '4': 'Increase Study Time',
+            '5': 'Better Time Management',
+            '6': 'Reduce Distractions',
+            '7': 'Improve Focus',
+            '8': 'Career Development',
+            '9': 'Personal Growth'
         }
         
         # Parse the string and map each index to text
@@ -898,16 +1041,16 @@ def dashboard_view(request):
         
         # Define location choices mapping
         LOCATION_CHOICES = {
-            '1': 'Library',
-            '2': 'Home Office',
-            '3': 'Bedroom',
-            '4': 'Living Room',
-            '5': 'Cafe/Coffee Shop',
-            '6': 'Study Room',
-            '7': 'Classroom',
-            '8': 'Co-working Space',
-            '9': 'Outdoor',
-            '10': 'Other'
+            '0': 'Library',
+            '1': 'Home Office',
+            '2': 'Bedroom',
+            '3': 'Living Room',
+            '4': 'Cafe/Coffee Shop',
+            '5': 'Study Room',
+            '6': 'Classroom',
+            '7': 'Co-working Space',
+            '8': 'Outdoor',
+            '9': 'Other'
         }
         
         # Parse the string and map each index to text
@@ -934,13 +1077,13 @@ def dashboard_view(request):
         
         # Define health condition choices mapping
         HEALTH_CHOICES = {
-            '1': 'Anxiety',
-            '2': 'ADHD',
-            '3': 'Depression',
-            '4': 'Insomnia',
-            '5': 'Migraines',
-            '6': 'None',
-            '7': 'Other'
+            '0': 'Anxiety',
+            '1': 'ADHD',
+            '2': 'Depression',
+            '3': 'Insomnia',
+            '4': 'Migraines',
+            '5': 'None',
+            '6': 'Other'
         }
         
         # Parse the string and map each index to text
@@ -967,15 +1110,15 @@ def dashboard_view(request):
         
         # Define subject choices mapping
         SUBJECT_CHOICES = {
-            '1': 'Mathematics',
-            '2': 'Science',
-            '3': 'English/Literature',
-            '4': 'History/Social Studies',
-            '5': 'Computer Science',
-            '6': 'Arts',
-            '7': 'Languages',
-            '8': 'Business',
-            '9': 'Other'
+            '0': 'Mathematics',
+            '1': 'Science',
+            '2': 'English/Literature',
+            '3': 'History/Social Studies',
+            '4': 'Computer Science',
+            '5': 'Arts',
+            '6': 'Languages',
+            '7': 'Business',
+            '8': 'Other'
         }
         
         # Parse the string and map each index to text
@@ -994,15 +1137,6 @@ def dashboard_view(request):
             return ', '.join(subject_texts) if subject_texts else 'Not Set'
         except Exception:
             return subjects_string
-        environments = {
-            0: 'Complete Silence',
-            1: 'White Noise',
-            2: 'Soft Music',
-            3: 'Nature Sounds',
-            4: 'Cafe/Background Noise',
-            5: 'Instrumental Music'
-        }
-        return environments.get(int(env_id), 'Not Set')
     
     def get_study_time_text(time_id):
         times = {
@@ -1267,6 +1401,26 @@ def dashboard_view(request):
     # Get month name for display
     month_name = calendar.month_name[current_month]
     
+    # Get unique subjects from user's PreSessionCheckIn records
+    from .models import PreSessionCheckIn
+    checkins = PreSessionCheckIn.objects.filter(user=user_profile).distinct()
+    
+    # Build list of display subjects (use custom value if "Other" is selected)
+    user_subjects = []
+    for checkin in checkins:
+        if checkin.subject_task == 'Other' and checkin.subject_other_value:
+            user_subjects.append(checkin.subject_other_value)
+        else:
+            user_subjects.append(checkin.subject_task)
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    user_subjects = [x for x in user_subjects if not (x in seen or seen.add(x))]
+    
+    # If no subjects yet, use empty list
+    if not user_subjects:
+        user_subjects = []
+    
     cache_key = f"recommendation_{user_email}"
     cached_data = cache.get(cache_key)
     ai_recommendation_text = cached_data.get('text') if cached_data else None
@@ -1286,6 +1440,7 @@ def dashboard_view(request):
         'session_stats': session_stats,
         'recommendations': recommendations,
         'ai_recommendation': ai_recommendation_text,
+        'user_subjects': user_subjects,
         'aggregate_stats': aggregate_stats,
         'calendar_weeks': calendar_weeks,
         'current_month': current_month,
@@ -2357,6 +2512,11 @@ def presession_checkin_view(request):
             }
             subject_task = subject_mapping.get(data.get('subject'), 'Studying')
             
+            # Handle custom subject value for "Other"
+            subject_other_value = None
+            if subject_task == 'Other' and data.get('subject_other'):
+                subject_other_value = data.get('subject_other')
+            
             # Map task length to model choice
             task_length_mapping = {
                 'None': 'None',
@@ -2413,6 +2573,7 @@ def presession_checkin_view(request):
             session_id=session_id,
             session_name=data.get('session_name', ''),
             subject_task=subject_task,
+            subject_other_value=subject_other_value,
             task_difficulty=int(data.get('difficulty', 5)),
             estimated_length=estimated_length,
             assignment_deadline=assignment_deadline,

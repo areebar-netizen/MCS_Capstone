@@ -40,6 +40,7 @@ from secondBrain_App.models import (
 from django.db import models
 import google.generativeai as genai
 
+# API Key rotation to avoid rate limits
 API_KEY = os.getenv("GEMINI_API_KEY")
 
 
@@ -48,45 +49,45 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 # ============================================================
 def get_sound_environment(value):
     mapping = {
-        '1': 'Silent',
-        '2': 'White Noise', 
-        '3': 'Nature Sounds',
-        '4': 'Music',
-        '5': 'Cafe/Background',
-        '6': 'Other'
+        '0': 'Silent',
+        '1': 'White Noise', 
+        '2': 'Nature Sounds',
+        '3': 'Music',
+        '4': 'Cafe/Background',
+        '5': 'Other'
     }
     return mapping.get(str(value), value)
 
 def get_main_goals(value):
     mapping = {
-        '1': 'Improve grades',
-        '2': 'Learn new skill',
-        '3': 'Career advancement',
-        '4': 'Personal interest',
-        '5': 'Other'
+        '0': 'Improve grades',
+        '1': 'Learn new skill',
+        '2': 'Career advancement',
+        '3': 'Personal interest',
+        '4': 'Other'
     }
     return mapping.get(str(value), value)
 
 def get_sleep_quality(value):
     mapping = {
-        '1': 'Poor',
-        '2': 'Fair',
-        '3': 'Good',
-        '4': 'Excellent',
-        '5': 'Perfect',
-        '6': 'None',
-        '7': 'Other'
+        '0': 'Poor',
+        '1': 'Fair',
+        '2': 'Good',
+        '3': 'Excellent',
+        '4': 'Perfect',
+        '5': 'None',
+        '6': 'Other'
     }
     return mapping.get(str(value), value)
 
 def get_learning_style(value):
     mapping = {
-        '1': 'Visual',
-        '2': 'Auditory',
-        '3': 'Kinesthetic',
-        '4': 'Reading/Writing',
-        '5': 'Mixed',
-        '6': 'Other'
+        '0': 'Visual',
+        '1': 'Auditory',
+        '2': 'Kinesthetic',
+        '3': 'Reading/Writing',
+        '4': 'Mixed',
+        '5': 'Other'
     }
     return mapping.get(str(value), value)
 

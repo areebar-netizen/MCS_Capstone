@@ -72,19 +72,33 @@ class EEGDataStreamer:
                 self.csv_file = open(self.csv_file_path, 'w', newline='')
                 self.csv_writer = csv.writer(self.csv_file)
                 
-                # Write header
+                # Write header with raw EEG data columns
                 header = [
                     'timestamp', 'focus_state', 'confidence_score', 'focus_score',
-                    'relaxed_prob', 'neutral_prob', 'concentrating_prob'
+                    'relaxed_prob', 'neutral_prob', 'concentrating_prob',
+                    'TP9', 'AF7', 'AF8', 'TP10', 'Right_AUX'
                 ]
                 self.csv_writer.writerow(header)
                 self.is_writing = True
-    def write_data_point(self, timestamp, focus_state, confidence, probabilities):
+    def write_data_point(self, timestamp, focus_state, confidence, probabilities, raw_eeg=None):
         """Write a single data point to CSV"""
         with self.lock:
             if self.is_writing and self.csv_writer:
                 focus_score = FOCUS_SCORES.get(focus_state, 0.5)
                 relaxed_prob, neutral_prob, concentrating_prob = probabilities
+                
+                # Extract raw EEG values if provided (take average of last sample)
+                if raw_eeg is not None and len(raw_eeg) > 0:
+                    # Get the last row of EEG data
+                    last_sample = raw_eeg[-1]
+                    # EEG data format: [timestamp, TP9, AF7, AF8, TP10, Right_AUX]
+                    tp9 = last_sample[1] if len(last_sample) > 1 else 0
+                    af7 = last_sample[2] if len(last_sample) > 2 else 0
+                    af8 = last_sample[3] if len(last_sample) > 3 else 0
+                    tp10 = last_sample[4] if len(last_sample) > 4 else 0
+                    right_aux = last_sample[5] if len(last_sample) > 5 else 0
+                else:
+                    tp9, af7, af8, tp10, right_aux = 0, 0, 0, 0, 0
                 
                 row = [
                     timestamp,
@@ -93,7 +107,12 @@ class EEGDataStreamer:
                     round(focus_score, 3),
                     round(relaxed_prob, 3),
                     round(neutral_prob, 3),
-                    round(concentrating_prob, 3)
+                    round(concentrating_prob, 3),
+                    round(tp9, 3),
+                    round(af7, 3),
+                    round(af8, 3),
+                    round(tp10, 3),
+                    round(right_aux, 3)
                 ]
                 self.csv_writer.writerow(row)
     
@@ -320,8 +339,8 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1, session_i
                         focus_scores.append(focus_score)
                         confidence_scores.append(confidence)
                         
-                        # Write to CSV
-                        streamer.write_data_point(current_time, predicted_label, confidence, probabilities)
+                        # Write to CSV with raw EEG data
+                        streamer.write_data_point(current_time, predicted_label, confidence, probabilities, rows)
                         
                         # BROADCAST live data with throttling to reduce cache pressure
                         if result.get('ok'):
@@ -541,7 +560,8 @@ def run_live_inference_streaming(self, user_email, duration_minutes=1, session_i
                 'state_switch_count': switch_count,
                 'focus_latency': latency,
                 'avg_confidence': np.mean(confidence_scores) if confidence_scores else 0.0,
-                'data_points_count': len(data_points)
+                'data_points_count': len(data_points),
+                'data_points': data_points
             })
         else:
             print("[FROM EXPO] no summary and recommendations saved")
@@ -781,7 +801,11 @@ def save_session_summary(summary_data):
                 
                 print(f"[RECOMMENDATION DEBUG] Found PreSessionCheckIn: {checkin is not None}")
                 if checkin:
-                    subject = checkin.subject_task or 'General'
+                    # Use custom value if subject is "Other"
+                    if checkin.subject_task == 'Other' and checkin.subject_other_value:
+                        subject = checkin.subject_other_value
+                    else:
+                        subject = checkin.subject_task or 'General'
                     print(f"[RECOMMENDATION DEBUG] Subject from PreSessionCheckIn: {subject}")
                 else:
                     print(f"[RECOMMENDATION DEBUG] No PreSessionCheckIn found for session {summary_data['session_id']}")

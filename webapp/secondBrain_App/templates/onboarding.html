@@ -25,11 +25,8 @@
     <!-- Progress Section -->
     <div class="progress-section">
         <span class="progress-text">Step {{ current_step|default:1 }} of 10</span>
-        <div class="progress-bar-container segmented" aria-label="Onboarding progress">
-            <div class="progress-bar-fill" style="width: {{ progress_percentage|default:10 }}%;"></div>
-            <div class="progress-dividers" aria-hidden="true">
-                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-            </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" data-progress="{{ progress_percentage|default:10 }}"></div>
         </div>
         <span class="progress-percentage">{{ progress_percentage|default:10 }}% Complete</span>
     </div>

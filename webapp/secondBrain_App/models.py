@@ -120,6 +120,7 @@ class PreSessionCheckIn(models.Model):
         ('Creative Work', 'Creative Work'),
         ('Other', 'Other'),
     ])
+    subject_other_value = models.CharField(max_length=100, blank=True, null=True, help_text="Custom subject value when 'Other' is selected")
     task_difficulty = models.IntegerField(help_text="Task difficulty from 1-10")
     estimated_length = models.CharField(max_length=20, choices=[
         ('15-30m', '15-30 minutes'),

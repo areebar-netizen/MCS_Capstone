@@ -5,274 +5,78 @@
     font-family: inherit;
 }
 
-.current-level-card {
-    background: linear-gradient(135deg, #fff5f1 0%, #fff 100%);
-    border: 1.5px solid #ffe0d4;
-    border-radius: 14px;
-    padding: 18px 20px;
-    margin-bottom: 20px;
+.progress-chart-container {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    margin-top: 12px;
+}
+
+.progress-filter-row {
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 12px;
 }
 
-.current-level-badge {
+.progress-filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.progress-filter-select {
+    padding: 8px 12px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #333;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.progress-filter-select:hover {
+    border-color: #FF9168;
+}
+
+.progress-filter-select:focus {
+    outline: none;
+    border-color: #FF9168;
+}
+
+.progress-stats-summary {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.progress-stat-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 70px;
 }
 
-.current-level-emoji {
-    font-size: 2.4rem;
-    line-height: 1;
-    filter: drop-shadow(0 2px 4px rgba(255,145,104,0.3));
-}
-
-.current-level-name {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #FF9168;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.current-level-divider {
-    width: 1px;
-    height: 50px;
-    background: #ffe0d4;
-}
-
-.current-level-stats {
-    display: flex;
-    gap: 20px;
-    flex: 1;
-    flex-wrap: wrap;
-}
-
-.cls-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.cls-stat-value {
-    font-size: 1.1rem;
+.progress-stat-value {
+    font-size: 1.2rem;
     font-weight: 700;
     color: #222;
-    line-height: 1;
 }
 
-.cls-stat-label {
-    font-size: 0.72rem;
+.progress-stat-label {
+    font-size: 0.75rem;
     color: #999;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
-/* ── Level Items ───────────────────────────────────── */
-.progress-levels {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 24px;
-}
-
-.level-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1.5px solid #f0f0f0;
-    background: #fafafa;
-    transition: border-color 0.2s;
-}
-
-.level-item.current {
-    border-color: #FF9168;
-    background: #fff8f5;
-}
-
-.level-item.completed {
-    border-color: #e8f5e9;
-    background: #f6faf6;
-}
-
-.level-item.locked {
-    opacity: 0.5;
-}
-
-.level-emoji-wrap {
-    font-size: 1.3rem;
-    width: 32px;
+.no-data-message {
     text-align: center;
-    flex-shrink: 0;
-}
-
-.level-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.level-info-top {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 5px;
-}
-
-.level-info-name {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #222;
-}
-
-.level-info-range {
-    font-size: 0.72rem;
-    color: #aaa;
-}
-
-.level-bar-track {
-    height: 5px;
-    background: #ececec;
-    border-radius: 99px;
-    overflow: hidden;
-}
-
-.level-bar-fill {
-    height: 100%;
-    border-radius: 99px;
-    background: linear-gradient(90deg, #FF9168, #ff6b35);
-    transition: width 0.6s ease;
-}
-
-.level-item.completed .level-bar-fill {
-    background: linear-gradient(90deg, #66bb6a, #43a047);
-}
-
-.level-status-badge {
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 99px;
-    flex-shrink: 0;
-}
-
-.level-item.completed .level-status-badge {
-    background: #e8f5e9;
-    color: #2e7d32;
-}
-
-.level-item.current .level-status-badge {
-    background: #fff0eb;
-    color: #FF9168;
-}
-
-.level-item.locked .level-status-badge {
-    background: #f0f0f0;
-    color: #bbb;
-}
-
-/* ── Recommended Study Method ──────────────────────── */
-.study-method {
-    margin-top: 4px;
-}
-
-.method-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #222;
-    margin: 0 0 12px 0;
-}
-
-.method-card-new {
-    border-radius: 14px;
-    border: 1.5px solid #ffe0d4;
-    overflow: hidden;
-}
-
-.method-card-header {
-    background: linear-gradient(135deg, #FF9168 0%, #ff6b35 100%);
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.method-card-header svg {
-    stroke: rgba(255,255,255,0.9);
-    flex-shrink: 0;
-}
-
-.method-card-title {
+    padding: 40px 20px;
+    color: #999;
     font-size: 0.9rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-}
-
-.method-card-body {
-    background: #fff;
-    padding: 18px;
-}
-
-.method-card-body p {
-    margin: 0 0 10px 0;
-    font-size: 0.88rem;
-    color: #444;
-    line-height: 1.7;
-}
-
-.method-card-body p:last-child {
-    margin-bottom: 0;
-}
-
-.method-card-body strong {
-    color: #FF9168;
-    font-weight: 700;
-}
-
-.method-card-body ul,
-.method-card-body ol {
-    margin: 6px 0 10px 0;
-    padding-left: 20px;
-}
-
-.method-card-body li {
-    font-size: 0.88rem;
-    color: #444;
-    line-height: 1.7;
-    margin-bottom: 4px;
-}
-
-.method-empty {
-    text-align: center;
-    padding: 24px;
-    color: #aaa;
-    font-size: 0.85rem;
-}
-
-.method-section {
-    margin-bottom: 14px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.method-section:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-}
-
-.method-section-title {
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #FF9168;
-    margin: 0 0 8px 0;
 }
 </style>
 
@@ -284,52 +88,274 @@
     </div>
 
     <div class="card-content">
+        <!-- Subject Filter -->
+        <div class="progress-filter-row">
+            <span class="progress-filter-label">Filter by Subject:</span>
+            <select id="progressSubjectFilter" class="progress-filter-select">
+                <option value="">All Subjects</option>
+            </select>
+        </div>
 
-        <!-- Current Level Card -->
-        <div class="current-level-card">
-            <div class="current-level-badge">
-                <span class="current-level-emoji">{{ current_level.emoji }}</span>
-                <span class="current-level-name">{{ current_level.name }}</span>
+        <!-- Stats Summary -->
+        <div class="progress-stats-summary" id="progressStatsSummary">
+            <div class="progress-stat-item">
+                <span class="progress-stat-value" id="avgFocusScore">0.0</span>
+                <span class="progress-stat-label">Avg Focus</span>
             </div>
-            <div class="current-level-divider"></div>
-            <div class="current-level-stats">
-                <div class="cls-stat">
-                    <span class="cls-stat-value">{{ progress_stats.avg_focus|default:"0.0" }}%</span>
-                    <span class="cls-stat-label">Average Focus</span>
-                </div>
-                <div class="cls-stat">
-                    <span class="cls-stat-value">{{ progress_stats.total_sessions|default:"0" }}</span>
-                    <span class="cls-stat-label">Total Sessions</span>
-                </div>
-                <div class="cls-stat">
-                    <span class="cls-stat-value">{{ progress_stats.study_hours|default:0 }}h {{ progress_stats.study_remaining_minutes|default:0 }}m</span>
-                    <span class="cls-stat-label">Study Time</span>
-                </div>
+            <div class="progress-stat-item">
+                <span class="progress-stat-value" id="totalSessionsCount">0</span>
+                <span class="progress-stat-label">Sessions</span>
+            </div>
+            <div class="progress-stat-item">
+                <span class="progress-stat-value" id="trendIndicator">--</span>
+                <span class="progress-stat-label">Trend</span>
             </div>
         </div>
 
-        <!-- Progress Levels -->
-        <div class="progress-levels">
-            {% for level in levels %}
-            <div class="level-item {{ level.status }}">
-                <div class="level-emoji-wrap">{{ level.emoji }}</div>
-                <div class="level-info">
-                    <div class="level-info-top">
-                        <span class="level-info-name">{{ level.name }}</span>
-                        <span class="level-info-range">{{ level.range }}</span>
-                    </div>
-                    <div class="level-bar-track">
-                        <div class="level-bar-fill" style="width: {{ level.progress }}%;"></div>
-                    </div>
-                </div>
-                <span class="level-status-badge">
-                    {% if level.status == 'completed' %}✓ Done
-                    {% elif level.status == 'current' %}In Progress
-                    {% else %}Locked{% endif %}
-                </span>
-            </div>
-            {% endfor %}
+        <!-- Line Chart Container -->
+        <div class="progress-chart-container">
+            <canvas id="progressChart"></canvas>
         </div>
 
+        <!-- No Data Message -->
+        <div id="noDataMessage" class="no-data-message" style="display: none;">
+            No session data available. Complete a session to see your progress.
+        </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+let progressChart = null;
+
+async function loadProgressTrackerData(subjectFilter = '') {
+    try {
+        const response = await fetch(`/api/progress-tracker-data/?subject=${encodeURIComponent(subjectFilter)}`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to load progress tracker data');
+        }
+        
+        const data = await response.json();
+        
+        // Update subject filter dropdown
+        updateSubjectFilter(data.subjects, data.current_filter);
+        
+        // Update chart
+        updateProgressChart(data.data);
+        
+        // Update stats summary
+        updateStatsSummary(data.data);
+        
+    } catch (error) {
+        console.error('Error loading progress tracker data:', error);
+    }
+}
+
+function updateSubjectFilter(subjects, currentFilter) {
+    const select = document.getElementById('progressSubjectFilter');
+    if (!select) return;
+    
+    // Save current selection
+    const currentValue = select.value;
+    
+    // Clear existing options
+    select.innerHTML = '<option value="">All Subjects</option>';
+    
+    // Add subject options
+    subjects.forEach(subject => {
+        const option = document.createElement('option');
+        option.value = subject;
+        option.textContent = subject;
+        if (subject === currentFilter) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+    
+    // Restore selection if it still exists
+    if (subjects.includes(currentValue)) {
+        select.value = currentValue;
+    }
+}
+
+function updateProgressChart(graphData) {
+    const canvas = document.getElementById('progressChart');
+    const noDataMessage = document.getElementById('noDataMessage');
+    
+    if (!graphData || graphData.length === 0) {
+        if (canvas) canvas.style.display = 'none';
+        if (noDataMessage) noDataMessage.style.display = 'block';
+        
+        if (progressChart) {
+            progressChart.destroy();
+            progressChart = null;
+        }
+        return;
+    }
+    
+    if (canvas) canvas.style.display = 'block';
+    if (noDataMessage) noDataMessage.style.display = 'none';
+    
+    // Prepare data for Chart.js
+    const labels = graphData.map(d => d.date);
+    const focusScores = graphData.map(d => d.focus_score);
+    
+    // Destroy existing chart if it exists
+    if (progressChart) {
+        progressChart.destroy();
+    }
+    
+    // Create new chart
+    const ctx = canvas.getContext('2d');
+    progressChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Focus Score',
+                data: focusScores,
+                borderColor: '#FF9168',
+                backgroundColor: 'rgba(255, 145, 104, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#FF9168',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 13,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 12
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        title: function(context) {
+                            return 'Date: ' + context[0].label;
+                        },
+                        label: function(context) {
+                            return 'Focus Score: ' + context.parsed.y.toFixed(1) + '/10';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Date',
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        },
+                        color: '#666'
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        color: '#999',
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Focus Score (0-10)',
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        },
+                        color: '#666'
+                    },
+                    min: 0,
+                    max: 10,
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        color: '#999',
+                        stepSize: 2
+                    },
+                    grid: {
+                        color: '#f0f0f0'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateStatsSummary(graphData) {
+    const avgFocusEl = document.getElementById('avgFocusScore');
+    const totalSessionsEl = document.getElementById('totalSessionsCount');
+    const trendEl = document.getElementById('trendIndicator');
+    
+    if (!graphData || graphData.length === 0) {
+        if (avgFocusEl) avgFocusEl.textContent = '0.0';
+        if (totalSessionsEl) totalSessionsEl.textContent = '0';
+        if (trendEl) trendEl.textContent = '--';
+        return;
+    }
+    
+    // Calculate average focus
+    const avgFocus = graphData.reduce((sum, d) => sum + d.focus_score, 0) / graphData.length;
+    
+    // Calculate trend (compare first half to second half)
+    let trend = '--';
+    if (graphData.length >= 2) {
+        const midPoint = Math.floor(graphData.length / 2);
+        const firstHalfAvg = graphData.slice(0, midPoint).reduce((sum, d) => sum + d.focus_score, 0) / midPoint;
+        const secondHalfAvg = graphData.slice(midPoint).reduce((sum, d) => sum + d.focus_score, 0) / (graphData.length - midPoint);
+        
+        const diff = secondHalfAvg - firstHalfAvg;
+        if (diff > 0.5) {
+            trend = '↑ Improving';
+        } else if (diff < -0.5) {
+            trend = '↓ Declining';
+        } else {
+            trend = '→ Stable';
+        }
+    }
+    
+    if (avgFocusEl) avgFocusEl.textContent = avgFocus.toFixed(1);
+    if (totalSessionsEl) totalSessionsEl.textContent = graphData.length;
+    if (trendEl) trendEl.textContent = trend;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data
+    loadProgressTrackerData();
+    
+    // Add event listener for subject filter
+    const subjectFilter = document.getElementById('progressSubjectFilter');
+    if (subjectFilter) {
+        subjectFilter.addEventListener('change', function() {
+            loadProgressTrackerData(this.value);
+        });
+    }
+});
+</script>
