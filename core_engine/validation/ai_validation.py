@@ -3,17 +3,20 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import os
-import sys
-import django
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-import json
-from django.db import models
 
+BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / ".env")
 
 API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not API_KEY:
+    raise ValueError("GEMINI_API_KEY was not found. Check your .env file path/name.")
+
 client = genai.Client(api_key=API_KEY)
 
 JUDGE_PROMPT = """

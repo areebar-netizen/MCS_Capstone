@@ -1,0 +1,447 @@
+[2026-05-26 16:18:16,177: ERROR/MainProcess] consumer: Cannot connect to redis://localhost:6379/0: Connection closed by server..
+Trying again in 2.00 seconds... (1/100)
+
+[2026-05-26 16:18:18,241: INFO/MainProcess] Connected to redis://localhost:6379/0
+[2026-05-26 16:18:18,287: INFO/MainProcess] mingle: searching for neighbors
+[2026-05-26 16:18:19,483: INFO/MainProcess] mingle: all alone
+[2026-05-26 16:18:19,810: INFO/MainProcess] celery@Areeba_Device ready.
+[2026-05-26 16:18:27,008: INFO/MainProcess] Task secondBrain_App.tasks_realtime.run_live_inference_streaming[ed038490-f607-4a27-992c-16ed7b8d307c] received
+[2026-05-26 16:18:27,157: WARNING/MainProcess] [INIT] Set initial cache package immediately to show brainwave box
+[2026-05-26 16:18:27,183: WARNING/MainProcess] Looking for EEG
+[2026-05-26 16:18:28,524: WARNING/MainProcess] connected to EEG
+[2026-05-26 16:18:30,180: WARNING/MainProcess] [DEBUG 2] Loading prediction service...
+[2026-05-26 16:18:30,182: WARNING/MainProcess] Loading from C:\Users\binom\OneDrive\Desktop\KeystoneProject\MCS_Capstone\core_engine\artifacts
+[2026-05-26 16:18:30,184: WARNING/MainProcess] Initializing PredictionService...
+[2026-05-26 16:18:30,185: WARNING/MainProcess] Denoiser loaded.
+[2026-05-26 16:18:30,186: WARNING/MainProcess] Predictor class initilaising
+[2026-05-26 16:18:30,187: WARNING/MainProcess] --- ATTEMPTING TO LOAD: C:\Users\binom\OneDrive\Desktop\KeystoneProject\MCS_Capstone\core_engine\artifacts\xgboost.joblib ---
+[2026-05-26 16:18:30,188: WARNING/MainProcess] Starting joblib.load()...
+[2026-05-26 16:18:30,189: WARNING/MainProcess] Set threading environment variables to 1
+[2026-05-26 16:18:30,331: WARNING/MainProcess] Model loaded with mmap_mode='r'
+[2026-05-26 16:18:30,335: WARNING/MainProcess] Fixed XGBClassifier n_jobs from -1 to 1
+[2026-05-26 16:18:30,342: WARNING/MainProcess] Restored original threading environment variables
+[2026-05-26 16:18:30,363: WARNING/MainProcess] C:\Users\binom\OneDrive\Desktop\KeystoneProject\MCS_Capstone\core_engine\artifacts\xgboost.joblib loaded---
+[2026-05-26 16:18:30,387: WARNING/MainProcess] --- LOOKING FOR ARTIFACTS IN: C:\Users\binom\OneDrive\Desktop\KeystoneProject\MCS_Capstone\core_engine\artifacts\preprocessing_artifacts ---
+[2026-05-26 16:18:30,395: WARNING/MainProcess] Scaler loaded. Expected input features: 854
+[2026-05-26 16:18:30,398: WARNING/MainProcess] eature info indices count: 100 (Best Features confirmed)
+[2026-05-26 16:18:30,399: WARNING/MainProcess] models loaded
+[2026-05-26 16:18:30,401: WARNING/MainProcess] Predictor class initilaised
+[2026-05-26 16:18:30,403: WARNING/MainProcess] Predictor loaded.
+[2026-05-26 16:18:30,404: WARNING/MainProcess] [DEBUG 3] Prediction service loaded
+[2026-05-26 16:18:30,406: WARNING/MainProcess] Looking for EEG
+[2026-05-26 16:18:30,525: WARNING/MainProcess] connected to EEG
+[2026-05-26 16:18:30,532: WARNING/MainProcess] [DEBUG] Empty EEG buffer, waiting for data...
+[2026-05-26 16:18:30,534: WARNING/MainProcess] [WAIT] Not enough EEG samples yet
+[2026-05-26 16:18:31,538: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:31,595: WARNING/MainProcess] Input rows size: 1512
+[2026-05-26 16:18:31,821: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:31,823: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:31,827: WARNING/MainProcess]  
+[2026-05-26 16:18:31,828: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:32,832: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:32,885: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:33,032: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:33,034: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:33,035: WARNING/MainProcess]  
+[2026-05-26 16:18:33,037: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:34,043: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:34,092: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:37,352: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:37,353: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:37,355: WARNING/MainProcess]  
+[2026-05-26 16:18:37,357: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:38,384: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:38,469: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:38,474: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:38,476: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:38,478: WARNING/MainProcess]  
+[2026-05-26 16:18:38,479: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:39,499: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:39,637: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:39,661: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:39,666: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:39,667: WARNING/MainProcess]  
+[2026-05-26 16:18:39,669: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:40,673: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:40,731: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:41,058: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:41,063: WARNING/MainProcess] apply_feature_pipeline done
+[2026-05-26 16:18:41,064: WARNING/MainProcess] inside preditct #4
+[2026-05-26 16:18:41,082: WARNING/MainProcess]   Full result: {'ok': True, 'n_windows': 1, 'total_seconds': 0.5, 'relaxed_seconds': 0.5, 'neutral_seconds': 0.0, 'concentrating_seconds': 0.0, 'predicted_label': 'relaxed', 'confidence': 0.9919425249099731}
+[2026-05-26 16:18:41,128: WARNING/MainProcess] [DEBUG] Brainwave: delta:125.2 theta:112.8 alpha:76.4
+[2026-05-26 16:18:41,130: WARNING/MainProcess] [DEBUG] Raw brainwave values at 23:18:41: {'delta': 125.18495476325462, 'theta': 112.75141633010578, 'alpha': 76.39216993766196, 'beta': 119.71718216213661, 'gamma': 48.24295805773584}
+[2026-05-26 16:18:41,132: WARNING/MainProcess] [INFO] Brainwave values changed - new data detected
+[2026-05-26 16:18:41,133: WARNING/MainProcess] [SCALING] Raw→Scaled: delta:125.2→2.5% | theta:112.8→22.6% | alpha:76.4→3.8% | beta:119.7→1.2% | gamma:48.2→1.6%
+[2026-05-26 16:18:41,148: WARNING/MainProcess] [BROADCAST] Updated live stream: RELAXED 99.2%
+[2026-05-26 16:18:41,150: WARNING/MainProcess]    23:18:41 | relaxed      | 0.99 | 0.30
+[2026-05-26 16:18:42,155: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:42,218: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:42,223: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:42,226: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:42,227: WARNING/MainProcess]  
+[2026-05-26 16:18:42,228: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:43,237: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:43,288: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:43,457: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:43,459: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:43,461: WARNING/MainProcess]  
+[2026-05-26 16:18:43,465: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:44,473: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:44,531: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:44,792: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:44,794: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:44,795: WARNING/MainProcess]  
+[2026-05-26 16:18:44,796: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:45,805: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:45,868: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:46,047: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:46,049: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:46,051: WARNING/MainProcess]  
+[2026-05-26 16:18:46,052: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:47,057: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:47,112: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:47,117: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:47,118: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:47,120: WARNING/MainProcess]  
+[2026-05-26 16:18:47,120: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:48,127: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:48,197: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:49,053: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:49,058: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:49,060: WARNING/MainProcess]  
+[2026-05-26 16:18:49,061: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:50,075: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:50,148: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:50,158: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:50,161: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:50,162: WARNING/MainProcess]  
+[2026-05-26 16:18:50,162: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:51,167: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:51,216: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:51,399: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:51,402: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:51,403: WARNING/MainProcess]  
+[2026-05-26 16:18:51,404: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:52,410: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:52,463: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:52,673: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:52,675: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:52,676: WARNING/MainProcess]  
+[2026-05-26 16:18:52,678: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:53,682: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:53,739: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:53,919: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:53,921: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:53,923: WARNING/MainProcess]  
+[2026-05-26 16:18:53,924: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:54,933: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:55,075: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:55,090: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:55,092: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:55,095: WARNING/MainProcess]  
+[2026-05-26 16:18:55,096: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:56,119: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:56,228: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:56,233: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:56,238: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:56,241: WARNING/MainProcess]  
+[2026-05-26 16:18:56,242: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:57,247: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:57,312: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:57,317: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:57,318: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:57,322: WARNING/MainProcess]  
+[2026-05-26 16:18:57,323: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:58,330: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:58,460: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:18:58,473: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:18:58,475: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:18:58,478: WARNING/MainProcess]  
+[2026-05-26 16:18:58,483: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:18:59,491: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:18:59,583: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:16,243: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:16,248: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:16,250: WARNING/MainProcess]  
+[2026-05-26 16:19:16,251: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:17,282: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:17,438: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:17,444: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:17,446: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:17,448: WARNING/MainProcess]  
+[2026-05-26 16:19:17,450: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:18,470: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:18,655: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:18,664: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:18,665: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:18,667: WARNING/MainProcess]  
+[2026-05-26 16:19:18,669: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:19,676: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:19,784: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:19,791: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:19,792: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:19,801: WARNING/MainProcess]  
+[2026-05-26 16:19:19,802: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:20,835: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:20,953: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:20,962: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:20,964: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:20,965: WARNING/MainProcess]  
+[2026-05-26 16:19:20,967: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:21,973: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:22,059: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:22,069: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:22,072: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:22,073: WARNING/MainProcess]  
+[2026-05-26 16:19:22,082: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:23,097: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:23,178: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:23,188: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:23,191: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:23,196: WARNING/MainProcess]  
+[2026-05-26 16:19:23,200: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:24,208: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:24,283: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:24,289: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:24,291: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:24,293: WARNING/MainProcess]  
+[2026-05-26 16:19:24,297: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:25,306: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:25,416: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:25,422: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:25,423: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:25,424: WARNING/MainProcess]  
+[2026-05-26 16:19:25,425: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:26,456: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:26,676: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:26,692: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:26,697: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:26,700: WARNING/MainProcess]  
+[2026-05-26 16:19:26,703: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:27,724: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:27,833: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:27,839: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:27,841: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:27,843: WARNING/MainProcess]  
+[2026-05-26 16:19:27,844: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:28,894: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:29,010: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:29,025: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:29,028: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:29,029: WARNING/MainProcess]  
+[2026-05-26 16:19:29,033: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:30,040: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:30,221: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:30,226: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:30,229: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:30,237: WARNING/MainProcess]  
+[2026-05-26 16:19:30,240: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:31,253: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:31,349: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:31,355: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:31,359: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:31,359: WARNING/MainProcess]  
+[2026-05-26 16:19:31,362: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:32,373: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:32,439: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:32,443: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:32,446: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:32,452: WARNING/MainProcess]  
+[2026-05-26 16:19:32,453: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:33,458: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:33,504: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:33,508: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:33,510: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:33,511: WARNING/MainProcess]  
+[2026-05-26 16:19:33,512: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:34,522: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:34,626: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:34,638: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:34,643: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:34,646: WARNING/MainProcess]  
+[2026-05-26 16:19:34,646: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:35,663: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:35,738: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:35,749: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:35,768: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:35,770: WARNING/MainProcess]  
+[2026-05-26 16:19:35,771: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:36,780: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:36,869: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:36,875: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:36,877: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:36,878: WARNING/MainProcess]  
+[2026-05-26 16:19:36,879: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:37,893: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:38,078: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:38,090: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:38,092: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:38,096: WARNING/MainProcess]  
+[2026-05-26 16:19:38,097: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:39,112: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:39,162: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:39,168: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:39,169: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:39,171: WARNING/MainProcess]  
+[2026-05-26 16:19:39,172: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:40,176: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:40,230: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:40,235: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:40,237: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:40,240: WARNING/MainProcess]  
+[2026-05-26 16:19:40,241: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:41,266: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:41,322: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:41,327: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:41,329: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:41,331: WARNING/MainProcess]  
+[2026-05-26 16:19:41,332: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:42,425: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:42,520: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:42,529: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:42,531: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:42,532: WARNING/MainProcess]  
+[2026-05-26 16:19:42,533: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:43,553: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:43,653: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:43,691: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:43,694: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:43,695: WARNING/MainProcess]  
+[2026-05-26 16:19:43,697: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:44,708: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:44,844: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:44,859: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:44,863: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:44,874: WARNING/MainProcess]  
+[2026-05-26 16:19:44,874: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:45,894: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:46,005: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:46,013: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:46,015: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:46,017: WARNING/MainProcess]  
+[2026-05-26 16:19:46,020: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:47,033: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:47,172: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:47,181: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:47,182: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:47,184: WARNING/MainProcess]  
+[2026-05-26 16:19:47,185: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:48,195: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:48,250: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:48,256: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:48,259: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:48,260: WARNING/MainProcess]  
+[2026-05-26 16:19:48,260: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:49,268: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:49,295: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:49,300: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:49,300: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:49,302: WARNING/MainProcess]  
+[2026-05-26 16:19:49,302: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:50,311: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:50,383: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:50,387: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:50,390: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:50,393: WARNING/MainProcess]  
+[2026-05-26 16:19:50,395: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:51,408: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:51,524: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:51,532: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:51,534: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:51,537: WARNING/MainProcess]  
+[2026-05-26 16:19:51,553: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:52,623: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:52,784: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:52,790: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:52,791: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:52,817: WARNING/MainProcess]  
+[2026-05-26 16:19:52,817: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:53,873: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:54,383: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:54,392: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:54,401: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:54,404: WARNING/MainProcess]  
+[2026-05-26 16:19:54,405: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:55,430: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:55,531: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:55,552: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:55,553: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:55,555: WARNING/MainProcess]  
+[2026-05-26 16:19:55,556: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:56,567: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:56,653: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:56,661: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:56,662: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:56,666: WARNING/MainProcess]  
+[2026-05-26 16:19:56,667: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:57,678: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:57,778: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:57,794: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:57,845: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:57,847: WARNING/MainProcess]  
+[2026-05-26 16:19:57,849: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:58,918: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:58,948: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:58,950: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:58,951: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:58,952: WARNING/MainProcess]  
+[2026-05-26 16:19:58,952: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:19:59,953: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:19:59,978: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:19:59,980: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:19:59,981: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:19:59,981: WARNING/MainProcess]  
+[2026-05-26 16:19:59,981: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:20:00,991: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:20:01,072: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:20:01,077: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:20:01,080: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:20:01,081: WARNING/MainProcess]  
+[2026-05-26 16:20:01,082: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:20:02,089: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:20:02,188: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:20:02,198: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:20:02,199: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:20:02,201: WARNING/MainProcess]  
+[2026-05-26 16:20:02,202: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:20:03,216: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:20:03,287: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:20:03,293: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:20:03,295: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:20:03,296: WARNING/MainProcess]  
+[2026-05-26 16:20:03,297: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:20:04,305: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:20:04,384: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:20:04,391: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:20:04,395: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:20:04,396: WARNING/MainProcess]  
+[2026-05-26 16:20:04,398: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:20:05,444: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:20:05,741: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:20:05,750: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:20:05,752: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:20:05,815: WARNING/MainProcess]  
+[2026-05-26 16:20:05,818: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:20:06,842: WARNING/MainProcess] Running Predservice
+[2026-05-26 16:20:06,997: WARNING/MainProcess] Input rows size: 1536
+[2026-05-26 16:20:07,003: WARNING/MainProcess] generate_feature_vectors_from_matrix done
+[2026-05-26 16:20:07,005: WARNING/MainProcess] [ERROR] Prediction returned not ok
+[2026-05-26 16:20:07,006: WARNING/MainProcess]  
+[2026-05-26 16:20:07,006: WARNING/MainProcess] {'ok': False, 'message': 'No valid windows for prediction.'}
+[2026-05-26 16:20:07,369: INFO/MainProcess] Task secondBrain_App.tasks_realtime.run_live_inference_streaming[ed038490-f607-4a27-992c-16ed7b8d307c] succeeded in 100.32800000000861s: {'status': 'error', 'session_id': 'areebaarashid31_20260526_231827', 'user_email': 'areebaarashid31@gmail.com', 'error': '<class \'celery.concurrency.solo.TaskPool\'> does not implement kill_job', 'error_type': 'processing_error'}
+[2026-05-26 16:20:35,103: INFO/MainProcess] Connected to redis://localhost:6379/0
+[2026-05-26 16:20:35,145: INFO/MainProcess] mingle: searching for neighbors
+[2026-05-26 16:20:36,423: INFO/MainProcess] mingle: all alone
+[2026-05-26 16:20:36,777: INFO/MainProcess] celery@Areeba_Device ready.
+[2026-05-26 16:21:10,008: INFO/MainProcess] Task secondBrain_App.tasks_realtime.run_live_inference_streaming[b9526452-36a0-4019-b69f-0fe6bd1418b0] received
+[2026-05-26 16:21:10,039: WARNING/MainProcess] [INIT] Set initial cache package immediately to show brainwave box
+[2026-05-26 16:21:10,041: WARNING/MainProcess] Looking for EEG
+[2026-05-26 16:21:15,177: INFO/MainProcess] Task secondBrain_App.tasks_realtime.run_live_inference_streaming[b9526452-36a0-4019-b69f-0fe6bd1418b0] succeeded in 5.171999999991385s: {'status': 'error', 'session_id': 'areebaarashid31_20260526_232110', 'user_email': 'areebaarashid31@gmail.com', 'error': 'EEG Device connection failed: No EEG stream found', 'error_type': 'hardware_connection'}
+[2026-05-26 16:22:07,843: INFO/MainProcess] Connected to redis://localhost:6379/0
+[2026-05-26 16:22:07,912: INFO/MainProcess] mingle: searching for neighbors
+[2026-05-26 16:22:09,061: INFO/MainProcess] mingle: all alone
+[2026-05-26 16:22:09,235: INFO/MainProcess] celery@Areeba_Device ready.
+[2026-05-26 16:22:29,594: INFO/MainProcess] Task secondBrain_App.tasks_realtime.run_live_inference_streaming[815d36dd-3d71-455d-bc80-aabf092c76b4] received
+[2026-05-26 16:22:29,623: WARNING/MainProcess] [INIT] Set initial cache package immediately to show brainwave box
+[2026-05-26 16:22:29,625: WARNING/MainProcess] Looking for EEG
+[2026-05-26 16:22:34,825: INFO/MainProcess] Task secondBrain_App.tasks_realtime.run_live_inference_streaming[815d36dd-3d71-455d-bc80-aabf092c76b4] succeeded in 5.2189999999973224s: {'status': 'error', 'session_id': 'areebaarashid31_20260526_232229', 'user_email': 'areebaarashid31@gmail.com', 'error': 'EEG Device connection failed: No EEG stream found', 'error_type': 'hardware_connection'}

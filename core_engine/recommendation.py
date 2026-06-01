@@ -12,6 +12,7 @@ import sys
 import django
 from pathlib import Path
 from dotenv import load_dotenv
+from ai_validation import judge_response
 
 load_dotenv()
 
@@ -410,7 +411,9 @@ RESPOND WITH:
     response = model.generate_content(
         contents = contents
     )
-    return response.text
+    output = response.text
+
+    return output
 
 def parse_recommendation_sections(text):
     """Extract numbered sections from LLM recommendation text"""

@@ -34,7 +34,6 @@
             </div>
         </div>
 
-        <!-- Live Brain State Card -->
         <div class="grid-row mt-4">
             <div class="col-span-12">
                 <div id="liveBrainStateCard" class="card shadow-sm border-0" style="background: #ffffff; border-radius: 15px; border-left: 5px solid #28a745; display: block;">
@@ -753,19 +752,17 @@ function updateLiveBrainBox() {
             const liveStateCard = document.getElementById('liveBrainStateCard');
             
             if (data.ok && data.status === 'active') {
-                // Session is active - show box and update display
                 updateLiveStateDisplay(data);
-                if (liveStateCard) {
-                    liveStateCard.style.display = 'block';
-                }
-                console.log('Session active, data:', data);
-            } else {
-                // Session is idle or no data - hide box and stop polling
-                if (liveStateCard) {
-                    liveStateCard.style.display = 'none';
-                }
-                console.log('Session idle or no data, hiding box and stopping polling');
+                liveStateCard.style.display = 'block';
+            } else if (data.status === 'initializing') {
+                updateLiveStateDisplay(data);
+                liveStateCard.style.display = 'block';
+            } else if (data.status === 'idle') {
+                liveStateCard.style.display = 'none';
                 stopLiveStatePolling();
+            } else {
+                console.log('Temporary missing EEG data:', data);
+                // Do NOT stop polling here
             }
         })
         .catch(error => {
@@ -819,7 +816,8 @@ function initializeBrainwaveCharts() {
             
             // Set canvas size with proper dimensions - account for device pixel ratio
             const dpr = window.devicePixelRatio || 1;
-            const displayWidth = 200;  // Fixed display width
+            const rect = canvas.parentElement.getBoundingClientRect(); // Get container width for proper scaling
+            const displayWidth = rect.width - 20;  // Account for padding
             
             // Set display size (CSS)
             canvas.style.width = displayWidth + 'px';
@@ -838,6 +836,23 @@ function initializeBrainwaveCharts() {
         }
     });
 }
+
+const smoothedWaves = {
+    delta: 0,
+    theta: 0,
+    alpha: 0,
+    beta: 0,
+    gamma: 0
+};
+
+const waveFrequencies = {
+    delta: 1.2,
+    theta: 3,
+    alpha: 6,
+    beta: 12,
+    gamma: 22
+};
+
 
 function updateBrainwaveChart(wave, value) {
     console.log(`[CHART UPDATE] ${wave} called with value: ${value}`);
@@ -859,30 +874,61 @@ function updateBrainwaveChart(wave, value) {
     if (!chart.ctx || !chart.canvas) {
         return;
     }
-    
+   
+
+    const smoothing = 0.18
+    smoothedWaves[wave] = smoothedWaves[wave] * (1 - smoothing) + numValue * smoothing;
+
+    const amplitude = Math.max(3, smoothedWaves[wave] * 0.35)
+    const freq = waveFrequencies[wave] || 6;
+
+
     // Get display dimensions (account for device pixel ratio)
     const dpr = window.devicePixelRatio || 1;
     const displayWidth = chart.canvas.width / dpr;
     const displayHeight = chart.canvas.height / dpr;
+    const midY = displayHeight / 2;
     
     // Clear canvas
     chart.ctx.clearRect(0, 0, displayWidth, displayHeight);
     
-    // Find max value for dynamic scaling (with minimum scale of 20)
-    const maxValue = Math.max(...chart.data, 20);
     
-    // Draw simple colored line
+
+    // Begin path for wave
     chart.ctx.beginPath();
-    chart.data.forEach((point, index) => {
-        const x = (index / (chart.data.length - 1)) * displayWidth;
-        const y = displayHeight - (point / maxValue) * displayHeight;
+
+    const time = Date.now() * 0.004;
+
+    const noiseState = {
+        delta: 0,
+        theta: 0,
+        alpha: 0,
+        beta: 0,
+        gamma: 0
+    };
+
+    for (let i = 0; i < chart.data.length; i++) {
+        const x = (i / (chart.data.length - 1)) * displayWidth;
+
+        noiseState[wave] =
+        noiseState[wave] * 0.92 +
+            (Math.random() - 0.5) * 0.08;
+
+        const noise = noiseState[wave] * amplitude * 0.3
         
-        if (index === 0) {
+        const waveShape =
+            Math.sin((i * 0.12 * freq) + time) * amplitude * 0.55 +
+            Math.sin((i * 0.04 * freq) + time * 0.7) * amplitude * 0.20 +
+            noise
+
+        const y = midY - waveShape;
+
+        if (i === 0) {
             chart.ctx.moveTo(x, y);
         } else {
             chart.ctx.lineTo(x, y);
         }
-    });
+    }
     
     // Simple colored line with subtle glow
     chart.ctx.strokeStyle = chart.color;

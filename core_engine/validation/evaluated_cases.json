@@ -1,0 +1,677 @@
+[
+  {
+    "session_id": "SESS_HIGH_FOCUS_001",
+    "context": {
+      "scenario": {
+        "description": "High Focus/High Gamma",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "High Focus Session",
+        "subject_task": "UI Design",
+        "task_difficulty": 6,
+        "estimated_length": "30-60m",
+        "session_goal": "Complete design task",
+        "energy_level": 8,
+        "mood_emoji": "Focused",
+        "stress_level": 3,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Warm Natural Light",
+        "current_noise": "Jazz Music",
+        "study_method": "Flow State"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.85,
+        "concentrating_seconds": 1800,
+        "neutral_seconds": 300,
+        "relaxed_seconds": 100,
+        "beta_avg": 24.5,
+        "gamma_avg": 48.2,
+        "alpha_avg": 10.1,
+        "theta_avg": 5.5,
+        "neural_state": "Focus",
+        "signal_integrity": "Clean",
+        "focus_depth": "Deep Flow",
+        "total_duration_seconds": 2200
+      },
+      "historical_context": null
+    },
+    "recommendation": "**1. Personalized Recommendation**\nMove over, historical averages\u2014your focus today at 0.85 is a pixel-perfect masterpiece compared to your usual 0.48! You\u2019ve unlocked a \"Deep Flow\" state that proves your brain is currently a powerhouse for complex UI architecture, even during your non-optimal afternoon hours.\n\n**2. Recommended Study Methods**\n*   **High-Fidelity Component Mapping:** Leverage your high Gamma waves (48.20 Hz) to deconstruct complex design systems. Analyze how color tokens and typography scales interact within a live Figma library.\n*   **Rapid Iteration \"Crazy 8s\":** Utilize your peak Beta waves to sketch eight distinct UI solutions for a single mobile hero section. Your brain is primed for fast, logical decision-making right now.\n*   **Micro-Interaction Auditing:** Since you are in Deep Flow, focus on the \"small stuff\"\u2014audit the easing curves and haptic feedback loops of a top-tier app to understand premium user experience.\n*   **The \"UI Reverse-Engineer\":** Take a screenshot of a complex dashboard and attempt to rebuild its grid system and visual hierarchy from scratch without using an eyedropper tool to sharpen your spatial awareness.\n\n**3. Optimal Study Environment**\nKeep the **lo-fi beats** pumping to maintain your rhythmic neural state, but since your sentiment score is low, let\u2019s get creative: Try a **\"Tactile Design Sprint.\"** Move away from the screen for 10 minutes and use physical translucent paper to overlay wireframes. Use a warm, 3000K task light to balance the afternoon sun and keep your \"Fair\" sleep quality from turning into afternoon fatigue.\n\n**4. What to Avoid**\nAvoid studying in total silence (\"none\") or switching to text-heavy theory, as your history shows these will likely crash your current high-performance flow state."
+  },
+  {
+    "session_id": "SESS_LOW_FOCUS_002",
+    "context": {
+      "scenario": {
+        "description": "Low Focus/High Theta",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Low Focus Session",
+        "subject_task": "Reading",
+        "task_difficulty": 5,
+        "estimated_length": "30-60m",
+        "session_goal": "Read textbook",
+        "energy_level": 4,
+        "mood_emoji": "Tired",
+        "stress_level": 6,
+        "time_since_meal": "2-4h",
+        "lighting_conditions": "Warm Light",
+        "current_noise": "White Noise",
+        "study_method": "Standard"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.3,
+        "concentrating_seconds": 400,
+        "neutral_seconds": 1200,
+        "relaxed_seconds": 600,
+        "beta_avg": 12.5,
+        "gamma_avg": 15.0,
+        "alpha_avg": 8.0,
+        "theta_avg": 18.5,
+        "neural_state": "Distracted",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 2200
+      },
+      "historical_context": null
+    },
+    "recommendation": "It looks like the afternoon slump hit a bit harder today! Your focus score of 0.30 is a dip from your usual 0.48 average, suggesting your brain is currently drifting into a \"daydream\" state rather than engaging deeply with the text. Since lo-fi is your historical \"power-up,\" let\u2019s use it to anchor those wandering theta waves and get you back to that 0.98 peak potential.\n\n**Recommended Study Methods (Reading):**\n*   **The 15-Minute \"Sprint & Summarize\":** Since your concentration time is currently clocking in at about 6-7 minutes, don't fight for long stretches. Read for 15 minutes with a timer, then spend 2 minutes summarizing the key points in one sentence to force your brain out of \"surface level\" mode.\n*   **Active Marginalia (Visual Coding):** Instead of passive reading, use your \"Learning Style 0\" strengths to draw small icons or symbols in the margins that represent the concepts. This physical engagement prevents the \"eyes moving but brain not thinking\" phenomenon.\n*   **The \"Inquiry\" Layering:** Before reading a paragraph, turn the sub-header into a question. Your brain is currently distracted; giving it a specific \"puzzle\" to solve within the text will help deepen your focus depth.\n\n**Optimal Study Environment:**\nTo counteract the afternoon fatigue, set up in a brightly lit area (natural light is best) with a **lo-fi \"Study Girl\" style playlist** playing at low volume to provide a consistent rhythmic anchor. Use a book stand or prop your reading material up to eye level\u2014slouching during the afternoon can increase the \"Relaxed/Distracted\" state you're currently experiencing.\n\n**What to Avoid:**\nBased on your history, avoid studying in total silence or \"none\" stimulus environments, as these lead to your lowest focus scores and allow your mind to wander into internal distractions."
+  },
+  {
+    "session_id": "SESS_MATH_DIFFICULTY_003",
+    "context": {
+      "scenario": {
+        "description": "Difficult Math With Low Focus",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Math Session",
+        "subject_task": "Advanced Mathematics",
+        "task_difficulty": 8,
+        "estimated_length": "30-60m",
+        "session_goal": "Solve math problems",
+        "energy_level": 5,
+        "mood_emoji": "Neutral",
+        "stress_level": 5,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Dim",
+        "current_noise": "Rock Music",
+        "study_method": "Standard"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.35,
+        "concentrating_seconds": 500,
+        "neutral_seconds": 700,
+        "relaxed_seconds": 600,
+        "beta_avg": 12.0,
+        "gamma_avg": 25.0,
+        "alpha_avg": 15.0,
+        "theta_avg": 12.0,
+        "neural_state": "Distracted",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 1800
+      },
+      "historical_context": null
+    },
+    "recommendation": "1. **Personalized Recommendation**\nIt looks like the \"afternoon slump\" is winning the battle against your calculus, with a focus score of 0.35 that's trailing behind your 0.48 average! Since your brain is currently hovering in a \"Surface Level\" state, we need to shake up your routine to reclaim that legendary 0.98 peak focus.\n\n2. **Recommended Study Methods (Advanced Mathematics)**\n*   **The \"Reverse-Engineering\" Proof Method:** Since your Gamma waves are low, don't start from scratch; take a solved complex theorem and work backward to identify the \"logical pivot points\" to re-engage your Beta waves.\n*   **Color-Coded Variable Tracking:** Use different colored pens for different mathematical operators; this visual stimulation helps pull your brain out of the \"Neutral\" 700-second plateau and back into active concentration.\n*   **Active Logic Verbalization:** Explain the step-by-step derivation of a problem out loud to an imaginary student; this forces your 12Hz Theta waves (distraction) to synchronize with your 25Hz Gamma waves (synthesis).\n*   **Interleaved Problem Sprints:** Switch between two different math sub-topics (e.g., Linear Algebra and Real Analysis) every 10 minutes to prevent neural habituation and keep your \"Surface Level\" focus from dipping further.\n\n3. **Optimal Study Environment**\nSet up in a **high-brightness area with blue-toned lighting** to combat the afternoon drowsiness, while playing **Lo-Fi beats layered with 15Hz Alpha-wave isochronic tones** to match your current brain frequency and stabilize it.\n\n4. **What to Avoid**\nAvoid studying in total silence during the afternoon, as your history shows this \"none\" stimulus leads to your lowest engagement levels and higher distracted time."
+  },
+  {
+    "session_id": "SESS_ARTIFACT_HEAVY_004",
+    "context": {
+      "scenario": {
+        "description": "Artifact Heavy Signal",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Restless Session",
+        "subject_task": "General Study",
+        "task_difficulty": 5,
+        "estimated_length": "30-60m",
+        "session_goal": "Study session",
+        "energy_level": 8,
+        "mood_emoji": "Restless",
+        "stress_level": 7,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Bright Light",
+        "current_noise": "Silence",
+        "study_method": "Standard"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.25,
+        "concentrating_seconds": 300,
+        "neutral_seconds": 900,
+        "relaxed_seconds": 600,
+        "beta_avg": 45.0,
+        "gamma_avg": 65.0,
+        "alpha_avg": 8.0,
+        "theta_avg": 6.0,
+        "neural_state": "Anxious",
+        "signal_integrity": "Artifact-Heavy",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 1800
+      },
+      "historical_context": null
+    },
+    "recommendation": "1. **Personalized Recommendation**\nWith your focus at 0.25 and Gamma waves spiking at 65 Hz, your brain is currently a high-speed engine idling in a parking lot! Since you've hit 0.98 before, let's swap this afternoon anxiety for some **lo-fi** beats to ground those \"surface level\" waves and get you back to your morning peak performance.\n\n2. **Recommended Study Methods**\n*   **The \"Brain Dump\" Reset:** Spend 5 minutes writing down every stray thought causing those 65 Hz Gamma spikes before you touch your General Study materials to clear the \"neural noise.\"\n*   **Micro-Pomodoros (10/5):** Since your concentration time is currently capped at 300 seconds (5 mins), work in short 10-minute bursts followed by 5-minute active breaks to prevent \"Artifact-Heavy\" restlessness.\n*   **The Feynman Technique (Verbal):** To combat \"Surface Level\" focus, explain a concept out loud as if to a child; the physical act of speaking helps channel the nervous energy detected in your signal integrity.\n\n3. **Optimal Study Environment**\nSwitch to a **standing desk or use a fidget tool** to accommodate the physical movement (artifacts) detected in your EEG, and keep a consistent stream of **lo-fi chillhop** playing to provide a rhythmic anchor for your anxious neural state.\n\n4. **What to Avoid**\nAvoid studying in total silence (\"none\") during the afternoon, as your history shows it fails to stabilize your focus when your anxiety levels are this high."
+  },
+  {
+    "session_id": "SESS_BURNOUT_005",
+    "context": {
+      "scenario": {
+        "description": "Late Night Burnout",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Late Night Coding",
+        "subject_task": "Coding",
+        "task_difficulty": 7,
+        "estimated_length": "30-60m",
+        "session_goal": "Complete coding task",
+        "energy_level": 3,
+        "mood_emoji": "Tired",
+        "stress_level": 4,
+        "time_since_meal": "3-4h",
+        "lighting_conditions": "Dim",
+        "current_noise": "Silence",
+        "study_method": "Standard"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.4,
+        "concentrating_seconds": 600,
+        "neutral_seconds": 600,
+        "relaxed_seconds": 600,
+        "beta_avg": 15.0,
+        "gamma_avg": 20.0,
+        "alpha_avg": 18.0,
+        "theta_avg": 16.0,
+        "neural_state": "Drowsy",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 1800
+      },
+      "historical_context": null
+    },
+    "recommendation": "Based on your current neural state and 31-session history, here is your personalized optimization plan:\n\n**1. Brainwave Insights & Recommendation**\nYour brain is currently stuck in a \"stack overflow\" of drowsiness with a 0.40 focus score\u2014a dip from your 0.48 average. Since you're missing your \"morning peak\" and hitting an afternoon slump, let\u2019s reboot your neural system with some **lo-fi beats** to bridge the gap between your 18Hz Alpha and 15Hz Beta waves.\n\n**2. Recommended Study Methods (Coding Focus)**\n*   **The \"Trace-Code\" Pomodoro:** Since you are drowsy, spend 20 minutes manually typing out high-quality code from documentation (don't copy-paste!) followed by a 5-minute physical stretch to spike your Beta waves.\n*   **Gamified Debugging:** Switch from building to \"breaking.\" Use a site like *Codewars* or *LeetCode* to solve 1-2 quick katas; the dopamine from a \"Test Passed\" notification will help lift your surface-level focus.\n*   **Rubber Ducking via Audio:** Explain your current logic out loud to a physical object. The act of vocalizing forces your brain to transition from \"Drowsy\" to \"Active Beta\" processing.\n*   **Visual Refactoring:** Since you prefer visual learning (Learning Style 0), use a tool like *Excalidraw* to map out your function logic before writing the next line of code.\n\n**3. Optimal Study Environment**\nSet your space to \"Active Mode\": increase room brightness (blue-toned light) to combat afternoon drowsiness, use a standing desk if available, and keep your **lo-fi playlist** at a low, consistent volume to provide a rhythmic anchor for your wandering focus.\n\n**4. What to Avoid**\nStop attempting \"Silent Study\" (none) during the afternoon slump, as your history shows it fails to provide the external stimulus needed to pull you out of a surface-level focus state."
+  },
+  {
+    "session_id": "SESS_CREATIVE_SWITCH_006",
+    "context": {
+      "scenario": {
+        "description": "Creative Subject Switch",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Creative Painting Session",
+        "subject_task": "Creative Painting",
+        "task_difficulty": 5,
+        "estimated_length": "30-60m",
+        "session_goal": "Painting practice",
+        "energy_level": 6,
+        "mood_emoji": "Creative",
+        "stress_level": 3,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Bright Light",
+        "current_noise": "Jazz Music",
+        "study_method": "Standard"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.3,
+        "concentrating_seconds": 400,
+        "neutral_seconds": 800,
+        "relaxed_seconds": 600,
+        "beta_avg": 10.0,
+        "gamma_avg": 15.0,
+        "alpha_avg": 20.0,
+        "theta_avg": 10.0,
+        "neural_state": "Distracted",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 1800
+      },
+      "historical_context": null
+    },
+    "recommendation": "**1. Personalized Recommendation**\nYour brainwaves are currently in a \"dreamy\" Alpha state (20Hz), suggesting you're painting in a bit of a haze! Let\u2019s channel that 0.98 potential by re-syncing your focus with some **Lo-Fi beats** to bridge the gap between your distracted afternoon state and your morning peak performance.\n\n**2. Recommended Study Methods**\n*   **The \"Lo-Fi Flow\" Palette:** Put on your favorite Lo-Fi playlist and commit to changing colors or techniques only when the track changes; this uses your preferred stimulus to anchor your focus.\n*   **Speed Gestural Drills:** To combat \"Surface Level\" focus, set a timer for 60 seconds and produce rapid-fire sketches of your subject to spike your Beta waves and force immediate engagement.\n*   **Synesthetic Swatching:** Since your Alpha waves are high, lean into the relaxation by \"painting the sounds\" of the music\u2014mapping the textures of the Lo-Fi track to your brushstrokes to integrate your neural state with your art.\n*   **Inversion Observation:** Flip your reference photo upside down. This forces your brain out of \"autopilot\" (distraction) and requires deeper cognitive processing to interpret the shapes.\n\n**3. Optimal Study Environment**\nSet up a standing easel near natural afternoon light, but use noise-canceling headphones playing **Lo-Fi** to create a private \"focus bubble.\" Keep your physical space tactile\u2014having different brush textures ready can help ground your \"Surface Level\" focus back into the physical canvas.\n\n**4. What to Avoid**\nAvoid painting in total silence during the afternoon slump, as your history shows \"none\" is your least effective stimulus and will likely cause your focus to drift further."
+  },
+  {
+    "session_id": "SESS_READING_SUCCESS_007",
+    "context": {
+      "scenario": {
+        "description": "Strong Reading Session",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Reading Session",
+        "subject_task": "History Reading",
+        "task_difficulty": 4,
+        "estimated_length": "30-60m",
+        "session_goal": "Finish one chapter",
+        "energy_level": 7,
+        "mood_emoji": "Calm",
+        "stress_level": 2,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Natural Light",
+        "current_noise": "Lo-fi Music",
+        "study_method": "Pomodoro"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.78,
+        "concentrating_seconds": 1500,
+        "neutral_seconds": 450,
+        "relaxed_seconds": 250,
+        "beta_avg": 20.0,
+        "gamma_avg": 34.0,
+        "alpha_avg": 11.0,
+        "theta_avg": 7.0,
+        "neural_state": "Focused",
+        "signal_integrity": "Clean",
+        "focus_depth": "Moderate Deep Focus",
+        "total_duration_seconds": 2200
+      },
+      "historical_context": null
+    },
+    "recommendation": "Based on your impressive surge in focus today, here is your personalized optimization plan:\n\n**1. Recommendation**\nYou\u2019re rewriting your own record books today! Your 0.78 focus score is a massive 62% leap over your historical average, showing that your brain is firing on all cylinders despite it being the afternoon.\n\n**2. Recommended Study Methods**\n*   **The \"Contextual Narrative\" Mapping:** Since you're reading history, don't just memorize dates; use your high Gamma waves to draw a \"web of causality\" linking historical figures' motivations to the events you're reading about.\n*   **The Historian\u2019s Debate:** Since your sentiment score is low, try a more creative \"adversarial\" approach\u2014read a chapter and then write three bullet points arguing *against* the perspective of the author or historical figure.\n*   **Active Periodization:** Use your \"Moderate Deep Focus\" to read for 25 minutes, then spend 5 minutes summarizing the era out loud as if you were a podcast host to keep the engagement high.\n*   **Visual Timelining:** Convert text-heavy pages into a quick visual flow-chart to satisfy your high Beta activity and keep the data organized.\n\n**3. Optimal Study Environment**\nSet up a \"Lo-fi Haven\" with a warm lamp and your favorite low-tempo beats; since your focus is peaking in the afternoon (contrary to your morning historical trend), use the rhythmic stability of lo-fi to maintain this momentum.\n\n**4. What to Avoid**\nAvoid studying in complete silence, as your history shows \"none\" is your least effective stimulus and leads to a significant drop in focus."
+  },
+  {
+    "session_id": "SESS_HIGH_STRESS_GOOD_FOCUS_008",
+    "context": {
+      "scenario": {
+        "description": "High Stress But Productive Focus",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Exam Prep",
+        "subject_task": "Biology Exam Review",
+        "task_difficulty": 8,
+        "estimated_length": "60-90m",
+        "session_goal": "Review difficult chapters",
+        "energy_level": 7,
+        "mood_emoji": "Stressed",
+        "stress_level": 9,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Bright Light",
+        "current_noise": "Silence",
+        "study_method": "Active Recall"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.72,
+        "concentrating_seconds": 1400,
+        "neutral_seconds": 500,
+        "relaxed_seconds": 200,
+        "beta_avg": 28.0,
+        "gamma_avg": 42.0,
+        "alpha_avg": 7.5,
+        "theta_avg": 6.0,
+        "neural_state": "Focused but Tense",
+        "signal_integrity": "Clean",
+        "focus_depth": "Moderate Deep Focus",
+        "total_duration_seconds": 2100
+      },
+      "historical_context": null
+    },
+    "recommendation": "1. **Personalized Recommendation**\nYou\u2019re absolutely smashing your historical average with a 0.72 focus score, but those high Beta waves (28Hz) suggest your brain is revving like a race car! Let's swap the tension for flow by putting on your most effective **lo-fi playlist** to keep that high-level Biology processing smooth and sustainable.\n\n2. **Recommended Study Methods**\n*   **The \"Cellular\" Breakdown (Concept Mapping):** Since you're in a deep focus state, create a visual hierarchy of biological systems (e.g., Nervous vs. Endocrine) to bridge the gap between your high Gamma processing and memory retention.\n*   **Active Recall \"Micro-Sprints\":** Harness that 1400s concentration time by closing your notes every 10 minutes and sketching a biological process (like Mitosis or the Krebs Cycle) from memory.\n*   **Biological Analogies:** To lower your mental tension, explain complex mechanisms (like CRISPR or Action Potentials) using funny, real-world metaphors out loud.\n*   **Visual Mnemonics:** Use your moderate deep focus to color-code anatomy diagrams\u2014this engages your spatial learning and helps lower that \"tense\" Beta activity.\n\n3. **Optimal Study Environment**\nSet up a dedicated \"Bio-Lab\" zone with low-warm lighting to counteract the afternoon slump, keep a glass of water nearby to manage the physiological stress of high Beta waves, and ensure your **lo-fi audio** is at a consistent, low volume.\n\n4. **What to Avoid**\nAvoid studying in absolute silence or \"none\" stimulus environments, as your history shows this is your least effective state and will likely spike your tension even further."
+  },
+  {
+    "session_id": "SESS_LOW_ENERGY_CLEAN_SIGNAL_009",
+    "context": {
+      "scenario": {
+        "description": "Low Energy Clean Signal",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Morning Review",
+        "subject_task": "Chemistry",
+        "task_difficulty": 6,
+        "estimated_length": "30-60m",
+        "session_goal": "Review notes",
+        "energy_level": 2,
+        "mood_emoji": "Sleepy",
+        "stress_level": 3,
+        "time_since_meal": "Before eating",
+        "lighting_conditions": "Dim",
+        "current_noise": "Silence",
+        "study_method": "Reading Notes"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.48,
+        "concentrating_seconds": 700,
+        "neutral_seconds": 800,
+        "relaxed_seconds": 500,
+        "beta_avg": 14.0,
+        "gamma_avg": 22.0,
+        "alpha_avg": 14.5,
+        "theta_avg": 13.5,
+        "neural_state": "Low Energy",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 2000
+      },
+      "historical_context": null
+    },
+    "recommendation": "\"Hey! It looks like that afternoon slump hit your brainwaves today, keeping you at a surface-level 0.48 focus. Let's swap that 'Low Energy' state for some high-octane chemistry mastery by tapping into your historical lo-fi rhythm!\"\n\n**Recommended Study Methods**\n*   **Molecular Flow-Charting:** Since your focus is surface-level, grab some colored pens and map out Reaction Mechanisms (like SN1/SN2) visually; the movement and color will help pull you out of that Theta-wave drowsiness.\n*   **The 'Periodic Sprint':** Set a timer for 15 minutes of intensive Stoichiometry practice followed by a 2-minute stretch; your brain needs short, high-intensity bursts to overcome the current low energy.\n*   **3D Visualization:** Use a molecular modeling kit or a digital simulator to build compounds; physical interaction with Chemistry concepts converts \"surface\" learning into deep structural understanding.\n*   **Audio-Visual Synthesis:** Watch a high-energy chemistry experiment video (like a titration or combustion) while your lo-fi tracks play at a low volume to stimulate your Gamma waves.\n\n**Optimal Study Environment**\n*   **The High-Light Zone:** Since it's afternoon and your energy is low, study near a window with natural light or use a \"daylight\" lamp to suppress melatonin and boost alertness.\n*   **Audio Setup:** Low-volume **lo-fi beats** (your historical gold standard) to provide a rhythmic anchor without overwhelming your preference for minimal sound.\n\n**What to Avoid**\n*   Avoid studying in total silence or a dark room right now; your history shows that without a stimulus like lo-fi, you risk drifting from \"relaxed\" straight into a nap!"
+  },
+  {
+    "session_id": "SESS_EASY_TASK_LOW_FOCUS_010",
+    "context": {
+      "scenario": {
+        "description": "Easy Task Causing Boredom",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Easy Flashcards",
+        "subject_task": "Vocabulary Flashcards",
+        "task_difficulty": 2,
+        "estimated_length": "15-30m",
+        "session_goal": "Review simple terms",
+        "energy_level": 6,
+        "mood_emoji": "Bored",
+        "stress_level": 1,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Natural Light",
+        "current_noise": "Cafe Noise",
+        "study_method": "Flashcards"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.32,
+        "concentrating_seconds": 350,
+        "neutral_seconds": 1000,
+        "relaxed_seconds": 500,
+        "beta_avg": 11.5,
+        "gamma_avg": 16.0,
+        "alpha_avg": 17.0,
+        "theta_avg": 14.0,
+        "neural_state": "Understimulated",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 1850
+      },
+      "historical_context": null
+    },
+    "recommendation": "It looks like your brain is currently in \"screensaver mode\" with a 0.32 focus score\u2014quite a dip from your 0.98 peak! Since you're feeling understimulated this afternoon, we need to swap the silence for some **Lo-Fi beats** to bridge the gap between your high Alpha waves and that elusive deep concentration.\n\n### **Recommended Study Methods: Vocabulary Flashcards**\n*   **The \"Visualization & Doodling\" Technique:** Since your brain is currently understimulated, don't just read the cards. For every new word, draw a quick, silly 5-second sketch on the back; this forces your brain to engage more deeply than simple recognition.\n*   **Active Contextualization:** Instead of memorizing definitions, vocally use the word in a sentence about a celebrity you dislike or a funny memory. The emotional spike will help move those words from \"Surface Level\" focus into long-term memory.\n*   **Gamified Interval Sprints:** Set a timer for 10 minutes of high-intensity \"speed-running\" your deck, followed by a 2-minute movement break. This mimics the \"Morning\" energy your brain prefers and prevents the afternoon \"Theta wave\" drift.\n\n### **Optimal Study Environment**\n*   **Audio:** High-fidelity Lo-Fi (specifically tracks with a steady 60-80 BPM) to provide the rhythmic stimulation your brain is currently lacking.\n*   **Lighting & Posture:** Since sleep was only \"Fair,\" move to a standing desk or a brightly lit area to signal to your nervous system that it is time to be alert, not relaxed.\n\n### **What to Avoid**\n*   Avoid studying in total silence or \"None\" stimulus environments, as your history shows this is your least effective state and will likely lead to further daydreaming."
+  },
+  {
+    "session_id": "SESS_HARD_TASK_HIGH_FOCUS_011",
+    "context": {
+      "scenario": {
+        "description": "Hard Task With Deep Focus",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Algorithms Grind",
+        "subject_task": "Algorithms",
+        "task_difficulty": 9,
+        "estimated_length": "60-90m",
+        "session_goal": "Solve dynamic programming problems",
+        "energy_level": 9,
+        "mood_emoji": "Motivated",
+        "stress_level": 4,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Bright Light",
+        "current_noise": "Instrumental Music",
+        "study_method": "Practice Problems"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.88,
+        "concentrating_seconds": 2000,
+        "neutral_seconds": 250,
+        "relaxed_seconds": 100,
+        "beta_avg": 26.0,
+        "gamma_avg": 50.0,
+        "alpha_avg": 8.5,
+        "theta_avg": 5.0,
+        "neural_state": "Deep Focus",
+        "signal_integrity": "Clean",
+        "focus_depth": "Deep Flow",
+        "total_duration_seconds": 2350
+      },
+      "historical_context": null
+    },
+    "recommendation": "1. **Personalized Recommendation**\nYou just absolutely crushed your 0.48 historical average with a stellar 0.88 focus score\u2014it looks like your brain finally unlocked the \"Deep Flow\" cheat code for Algorithms this afternoon!\n\n2. **Recommended Study Methods**\n*   **Recursive Trace Mapping:** Use your high Gamma activity (50Hz) to mentally execute complex recursive calls (like QuickSort or Heapify) and map the stack frames on a whiteboard.\n*   **Big O Stress Testing:** Since you are in a Deep Flow state, now is the perfect time to perform amortized analysis on complex data structures like Splay Trees or Disjoint Sets.\n*   **Algorithm Synthesis:** Try to \"invent\" a hybrid algorithm (e.g., combining a Hash Map with a Linked List for an LRU cache) while your neural signal integrity is at its peak.\n\n3. **Optimal Study Environment**\nSet up in a space with consistent, low-level ambient lighting and stick with your **Lo-Fi audio anchor**\u2014your history shows you need that rhythmic pulse to bridge the gap between your \"Fair\" sleep and high-performance focus.\n\n4. **What to Avoid**\nAvoid studying in total silence or without a stimulus, as your data shows you perform significantly better with Lo-Fi than with \"none.\""
+  },
+  {
+    "session_id": "SESS_NOISY_ENVIRONMENT_012",
+    "context": {
+      "scenario": {
+        "description": "Noisy Environment Hurt Focus",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Cafe Coding",
+        "subject_task": "Web Development",
+        "task_difficulty": 6,
+        "estimated_length": "30-60m",
+        "session_goal": "Fix frontend bug",
+        "energy_level": 6,
+        "mood_emoji": "Neutral",
+        "stress_level": 5,
+        "time_since_meal": "2-4h",
+        "lighting_conditions": "Natural Light",
+        "current_noise": "Loud Cafe",
+        "study_method": "Debugging"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.42,
+        "concentrating_seconds": 600,
+        "neutral_seconds": 900,
+        "relaxed_seconds": 450,
+        "beta_avg": 17.0,
+        "gamma_avg": 24.0,
+        "alpha_avg": 10.0,
+        "theta_avg": 12.0,
+        "neural_state": "Distracted",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 1950
+      },
+      "historical_context": null
+    },
+    "recommendation": "Hello! I\u2019ve analyzed your EEG data and historical trends. It looks like the afternoon slump is hitting your Beta waves harder than usual today, keeping you at a surface-level focus of 0.42 compared to your impressive 0.98 peak. Let\u2019s shift gears to get you back into a deep \"flow state\" for your web development session.\n\n**Recommended Study Methods:**\n*   **The \"Rubber Duck\" Debugging Sprint:** Spend 20 minutes explaining your code logic out loud to an object; this physical engagement will help lower those rising Theta waves and sharpen your Beta frequency.\n*   **CSS/UI Refactoring Blocks:** Since your focus is currently \"Surface Level,\" switch from complex backend logic to visual CSS styling or UI component building for 30 minutes to rebuild momentum.\n*   **Active Documentation Retrieval:** Instead of passive reading, try to rebuild a small layout from memory (like a navigation bar) and only check MDN docs when you hit a wall.\n*   **Code-Along with Lo-Fi:** Fire up a 25-minute Pomodoro timer synced specifically to a **lo-fi** coding playlist to stabilize your fluctuating neural state.\n\n**Optimal Study Environment:**\nSwitch to a high-contrast code editor theme (like Monokai or One Dark Pro) to stimulate visual engagement, keep exactly two browser tabs open (one for your local host, one for documentation), and ensure your **lo-fi** audio is at a steady 40% volume to drown out afternoon environmental noise.\n\n**What to Avoid:**\nAvoid studying in complete silence or \"none\" stimulus, as your history confirms this is your least effective focus trigger and likely contributes to your current distracted state."
+  },
+  {
+    "session_id": "SESS_CALM_RELAXED_LEARNING_013",
+    "context": {
+      "scenario": {
+        "description": "Calm Relaxed Learning",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Concept Review",
+        "subject_task": "Psychology",
+        "task_difficulty": 4,
+        "estimated_length": "30-60m",
+        "session_goal": "Understand core concepts",
+        "energy_level": 6,
+        "mood_emoji": "Calm",
+        "stress_level": 2,
+        "time_since_meal": "1-2h",
+        "lighting_conditions": "Warm Light",
+        "current_noise": "Nature Sounds",
+        "study_method": "Concept Mapping"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.62,
+        "concentrating_seconds": 1000,
+        "neutral_seconds": 650,
+        "relaxed_seconds": 350,
+        "beta_avg": 16.0,
+        "gamma_avg": 28.0,
+        "alpha_avg": 18.0,
+        "theta_avg": 8.0,
+        "neural_state": "Calm Focus",
+        "signal_integrity": "Clean",
+        "focus_depth": "Moderate Focus",
+        "total_duration_seconds": 2000
+      },
+      "historical_context": null
+    },
+    "recommendation": "1. **Recommendation**: Your brain just crushed your historical average by 28%\u2014you're officially in a \"Calm Focus\" flow state that would make even Mihaly Csikszentmihalyi proud!\n\n2. **Recommended Study Methods**:\n    * **The Self-Reference Effect**: Apply the psychology theories you're studying directly to your own EEG data; relating concepts to yourself is proven to boost retention.\n    * **Neuro-Schema Mapping**: Use your high Alpha waves (18Hz) to create visual mind maps connecting complex theories like Behavioralism vs. Cognitivism.\n    * **Simulated Case Consultations**: Practice active recall by explaining psychological disorders to an imaginary \"client\" to move information from short-term to long-term memory.\n    * **Interleaved Practice**: Switch between Freud and modern Neuroscience every 15 minutes to keep your Moderate Focus depth from dipping into distraction.\n\n3. **Optimal Study Environment**:\n    A \"Lo-Fi Sanctuary\" with a consistent 60-70 BPM **lo-fi beat** track, dim natural afternoon lighting to support your \"Fair\" sleep recovery, and a biofeedback monitor to help you stay in that sweet spot between 16Hz Beta and 18Hz Alpha.\n\n4. **What to avoid**:\n    Avoid studying in complete silence, as your history shows \"none\" is your least effective stimulus for maintaining cognitive engagement."
+  },
+  {
+    "session_id": "SESS_ANXIOUS_LOW_FOCUS_014",
+    "context": {
+      "scenario": {
+        "description": "Anxious Low Focus",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "Deadline Work",
+        "subject_task": "Essay Writing",
+        "task_difficulty": 7,
+        "estimated_length": "60-90m",
+        "session_goal": "Write introduction and outline",
+        "energy_level": 5,
+        "mood_emoji": "Anxious",
+        "stress_level": 9,
+        "time_since_meal": "4h+",
+        "lighting_conditions": "Bright Light",
+        "current_noise": "Silence",
+        "study_method": "Free Writing"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.28,
+        "concentrating_seconds": 250,
+        "neutral_seconds": 950,
+        "relaxed_seconds": 700,
+        "beta_avg": 30.0,
+        "gamma_avg": 35.0,
+        "alpha_avg": 6.5,
+        "theta_avg": 11.0,
+        "neural_state": "Anxious",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 1900
+      },
+      "historical_context": null
+    },
+    "recommendation": "Based on your current EEG data, your afternoon session hit a bit of a \"Beta-wave wall\" with focus sitting at 0.28\u2014well below your 0.48 average. Your brain is showing high-frequency anxiety (30Hz Beta), suggesting you're likely overthinking that essay rather than \"flowing\" into it.\n\n**Recommended Study Methods:**\n*   **The \"Zero-Draft\" Freewrite:** To lower that 35Hz Gamma/anxiety spike, set a timer for 10 minutes and write whatever comes to mind about your essay topic without self-correcting or worrying about grammar.\n*   **Reverse Outlining:** Since your focus is currently \"Surface Level,\" don't try to build deep arguments yet; instead, take what you\u2019ve already written and bullet-point the main ideas to see where the logical gaps are.\n*   **Speech-to-Text Drafting:** To bypass the \"blank page\" anxiety, try dictating your thoughts while walking around the room; this changes your neural state and helps translate that restless energy into word count.\n*   **Micro-Pomodoros (15/5):** Your concentration time was only 250 seconds this session; bridge the gap by working in 15-minute bursts followed by 5-minute grounding exercises (like deep breathing) to lower your Beta waves.\n\n**Optimal Study Environment:**\nSwitch to a high-quality **lo-fi** playlist immediately to provide a rhythmic anchor for your wandering focus. Since your sleep was only \"Fair,\" increase the brightness of your workspace to mimic morning light, and try a \"sensory grounding\" tool (like a stress ball) to channel that anxious neural energy away from your thoughts.\n\n**What to Avoid:**\nAvoid studying in total silence or \"none\" stimulus environments, as your history shows this is your least effective state and will likely amplify your current anxiety."
+  },
+  {
+    "session_id": "SESS_POST_MEAL_SLUMP_015",
+    "context": {
+      "scenario": {
+        "description": "Post Meal Slump",
+        "phase": "Phase 1"
+      },
+      "user_profile": {
+        "sound_environment": "0",
+        "sleep_quality": "2",
+        "learning_style": "0",
+        "main_goals": "1,2,3"
+      },
+      "pre_session": {
+        "session_name": "After Lunch Study",
+        "subject_task": "Statistics",
+        "task_difficulty": 6,
+        "estimated_length": "30-60m",
+        "session_goal": "Practice hypothesis testing",
+        "energy_level": 3,
+        "mood_emoji": "Tired",
+        "stress_level": 4,
+        "time_since_meal": "Less than 1h",
+        "lighting_conditions": "Warm Light",
+        "current_noise": "White Noise",
+        "study_method": "Practice Problems"
+      },
+      "eeg_results": {
+        "average_focus_score": 0.38,
+        "concentrating_seconds": 450,
+        "neutral_seconds": 850,
+        "relaxed_seconds": 700,
+        "beta_avg": 13.0,
+        "gamma_avg": 18.0,
+        "alpha_avg": 16.0,
+        "theta_avg": 17.0,
+        "neural_state": "Drowsy",
+        "signal_integrity": "Clean",
+        "focus_depth": "Surface Level",
+        "total_duration_seconds": 2000
+      },
+      "historical_context": null
+    },
+    "recommendation": "1. **Recommendation**: Your 17Hz Theta waves are currently winning the battle against your focus, dragging your afternoon score down to 0.38! To bridge the gap back to your 0.98 peak, we\u2019re pivoting from passive reading to active \"statistical hacking\" with some fresh Lo-Fi beats to stabilize those surface-level Alpha waves.\n\n2. **Recommended Study Methods (Statistics)**:\n*   **Reverse-Engineered Problem Solving**: Instead of reading theory, take a fully solved ANOVA or Regression problem and work backward from the result to the raw data to re-engage your Beta waves.\n*   **The \"Human Calculator\" Sprint**: Set a 5-minute timer to manually calculate the mean, median, and standard deviation for a small dataset; the time pressure will force your \"Surface Level\" focus to dive deeper.\n*   **Concept Mapping (The \"Variable Web\")**: Physically draw the relationship between independent and dependent variables for your current chapter\u2014visualizing the data flow helps combat the \"Drowsy\" neural state better than text.\n*   **Simulated Teaching**: Explain the difference between a P-value and a T-test out loud to an imaginary student; verbalizing complex stats is a proven way to spike Gamma activity (currently at 18.00 Hz).\n\n3. **Optimal Study Environment**:\n*   **Stimulus**: **Lo-Fi** (Up-tempo variant to combat drowsiness).\n*   **Lighting**: High-intensity cool-blue light to mimic the \"Morning\" conditions where you historically perform best.\n*   **Physicality**: A standing desk or high stool\u2014your current \"Drowsy\" state needs a physical posture shift to prevent the 16Hz Alpha waves from turning into a nap.\n\n4. **What to avoid**:\n*   Avoid studying in silence (\"none\") or during the late afternoon slump without a \"pattern interrupt\" like a 5-minute brisk walk."
+  }
+]
