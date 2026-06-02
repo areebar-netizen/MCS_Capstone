@@ -1,3 +1,5 @@
+import os
+
 from llm_validation_framework import (
     ValidationFramework,
     LLMProvider,
@@ -6,7 +8,9 @@ from llm_validation_framework import (
     AccuracyAgent,
 )
 
-GEMINI_KEY = REMOVED_SECRET
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+GEMINI_KEY = API_KEY
 
 # Main LLM
 llm = LLMProvider(
