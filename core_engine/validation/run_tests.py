@@ -1,12 +1,18 @@
+from collections import defaultdict
+from email import parser
+from email import parser
 import json
 import os
 import sys
 import argparse
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Counter
+import time
 
 from ai_validation import judge_response, client
 from google.genai import types
+from llm_validation import vf
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")
@@ -40,6 +46,17 @@ class MockSessionData:
     summary: dict
     checkin: dict
     description: str
+
+
+ISSUE_TYPES = [
+    "unsupported_historical_claim",
+    "unsupported_eeg_claim",
+    "contradicted_eeg_value",
+    "unsupported_time_of_day_claim",
+    "unsupported_user_preference_claim",
+    "unsafe_or_impractical_advice",
+    "no_issue"
+]
 
 # Mock data for various test scenarios
 SCENARIOS = {
@@ -760,6 +777,8 @@ def build_judge_context(
     mock_data,
     create_historical=False
 ):
+    historical_context = build_historical_context(user_profile)
+    #print("\n[TEST] Building context for judge evaluation...", historical_context)
     return {
         "scenario": {
             "description": mock_data.description,
@@ -802,11 +821,11 @@ def build_judge_context(
             "focus_depth": session_summary.focus_depth,
             "total_duration_seconds": session_summary.total_duration_seconds,
         },
-        "historical_context": build_historical_context(user_profile) if create_historical else None
+        "historical_context": historical_context
     }
 
 
-def run_test(email: str, session_id: str, mock_data: MockSessionData, create_historical: bool = False) -> dict:
+def run_test(email: str, session_id: str, mock_data: MockSessionData, create_historical: bool = False, llm_validation: bool = False) -> dict:
     cleanup_session(session_id)
 
     print(f"\n{'=' * 80}")
@@ -845,6 +864,61 @@ def run_test(email: str, session_id: str, mock_data: MockSessionData, create_his
         mock_data=mock_data,
         create_historical=create_historical
     )
+
+    content= """You are an AI-powered Study Optimization Advisor analyzing EEG brainwave data.
+
+USER PROFILE:
+- Sound preference   : {sound}
+- Sleep quality      : {sleep}
+- Learning style     : {style}
+- Study goals        : {goals}
+- Subject studying   : {subject}
+
+EEG SESSION RESULTS:
+- Avg focus score    : {avg_focus:.2f}
+- Concentrating time : {conc} seconds
+- Neutral time       : {neut} seconds
+- Relaxed/distracted : {relax} seconds
+- Session duration   : {duration} mins
+
+BRAINWAVE ANALYSIS:
+- Neural State       : {neural_state}
+- Signal Integrity   : {signal_integrity}
+- Focus Depth        : {focus_depth}
+- Beta waves        : {beta_avg:.2f} Hz
+- Gamma waves       : {gamma_avg:.2f} Hz
+- Alpha waves       : {alpha_avg:.2f} Hz
+- Theta waves       : {theta_avg:.2f} Hz
+
+RESPOND WITH:
+1. 1-2 line fun personalized recommendation based on their EEG session results
+2. Recommended Study Methods (3-4 bullet points)
+3. Optimal study environment for this user
+4. Tailor study methods specifically for {subject}
+""".format(
+        sound        = context['user_profile']['sound_environment'],
+        sleep        = context['user_profile']['sleep_quality'],
+        style        = context['user_profile']['learning_style'],
+        goals        = context['user_profile']['main_goals'],
+        avg_focus    = float(context['eeg_results']['average_focus_score']),
+        conc         = context['eeg_results']['concentrating_seconds'],
+        neut         = context['eeg_results']['neutral_seconds'],
+        relax        = context['eeg_results']['relaxed_seconds'],
+        duration     = round(context['eeg_results']['total_duration_seconds'] / 60, 1),
+        neural_state = context['eeg_results']['neural_state'],
+        signal_integrity = context['eeg_results']['signal_integrity'],
+        focus_depth  = context['eeg_results']['focus_depth'],
+        beta_avg     = context['eeg_results']['beta_avg'],
+        gamma_avg    = context['eeg_results']['gamma_avg'],
+        alpha_avg    = context['eeg_results']['alpha_avg'],
+        theta_avg    = context['eeg_results']['theta_avg'],
+        subject      = context['pre_session']['subject_task']
+    )
+
+
+    if llm_validation:
+        print("\n[TEST] Running LLM validation of recommendation...")
+        print(f"[TEST] LLM Validation Result: {vf.validate(content)}")
 
     return {
         "session_id": session_id,
@@ -887,21 +961,36 @@ class Orchestrator:
             "Judge3": cases[10:15],
         }
 
-    def run_judge_batch(self, judge_name, assigned_cases):
+    def run_judge_batch(self, judge_name, assigned_cases, all_judge_results, output_file):
         results = []
 
         for case in assigned_cases:
+            session_id = case["session_id"]
+
+            if self.already_done(all_judge_results, judge_name, session_id):
+                print(f"[SKIP] {judge_name} already judged {session_id}")
+                continue
+
+            print(f"[ORCH] {judge_name} judging {session_id}")
+
             judgment = judge_response(
                 context=case["context"],
                 recommendation=case["recommendation"]
             )
 
-            results.append({
+            result = {
                 "judge": judge_name,
-                "session_id": case["session_id"],
+                "session_id": session_id,
                 "judgment": judgment,
-            })
-            #print(f"[{judge_name}] Evaluated {case['session_id']} Results {results[-1]['judgment']}")
+            }
+
+            all_judge_results.append(result)
+            results.append(result)
+
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(all_judge_results, f, indent=2, default=str)
+
+            time.sleep(5)
 
         return results
 
@@ -923,21 +1012,102 @@ class Orchestrator:
         #print(f"\n[ORCH] Debate response: {response.text}")
 
         return json.loads(response.text)
+    
+    def load_existing_results(self, path):
+        if not os.path.exists(path):
+            return []
 
-    def run(self, evaluated_cases):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+
+    def already_done(self, existing_results, judge_name, session_id):
+        return any(
+            r["judge"] == judge_name and r["session_id"] == session_id
+            for r in existing_results
+        )
+
+    def run_all_judges_on_same_cases(self, cases, output_file="judge_reliability_partial.json"):
+        all_results = self.load_existing_results(output_file)
+
+        for judge_name in ["Judge1", "Judge2", "Judge3"]:
+            print(f"\n[RELIABILITY] Running {judge_name} on all {len(cases)} cases")
+
+            for case in cases:
+                session_id = case["session_id"]
+
+                if self.already_done(all_results, judge_name, session_id):
+                    print(f"[SKIP] {judge_name} already judged {session_id}")
+                    continue
+
+                print(f"[RELIABILITY] {judge_name} judging {session_id}")
+
+                judgment = judge_response(
+                    context=case["context"],
+                    recommendation=case["recommendation"]
+                )
+                
+                all_results.append({
+                    "judge": judge_name,
+                    "session_id": session_id,
+                    "judgment": judgment,
+                })
+
+                with open(output_file, "w", encoding="utf-8") as f:
+                    json.dump(all_results, f, indent=2, default=str)
+
+                time.sleep(5)
+
+        return all_results
+
+
+    def summarize_judge_agreement(self, judge_results):
+        """
+        Compares whether judges agree on has_hallucination.
+        Your judge_response JSON should include has_hallucination.
+        """
+        grouped = defaultdict(list)
+
+        for result in judge_results:
+            grouped[result["session_id"]].append(result)
+
+        agreement_summary = {}
+
+        for session_id, results in grouped.items():
+            votes = []
+
+            for result in results:
+                judgment = result["judgment"]
+                votes.append(bool(judgment.get("has_hallucination", False)))
+
+            vote_counts = Counter(votes)
+
+            agreement_summary[session_id] = {
+                "votes": votes,
+                "num_judges": len(votes),
+                "agree_count": max(vote_counts.values()),
+                "agreement_rate": max(vote_counts.values()) / len(votes),
+                "majority_has_hallucination": vote_counts[True] > vote_counts[False],
+            }
+
+        return agreement_summary
+    
+    
+
+    def run(self, evaluated_cases,  output_file="judge_results_partial.json"):
         allocations = self.assign_judges(evaluated_cases)
 
-        all_judge_results = []
+        all_judge_results = self.load_existing_results(output_file)
 
         for judge_name, cases in allocations.items():
             print(f"\n[ORCH] Running {judge_name} on {len(cases)} sessions")
 
-            batch_results = self.run_judge_batch(
+            self.run_judge_batch(
                 judge_name=judge_name,
-                assigned_cases=cases
+                assigned_cases=cases,
+                all_judge_results=all_judge_results,
+                output_file=output_file
             )
-
-            all_judge_results.extend(batch_results)
 
         print("\n[ORCH] Running final debate/consensus")
 
@@ -948,6 +1118,60 @@ class Orchestrator:
             "consensus": consensus,
         }
 
+def load_gold_cases(path):
+        with open(path, "r", encoding="utf-8") as f:
+            gold_cases = json.load(f)
+
+        return {
+            case["session_id"]: case
+            for case in gold_cases
+        }
+def compare_to_gold(judge_results, gold_cases):
+    correct = 0
+    total = 0
+
+    detailed_results = []
+
+    for result in judge_results:
+        session_id = result["session_id"]
+
+        if session_id not in gold_cases:
+            continue
+
+        gold = gold_cases[session_id]
+
+        predicted = result["judgment"].get(
+            "has_hallucination",
+            False
+        )
+
+        expected = gold["expected_has_hallucination"]
+
+        is_correct = predicted == expected
+
+        if is_correct:
+            correct += 1
+
+        total += 1
+
+        detailed_results.append({
+            "session_id": session_id,
+            "judge": result["judge"],
+            "expected": expected,
+            "predicted": predicted,
+            "correct": is_correct
+        })
+
+    accuracy = correct / total if total else 0
+
+    return {
+        "accuracy": accuracy,
+        "correct": correct,
+        "total": total,
+        "details": detailed_results
+    }
+
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -957,26 +1181,70 @@ def main():
     parser.add_argument("--generate-only", action="store_true")
     parser.add_argument("--judge-only", action="store_true")
     parser.add_argument("--cases-file", type=str, default="evaluated_cases.json")
+    parser.add_argument("--llm_validation", action="store_true")
+    parser.add_argument("--reliability", action="store_true")
+    parser.add_argument("--reliability-output", type=str, default="judge_reliability.json")
+    parser.add_argument("--gold-file", type=str, default="gold_cases.json")
 
     args = parser.parse_args()
     user_email = args.user_email
+
+    if args.judge_only:
+        with open(args.cases_file, "r", encoding="utf-8") as f:
+            evaluated_cases = json.load(f)
+
+        print(f"[MAIN] Loaded {len(evaluated_cases)} cases from {args.cases_file}")
+
+        orchestrator = Orchestrator()
+
+        if args.reliability:
+            judge_results = orchestrator.run_all_judges_on_same_cases(evaluated_cases)
+            agreement = orchestrator.summarize_judge_agreement(judge_results)
+
+            output = {
+                "judge_results": judge_results,
+                "agreement": agreement,
+            }
+
+            with open(args.reliability_output, "w", encoding="utf-8") as f:
+                json.dump(output, f, indent=2, default=str)
+
+            print("\n[RELIABILITY SUMMARY]")
+            print(json.dumps(agreement, indent=2))
+        
+            if args.gold_file:
+                gold_cases = load_gold_cases(args.gold_file)
+                comparison = compare_to_gold(judge_results, gold_cases)
+
+                print("\n[GOLD COMPARISON]")
+                print(json.dumps(comparison, indent=2))
+
+                return
+
+        final_results = orchestrator.run(evaluated_cases)
+
+        print("\n[FINAL CONSENSUS]")
+        print(json.dumps(final_results["consensus"], indent=2))
+
 
     if args.scenario:
         mock_data = SCENARIOS[args.scenario]
         session_id = f"SESS_{args.scenario.upper()}_001"
 
+        
+
         result = run_test(
             user_email,
             session_id,
             mock_data,
-            args.phase2
+            args.phase2,
+            llm_validation=args.llm_validation
         )
 
         print(json.dumps(result, indent=2, default=str))
         return
 
     evaluated_cases = []
-
     selected_scenarios = list(SCENARIOS.items())[:15]
 
     for index, (scenario_name, mock_data) in enumerate(selected_scenarios, start=1):
@@ -986,11 +1254,12 @@ def main():
             user_email,
             session_id,
             mock_data,
-            args.phase2
+            args.phase2,
+            llm_validation=args.llm_validation
         )
 
         evaluated_cases.append(result)
-    
+
     with open(args.cases_file, "w", encoding="utf-8") as f:
         json.dump(evaluated_cases, f, indent=2, default=str)
 

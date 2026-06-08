@@ -127,6 +127,8 @@ def build_historical_context(user_profile):
             "total_sessions": 0,
             "note": "No historical session data available."
         }
+    
+    print("built history")
 
     return {
         "total_sessions": sessions.count(),
@@ -174,6 +176,9 @@ def build_historical_context(user_profile):
 def create_historical_data(user_profile: UserProfile, count: int = HISTORICAL_COUNT) -> None:
     """Create dummy historical SessionSummary and Recommendation objects to trigger Phase 2 logic."""
     # Cleanup existing historical data first
+    print(f"Creating {count} historical sessions for user {user_profile.email}...")
+
+    
     for i in range(count):
         session_id = f"{HISTORICAL_PREFIX}{i:03d}"
         SessionSummary.objects.filter(session_id=session_id).delete()

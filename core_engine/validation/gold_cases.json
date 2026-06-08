@@ -1,0 +1,38 @@
+[
+  {
+    "session_id": "SESS_HIGH_FOCUS_001",
+    "expected_has_hallucination": true,
+    "expected_issue_types": [
+      "unsupported_historical_claim"
+    ]
+  },
+  {
+    "session_id": "SESS_LOW_FOCUS_002",
+    "expected_has_hallucination": true,
+    "expected_issue_types": [
+      "unsupported_historical_claim"
+    ]
+  },
+  {
+    "session_id": "SESS_ARTIFACT_HEAVY_004",
+    "expected_has_hallucination": true,
+    "expected_issue_types": [
+      "unsupported_historical_claim",
+      "artifact_misinterpretation"
+    ]
+  },
+  {
+    "session_id": "SESS_BURNOUT_005",
+    "expected_has_hallucination": true,
+    "expected_issue_types": [
+      "unsupported_historical_claim"
+    ]
+  },
+  {
+    "session_id": "SESS_HARD_TASK_HIGH_FOCUS_011",
+    "expected_has_hallucination": true,
+    "expected_issue_types": [
+      "unsupported_historical_claim"
+    ]
+  }
+]

@@ -1,0 +1,330 @@
+[
+  {
+    "judge": "Judge1",
+    "session_id": "SESS_HIGH_FOCUS_001",
+    "judgment": {
+      "evaluation": {
+        "Context Match": 4,
+        "Avoidance Safety": 5,
+        "Specificity": 5,
+        "Reasoning Quality": 4,
+        "Non-Contradiction": 4,
+        "Practicality": 5,
+        "Possible edge case suggestions": 3
+      },
+      "commentary": {
+        "Context Match": "The recommendation aligns very well with the user's current 'Deep Flow' state, high focus score (0.85), and elevated Gamma/Beta brainwave activity. The suggested study methods are highly relevant to the 'UI Design' task and leverage the user's 'visual learner' style. The only nuanced point is the 'lo-fi' suggestion against a 'silent preference', which the recommendation attempts to address by claiming historical evidence and suggesting low volume.",
+        "Avoidance Safety": "The 'What to Avoid' section is safe and logical, advising against non-visual tasks that could disrupt the current optimal state for spatial and visual synthesis. No recommendations pose any safety risks.",
+        "Specificity": "The recommendation is exceptionally specific. It uses concrete EEG data (focus score, Gamma/Beta waves) to justify specific UI design tasks (Rapid Iterative Prototyping, Visual Hierarchy Sprint, Accessibility Logic Audit, Atomic Design Structuring) and environmental adjustments (dual-monitor, lo-fi at 5% volume). The avoidance advice is also precise.",
+        "Reasoning Quality": "The reasoning is strong, explicitly linking the user's high Gamma waves to complex prototyping and high Beta waves to structured categorization. It effectively uses the 'Deep Flow' state and 'visual learner' profile to justify the recommended methods. The reasoning for the 'lo-fi' suggestion, while relying on an implied historical data point not fully visible in the provided context, attempts to logically reconcile it with the user's preference for silence by suggesting a very low volume.",
+        "Non-Contradiction": "The recommendation directly addresses the potential contradiction between the user's stated preference for silence ('sound_environment: 0') and the 'lo-fi' music suggestion. By claiming 'history shows lo-fi is your superpower stimulus' and recommending 'barely audible 5% volume', it attempts to resolve this rather than contradict it. All other aspects of the recommendation are consistent with the user's current state and goals.",
+        "Practicality": "All recommended study methods are highly practical and directly applicable to a UI designer in a deep focus state. The environmental suggestions (minimalist, dual-monitor, low-volume music) are also easily implementable. The advice on what to avoid is actionable and sensible for maintaining the current cognitive state.",
+        "Possible edge case suggestions": "The recommendation is excellent for the current positive state. However, it could be enhanced by considering: 1. How to validate or update the 'lo-fi superpower' claim if the user's preference for silence persists. 2. Strategies for maintaining the 'Deep Flow' state if minor distractions or dips in focus occur (e.g., micro-breaks, refocusing techniques). 3. Guidance on how to gently transition out of such an intense focus session to prevent burnout or cognitive fatigue. 4. What to do if external interruptions occur during this deep flow state. 5. Dynamic adjustment for task difficulty if the user starts to feel overwhelmed despite the flow."
+      }
+    }
+  },
+  {
+    "judge": "Judge1",
+    "session_id": "SESS_LOW_FOCUS_002",
+    "judgment": {
+      "evaluation": {
+        "Context Match": 5,
+        "Avoidance Safety": 5,
+        "Specificity": 5,
+        "Reasoning Quality": 5,
+        "Non-Contradiction": 5,
+        "Practicality": 5,
+        "Possible edge case suggestions": "The recommendation is highly effective and comprehensive. However, some edge cases or further considerations could include: 1. Clarifying the '0' learning style to confirm it indeed means 'visual' or offering alternatives if it's ambiguous. 2. Providing more specific guidance on types of lo-fi music (e.g., instrumental, ambient) or a mechanism for the user to track which specific subgenres work best. 3. Suggesting specific types of movement for the 5-minute breaks, especially given the user's 'Tired' mood and '6' stress level (e.g., light stretching, deep breathing). 4. For recurring 'afternoon slump' and low sleep quality, suggesting broader lifestyle adjustments (e.g., short power nap, hydration, consistent sleep schedule) for long-term improvement. 5. Explicitly showing the historical data that supports lo-fi as a 'historical MVP' and 'silence' as least effective, if not already transparent to the user."
+      }
+    }
+  },
+  {
+    "judge": "Judge1",
+    "session_id": "SESS_MATH_DIFFICULTY_003",
+    "judgment": {
+      "evaluation": {
+        "Context Match": 5,
+        "Avoidance Safety": 5,
+        "Specificity": 5,
+        "Reasoning Quality": 4,
+        "Non-Contradiction": 4,
+        "Practicality": 5,
+        "Possible edge case suggestions": 3
+      },
+      "commentary": {
+        "Context Match": "The recommendation perfectly aligns with the user's current state of low focus (0.35), distracted neural state, and surface-level focus during a difficult math task. It addresses the dim lighting and the presence of distracting 'Rock Music' by suggesting specific changes. It also leverages the user's visual learning style.",
+        "Avoidance Safety": "All recommendations are safe and involve adjustments to the study environment and methods, posing no risk to the user.",
+        "Specificity": "The recommendation is highly specific, suggesting 'low-volume lo-fi beats,' 'cool-toned (blue/white) lighting,' and concrete study methods like 'Dynamic Visual Proofs (Desmos or GeoGebra)' and 'Color-Coded Derivations.' The 'Active Graphing Intermissions' even includes a frequency (every 15 minutes).",
+        "Reasoning Quality": "The reasoning is generally strong, linking the low focus score and 12Hz Theta waves to a 'drifting' state. It justifies visual methods by engaging the user's learning style and stimulating Beta waves, and cool lighting to suppress drowsy Theta. The claim of lo-fi beats being a 'historical focus catalyst' is stated without explicit supporting data in the provided `historical_context.recent_recommendations` or `recent_sessions` (which only show generic tips), but the overall argument for avoiding silence due to current distraction is well-reasoned.",
+        "Non-Contradiction": "The recommendation directly contradicts the user's stated preference for a 'sound_environment: 0' (silence) by suggesting lo-fi beats and advising against total silence. However, this is a justified contradiction, as the recommendation explicitly states, 'while you prefer it, your history shows it currently allows your mind to wander.' This is a deliberate and data-driven challenge to a preference that is currently hindering performance, rather than an illogical inconsistency.",
+        "Practicality": "All suggested changes are highly practical and easy for the user to implement immediately, from changing music and lighting to adopting specific visual study techniques and using common tools like Desmos or a whiteboard.",
+        "Possible edge case suggestions": "The recommendation effectively addresses the immediate environmental factors (lighting, noise) and the conflict between user preference (silence) and current performance. However, it could further consider the user's 'sleep_quality: 2' (poor) and 'stress_level: 5' (neutral but not low). While the recommendation addresses drowsiness (Theta waves), it doesn't offer suggestions for the underlying poor sleep or stress, which could be contributing to the low focus and might require broader, long-term interventions beyond in-session adjustments."
+      }
+    }
+  },
+  {
+    "judge": "Judge1",
+    "session_id": "SESS_ARTIFACT_HEAVY_004",
+    "judgment": {
+      "1. Context Match": 5,
+      "2. Avoidance Safety": 5,
+      "3. Specificity": 5,
+      "4. Reasoning Quality": 5,
+      "5. Non-Contradiction": 4,
+      "6. Practicality": 5,
+      "7. Possible edge case suggestions": 3
+    }
+  },
+  {
+    "judge": "Judge1",
+    "session_id": "SESS_BURNOUT_005",
+    "judgment": {
+      "evaluation": {
+        "Context Match": 4,
+        "Avoidance Safety": 5,
+        "Specificity": 5,
+        "Reasoning Quality": 3,
+        "Non-Contradiction": 2,
+        "Practicality": 5,
+        "Possible edge case suggestions": 3
+      },
+      "comments": {
+        "Context Match": "The recommendation aligns well with the user's current drowsy, low-focus state, and the coding task. It addresses the dim lighting and silence. The only minor mismatch is the 'afternoon slump' phrasing when the scenario is 'Late Night Burnout'.",
+        "Avoidance Safety": "All recommendations (lo-fi, visual mapping, Pomodoro, stretching, lighting adjustments) are safe and generally beneficial, posing no risk to the user.",
+        "Specificity": "The recommendations are highly specific, naming types of music ('lo-fi beats'), tools ('Miro or Excalidraw'), techniques ('Pomodoro Technique', 'Rubber Duck Debugging'), and environmental adjustments ('high-contrast IDE theme', 'brightly lit workspace', 'noise-canceling headphones').",
+        "Reasoning Quality": "The reasoning is internally coherent, linking EEG states to recommendations (e.g., lo-fi for Alpha waves, visual aids for visual learners). However, it makes strong claims about 'most effective stimulus' (lo-fi) and 'least effective stimulus' (silence) that are not explicitly supported by the provided `historical_context.recent_recommendations` and are even contradicted by the `noise: \"Rock Music\"` in those historical entries. This weakens the factual basis of the reasoning based on the provided JSON.",
+        "Non-Contradiction": "The recommendation contradicts the provided `historical_context.recent_recommendations` which list `noise: \"Rock Music\"` for past sessions, while the recommendation claims 'silence' is the least effective stimulus based on history. It also claims lo-fi is the 'most effective stimulus' without supporting evidence in the provided historical data.",
+        "Practicality": "All suggested actions are practical, easy to implement, and require readily available resources or common study techniques. The user can immediately act on these recommendations.",
+        "Possible edge case suggestions": "The recommendation focuses solely on improving focus to continue the task. Given the 'Late Night Burnout,' 'Drowsy' state, and 'Low Sleep Quality,' an important edge case is that the user might be too tired to effectively continue, and a recommendation to stop, take a power nap, or switch to a less demanding task might be more appropriate. It also assumes the effectiveness of lo-fi without suggesting alternatives if it fails or if the 'visual learner' assumption (from `learning_style: 0`) is incorrect."
+      }
+    }
+  },
+  {
+    "judge": "Judge2",
+    "session_id": "SESS_CREATIVE_SWITCH_006",
+    "judgment": {
+      "evaluation": {
+        "Context Match": 3,
+        "Avoidance Safety": 4,
+        "Specificity": 5,
+        "Reasoning Quality": 2,
+        "Non-Contradiction": 1,
+        "Practicality": 5,
+        "Possible edge case suggestions": [
+          "The recommendation for 'Lo-Fi beats' directly contradicts the user's stated preference for a '0' (silent) sound environment. The claim that 'history shows this is your most effective stimulus despite your silent preference' is not supported by the provided historical context, which only contains generic 'study_tip' recommendations.",
+          "The recommendation assumes an 'optimal focus time' in the morning and a 'morning peak' for creative flow, which is not explicitly stated or supported by the provided historical data. The current session is in the afternoon, showing low focus.",
+          "The suggestion to 'reset your Alpha waves' is a specific neurofeedback-like goal. While high Alpha can be associated with a relaxed but unfocused state (as indicated by 'Distracted' and 'Relaxed' seconds), the recommendation doesn't elaborate on the specific mechanism or expected outcome for this user.",
+          "The recommendation assumes the user has control over their lighting conditions to 'Switch to a high-contrast visual workspace with natural morning light' in the afternoon, which might not always be feasible.",
+          "What if the user tries Lo-Fi music and finds it even more distracting, reinforcing their preference for silence, given the lack of historical evidence for its effectiveness for *this specific user*?"
+        ]
+      }
+    }
+  },
+  {
+    "judge": "Judge2",
+    "session_id": "SESS_READING_SUCCESS_007",
+    "judgment": {
+      "evaluation": {
+        "Context Match": 5,
+        "Avoidance Safety": 5,
+        "Specificity": 5,
+        "Reasoning Quality": 5,
+        "Non-Contradiction": 5,
+        "Practicality": 5,
+        "Possible edge case suggestions": 4,
+        "comments": "The recommendation is exceptionally well-tailored to the user's current successful session, leveraging EEG data, user profile, and historical context effectively. It provides specific, actionable advice with strong data-backed reasoning, particularly in addressing the user's preference for silence versus observed performance with Lo-Fi music. The suggestions are practical and safe. A minor improvement could be to offer alternative environmental suggestions for less ideal conditions (e.g., lack of natural light) or a brief mention of overall well-being factors like sleep quality, even when celebrating a strong performance."
+      }
+    }
+  },
+  {
+    "judge": "Judge2",
+    "session_id": "SESS_HIGH_STRESS_GOOD_FOCUS_008",
+    "judgment": {
+      "evaluation": {
+        "Context Match": {
+          "score": 4,
+          "reasoning": "The recommendation effectively addresses the user's 'Focused but Tense' neural state, high stress level (9), and good focus score (0.72). It leverages the visual learning style and provides specific methods relevant to 'Biology Exam Review'. However, the 'What to Avoid' section's claim about silent study being the 'least effective state' is not strongly supported by the provided historical data, as the current silent session yielded a good focus score, albeit with tension."
+        },
+        "Avoidance Safety": {
+          "score": 5,
+          "reasoning": "All recommendations are safe and constructive. There are no suggestions that could lead to harm or negative outcomes for the user."
+        },
+        "Specificity": {
+          "score": 5,
+          "reasoning": "The recommendation is highly specific, offering concrete study methods (Dynamic Visual Mapping for Krebs Cycle, Color-Coded Histology, Lo-Fi 'Bio-Beat' Sprints with 60 BPM, 3D Structure Modeling for proteins) and detailed environmental adjustments (natural light, vertical surface, low-volume Lo-Fi beats). The 'What to Avoid' is also specific to 'Silent' study sessions for 'complex Biology reviews'."
+        },
+        "Reasoning Quality": {
+          "score": 3,
+          "reasoning": "The reasoning for the recommended methods is generally strong, linking high Beta waves to 'high gear' and suggesting Lo-Fi to increase Alpha and reduce tension, aligning with the EEG results. It also correctly identifies and caters to the user's visual learning style. However, the reasoning in the 'What to Avoid' section is flawed. The claim that 'history shows that a lack of auditory stimulus (None) is your least effective state' is contradicted by the current session's 0.72 focus score (well above the historical average of 0.48) achieved in silence. While silence might contribute to tension, it's not demonstrably the 'least effective state' based on the provided data."
+        },
+        "Non-Contradiction": {
+          "score": 3,
+          "reasoning": "The recommendation largely maintains consistency by addressing both the high focus and high tension. However, the 'What to Avoid' section contradicts the current session's positive focus outcome (0.72) achieved in silence, by labeling silent study as the 'least effective state'. This creates an internal inconsistency regarding the interpretation of the user's performance in silence."
+        },
+        "Practicality": {
+          "score": 5,
+          "reasoning": "All suggested methods and environmental changes are highly practical and easily implementable by the user. They involve common study tools (whiteboard, diagrams, physical materials/software) and readily available auditory stimuli (Lo-Fi music)."
+        },
+        "Possible edge case suggestions": {
+          "score": 3,
+          "reasoning": "The recommendation effectively targets the immediate 'Focused but Tense' state. However, it could consider: \n1.  **User Preference vs. Tension:** The user's 'sound_environment: 0' might indicate a preference for silence. While Lo-Fi is suggested to reduce tension, a more nuanced approach could explore if silence can be effective *without* tension for this user, or if other tension-reducing strategies could be applied in silence. \n2.  **Burnout Risk:** Given the 'High Stress But Productive Focus' scenario, 'Stress Level: 9', and 'Exam Prep', and historical 'SESS_BURNOUT_005', the recommendation could more explicitly address burnout prevention beyond just Pomodoro, perhaps suggesting short mindfulness breaks or physical activity. \n3.  **Sleep Quality:** The user's 'sleep_quality: 2' (poor) is a significant underlying factor for stress and tension that is not addressed, which could be a crucial long-term recommendation."
+        }
+      }
+    }
+  },
+  {
+    "judge": "Judge2",
+    "session_id": "SESS_LOW_ENERGY_CLEAN_SIGNAL_009",
+    "judgment": {
+      "evaluation": {
+        "Context Match": 3,
+        "Avoidance Safety": 5,
+        "Specificity": 4,
+        "Reasoning Quality": 2,
+        "Non-Contradiction": 1,
+        "Practicality": 4,
+        "Possible edge case suggestions": "The recommendation makes strong claims about historical data (Lo-Fi as 'most effective focus catalyst', silence as 'least effective stimulus') that are not supported by the provided `historical_context.recent_recommendations`. This is a critical edge case where the system's internal data or reasoning is inconsistent with the observable input. \n\nAnother edge case is the assumption of 'visual learner' when `user_profile.learning_style` is '0' (unspecified). The system should either infer this from more robust data, prompt the user, or offer a broader range of methods. \n\nGiven the 'Low Energy' state and 'sleep_quality: 2', the system could suggest addressing sleep hygiene as a long-term strategy, rather than solely focusing on in-session adjustments. \n\nThe 'Before eating' status is also a potential factor for low energy; a suggestion for a light, quick snack or delaying study until after a meal could be an edge case. \n\nFinally, while recommending Lo-Fi, the system states 'despite what you might prefer!'. An edge case is how to handle user feedback if they genuinely dislike Lo-Fi or find it distracting, even if historical data (if it existed) suggested otherwise. The system should have a mechanism for user override or further experimentation."
+      }
+    }
+  },
+  {
+    "judge": "Judge2",
+    "session_id": "SESS_EASY_TASK_LOW_FOCUS_010",
+    "judgment": {
+      "criteria_scores": {
+        "Context Match": 5,
+        "Avoidance Safety": 5,
+        "Specificity": 5,
+        "Reasoning Quality": 4,
+        "Non-Contradiction": 5,
+        "Practicality": 5,
+        "Possible edge case suggestions": 3
+      },
+      "critique": {
+        "Context Match": "The recommendation perfectly aligns with the user's current state of 'Understimulated' neural activity, low focus score (0.32), and reported 'Bored' mood during an 'Easy Flashcards' task. It directly addresses the need to increase stimulation and engagement.",
+        "Avoidance Safety": "All recommendations are safe and beneficial. Suggesting Lo-Fi music, active study methods, and environmental changes like a well-lit area or standing desk pose no risks and are generally considered healthy for cognitive engagement.",
+        "Specificity": "The recommendation is highly specific, offering concrete actions: 'Lo-Fi beats,' 'Visual Sketch Method,' 'Active Gamification (Leitner System + stretch),' 'Contextual Storyboarding,' 'Color-Coded Etymology,' 'well-lit area,' 'standing desk,' and explicitly 'avoiding total silence.'",
+        "Reasoning Quality": "The initial diagnosis based on EEG (low focus, high Alpha/Theta) is excellent and accurately describes the 'screensaver mode.' The reasoning for recommending Lo-Fi and avoiding silence is strong, explicitly linking it to 'waking Beta waves up' and claiming historical EEG data supports Lo-Fi as a 'secret weapon' and silence as a cause for understimulation. While the provided `historical_context` JSON snippet doesn't explicitly detail this specific historical data, it's reasonable to assume the system has access to it, especially given the current 'Understimulated' state with a 'sound_environment' of '0' (likely silence).",
+        "Non-Contradiction": "The recommendation deliberately contradicts the user's implied preference for 'sound_environment: 0' (assuming '0' means silence) but provides a strong, data-driven justification for this contradiction based on claimed historical EEG performance. This is a reasoned and beneficial contradiction, not an oversight.",
+        "Practicality": "All suggested methods (visual sketching, gamification, storyboarding, color-coding) are highly practical for flashcards. Lo-Fi music is easily accessible, and environmental changes like finding a well-lit area or standing desk are generally feasible.",
+        "Possible edge case suggestions": "The recommendation is very confident about Lo-Fi being a 'secret weapon.' An edge case could be to suggest an alternative or a monitoring strategy if Lo-Fi doesn't yield the expected results for this specific session. It also assumes the user *can* easily change their environment (e.g., find a standing desk), which might not always be possible. The user's low 'sleep_quality' (2) is a potential underlying factor for understimulation that isn't directly addressed, though the current recommendations might indirectly help."
+      }
+    }
+  },
+  {
+    "judge": "Judge3",
+    "session_id": "SESS_HARD_TASK_HIGH_FOCUS_011",
+    "judgment": {
+      "1. Context Match": 4,
+      "2. Avoidance Safety": 5,
+      "3. Specificity": 5,
+      "4. Reasoning Quality": 4,
+      "5. Non-Contradiction": 3,
+      "6. Practicality": 5,
+      "7. Possible edge case suggestions": "The recommendation is strong but could be improved by explicitly addressing why a 'low-light setting' is recommended when the current 'Bright Light' conditions led to deep focus. Clarification on the 'morning peak' reference would also be beneficial, as this information is not present in the provided context. Given the user's 'sleep_quality' is low (2), future recommendations could consider how to sustain such high focus despite potential fatigue, or suggest strategies to improve sleep for long-term performance."
+    }
+  },
+  {
+    "judge": "Judge3",
+    "session_id": "SESS_NOISY_ENVIRONMENT_012",
+    "judgment": {
+      "1. Context Match": 2,
+      "2. Avoidance Safety": 2,
+      "3. Specificity": 5,
+      "4. Reasoning Quality": 1,
+      "5. Non-Contradiction": 1,
+      "6. Practicality": 3,
+      "7. Possible edge case suggestions": [
+        "The recommendation strongly contradicts the user's stated preference for silence (`sound_environment: \"0\"`) by recommending lo-fi music and advising against silence. If historical data truly supports lo-fi as a 'secret weapon' for this user, that specific historical evidence (e.g., 'In session SESS_XYZ, your focus score was 0.85 with lo-fi, compared to 0.42 in silence') must be explicitly presented to justify overriding the user's preference.",
+        "The user is currently in a 'Loud Cafe' and is 'Distracted'. The primary recommendation for sound should first address mitigating the existing loud noise (e.g., noise-canceling headphones) before suggesting adding more sound (lo-fi).",
+        "Consider offering a gradual approach or alternative non-auditory methods to suppress Theta waves if the user's preference for silence is strong. For example, suggesting specific breathing exercises, short breaks, or a change of scenery.",
+        "If the system believes its EEG data overrides stated preferences, it should suggest an A/B test for the user to try the recommendation (e.g., 'Try 15 minutes with lo-fi and compare your focus to 15 minutes in silence') and provide explicit feedback mechanisms to learn and adapt.",
+        "Clarify the definition of 'afternoon slump' and explicitly link it to the user's current energy level, mood, or time of day to strengthen the reasoning for the suggested interventions."
+      ]
+    }
+  },
+  {
+    "judge": "Judge3",
+    "session_id": "SESS_CALM_RELAXED_LEARNING_013",
+    "judgment": {
+      "evaluation": {
+        "Context Match": {
+          "score": 3,
+          "reasoning": "The recommendation accurately identifies the current 'Calm Focus' neural state and focus score (0.62, outperforming the 0.48 historical average). It tailors study methods to the 'Psychology' subject and 'Concept Review' goal. It correctly infers a visual learning style from '0' and provides relevant visual methods. However, it directly contradicts the user's stated sound environment preference ('0', interpreted as silence preference) and current lighting ('Warm Light') without providing explicit historical data within the given context to strongly justify these overrides. The recommendation acknowledges the sound preference ('even though you prefer silence') but the justification for overriding it is not fully supported by the provided historical data."
+        },
+        "Avoidance Safety": {
+          "score": 5,
+          "reasoning": "All recommendations are safe and constructive. There are no suggestions that could be harmful or counterproductive to the user's well-being or study process."
+        },
+        "Specificity": {
+          "score": 4,
+          "reasoning": "The recommendation provides highly specific study methods (e.g., Visual Case-Study Mapping, Patient File Method) tailored to the subject and learning style. Environmental suggestions (low-volume Lo-Fi, cool-toned, high-intensity lighting) are also specific. It includes specific brainwave references (Gamma 28.00 Hz, Alpha/Beta activity, Theta-heavy drowsiness). A minor point is the overstatement of 'current Beta wave peak' at 16.0 Hz, as the user's historical peak Beta is 26.0 Hz."
+        },
+        "Reasoning Quality": {
+          "score": 3,
+          "reasoning": "The reasoning is strong for linking Gamma waves to synthesizing complex theories and for using visual methods for a visual learner. The lighting recommendation is well-justified physiologically (sustain Gamma, prevent Theta drowsiness). However, the reasoning for overriding the user's sound preference ('your data shows it's your secret weapon,' 'your history proves this') is not explicitly supported by the provided historical data, which lacks specific noise conditions for low-focus sessions. This weakens the overall reasoning quality for a critical part of the recommendation."
+        },
+        "Non-Contradiction": {
+          "score": 2,
+          "reasoning": "There are direct contradictions with the user's context. The recommendation advises against silence and suggests Lo-Fi, contradicting the user's `sound_environment: \"0\"` (interpreted as silence preference). It also recommends 'cool-toned, high-intensity lighting,' contradicting the `pre_session.lighting_conditions: \"Warm Light\"`. While the system acknowledges the sound preference, the justification for overriding it is not explicitly provided in the historical data. Internally, stating 'current Beta wave peak' at 16.0 Hz contradicts the user's historical peak Beta of 26.0 Hz."
+        },
+        "Practicality": {
+          "score": 5,
+          "reasoning": "All recommended study methods are actionable and easy for the user to implement. The environmental adjustments (sound, lighting) are also practical and can be readily changed by the user."
+        },
+        "Possible edge case suggestions": {
+          "score": 3,
+          "reasoning": "The recommendation is generally good but could be improved. Edge cases include: 1. Clarifying ambiguous user profile inputs like '0' for sound environment and learning style. 2. Providing concrete historical evidence (e.g., specific session IDs and focus scores) when overriding a user's stated preference to enhance credibility. 3. Refining terminology like 'Beta wave peak' to be more accurate relative to the user's historical performance. 4. Explicitly stating the inferred time of day if it's used as a factor for recommendations."
+        }
+      }
+    }
+  },
+  {
+    "judge": "Judge3",
+    "session_id": "SESS_ANXIOUS_LOW_FOCUS_014",
+    "judgment": {
+      "evaluation": {
+        "1_context_match": 4,
+        "2_avoidance_safety": 5,
+        "3_specificity": 4,
+        "4_reasoning_quality": 3,
+        "5_non_contradiction": 4,
+        "6_practicality": 5,
+        "7_possible_edge_case_suggestions": 3
+      },
+      "critique": {
+        "1_context_match": "The recommendation accurately identifies the user's 'Anxious Low Focus' state, high stress, and the challenge of essay writing with high Beta waves. The suggested study methods are highly relevant to addressing writer's block and anxiety for this task. The shift from silence to lo-fi is a reasonable adaptation given the current low focus. However, the direct link between lo-fi beats and the 'legendary 0.98 focus score' is not explicitly supported by the provided historical data (the sound environment for that peak session is unknown). The specific claim of '42% lower than your morning peak' in the 'What to Avoid' section also lacks direct verifiable data within the provided context.",
+        "2_avoidance_safety": "All recommendations are safe and constructive. Lo-fi music is a benign intervention. The suggested study methods are standard, effective techniques for managing complex tasks and anxiety. Avoiding studying without a break is also a safe and generally healthy suggestion.",
+        "3_specificity": "The recommended study methods are exceptionally specific and actionable, providing clear steps (e.g., 'digital whiteboard,' 'summarize each paragraph into one visual icon,' 'write without looking at the screen,' 'color-coded evidence'). The environmental suggestions are also specific ('brightly lit space,' 'low-volume lo-fi'). However, the 'high-intensity 'brain break'' is less specific, and the 'morning peak' reference is vague without further context.",
+        "4_reasoning_quality": "The reasoning for identifying 'writer's block anxiety' from 30Hz Beta waves and noting that silence isn't working is sound. The study methods are well-justified for addressing the user's current challenges. However, the reasoning for linking lo-fi beats to the 'legendary 0.98 focus score' is weak; there's no evidence in the provided context that lo-fi was present during that session or that it's the specific key to replicating that state. The '42% lower than morning peak' statement in 'What to Avoid' is presented as a fact without supporting data in the provided context, making its reasoning opaque.",
+        "5_non_contradiction": "There are no direct contradictions within the recommendation. The shift from silence to lo-fi is an adaptive change based on current performance, not a contradiction. The aspirational link to the 0.98 focus score, while not fully supported by explicit data, does not contradict any explicit historical data about sound environments.",
+        "6_practicality": "All recommendations are highly practical and easy to implement. Lo-fi music is readily available. The study methods require common tools (digital whiteboard, pen/paper, computer) and can be applied immediately to essay writing.",
+        "7_possible_edge_case_suggestions": "The recommendation could be more holistic. 1. **Learning Style:** While the visual methods are good, the `user_profile.learning_style` is '0', which is ambiguous. If it implies a different primary style, these might not be optimal. 2. **Physiological Needs:** The `time_since_meal: '4h+'` and `sleep_quality: '2'` (poor) are significant factors for focus and anxiety that are not addressed. A quick, healthy snack or hydration could be beneficial. 3. **Immediate Reset:** Given `stress_level: 9` and `mood_emoji: 'Anxious'`, a brief, structured relaxation or mindfulness exercise *before* diving into new study methods might be more effective than immediately starting a 'Zero Draft Sprint.' 4. **Afternoon Mitigation:** The 'What to Avoid' section advises avoiding afternoon study without a break. If the user *must* study in the afternoon, the recommendation doesn't offer strategies to mitigate the lower focus, only to avoid it. 5. **Historical Data Transparency:** The recommendation relies on 'historical gold standard' and 'morning peak' without showing the specific data that supports these claims in the provided context, which limits the user's ability to understand the full reasoning."
+      }
+    }
+  },
+  {
+    "judge": "Judge3",
+    "session_id": "SESS_POST_MEAL_SLUMP_015",
+    "judgment": {
+      "evaluation": {
+        "Context Match": 5,
+        "Avoidance Safety": 5,
+        "Specificity": 5,
+        "Reasoning Quality": 5,
+        "Non-Contradiction": 4,
+        "Practicality": 4,
+        "Possible edge case suggestions": 3
+      },
+      "critique": {
+        "Context Match": "The recommendation perfectly aligns with the 'Post Meal Slump' scenario, the user's 'Drowsy' neural state, low focus score (0.38), and 'Tired' mood. It effectively leverages the 'visual learner' profile and the 'Statistics' subject to suggest tailored methods. The recommendation to switch from silence/white noise to lo-fi beats directly addresses the current low focus and drowsiness, claiming historical data supports this change.",
+        "Avoidance Safety": "All recommendations are safe and non-invasive. There are no suggestions that could be harmful or counterproductive to the user's well-being or study goals.",
+        "Specificity": "The recommendation is highly specific. It provides concrete study methods (e.g., 'Visual Probability Mapping,' 'Color-Coded Data Hunt,' 'Active Graphing Simulations' with tool suggestions, 'Lo-Fi Pomodoro Sprints' with duration), specific environmental changes (e.g., 'low-volume lo-fi soundscape,' 'natural sunlight,' 'dual-monitor or large whiteboard'), and a clear 'what to avoid.' It also integrates specific EEG metrics (focus score, neutral seconds, beta waves) into its reasoning.",
+        "Reasoning Quality": "The reasoning is excellent. It clearly links the user's current state (drowsiness, low focus, neutral seconds, time since meal) and profile (visual learner, statistics subject) to the proposed solutions. For example, visual methods are suggested for a visual learner, lo-fi beats and natural light are recommended to combat drowsiness, and Pomodoro sprints are suggested to break the 'Neutral' plateau. The claim of historical data for lo-fi as an 'MVP' and silence as 'least effective' provides a strong, data-driven justification.",
+        "Non-Contradiction": "The recommendation is largely non-contradictory. The primary potential conflict is the user's 'sound_environment: 0' (which often implies a preference for silence) versus the recommendation to avoid silence. However, the recommendation explicitly addresses this by stating, 'your history shows 'none' is your least effective stimulus,' which justifies overriding a potential preference based on performance data. Assuming this historical data is accurate, it's a data-driven override rather than a contradiction.",
+        "Practicality": "Most recommendations are practical and actionable. Implementing lo-fi music, visual study methods, and Pomodoro sprints are easily achievable. Suggestions like 'natural sunlight' and 'dual-monitor or large whiteboard' might require specific environmental conditions or equipment that not all users may have readily available, slightly reducing universal practicality.",
+        "Possible edge case suggestions": "The recommendation could be enhanced by offering alternatives for less accessible suggestions (e.g., 'if natural light isn't available, consider a full-spectrum lamp'). While the recommendation states 'lo-fi beats (your historical MVP)' and 'none is your least effective stimulus,' the provided historical context JSON does not explicitly contain this data, which is an assumption the system makes. Clarifying the link between 'Active Graphing Simulations' and 'anchoring those 13.00 Hz Beta waves' could also improve understanding."
+      }
+    }
+  }
+]
